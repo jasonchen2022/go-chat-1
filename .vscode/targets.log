@@ -1,0 +1,392 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 3.81
+# Copyright (C) 2006  Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.
+# There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+# This program built for i386-apple-darwin11.3.0
+ 
+make: *** No rule to make target `all'.  Stop.
+
+
+# Make data base, printed on Sun Jun 19 15:06:39 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# environment
+VSCODE_LOG_NATIVE = false
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /Users/admin/Documents/GitHub/go-chat
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"42e84e0914b17800d483f69e299e1b00.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/corrupted.info","_languagePackSupport":true}
+# environment
+_ = /usr/bin/make
+# makefile (from `Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+VSCODE_VERBOSE_LOGGING = true
+# environment
+__CFBundleIdentifier = com.microsoft.VSCode
+# environment
+INFOPATH = /opt/homebrew/share/info:
+# environment
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/vscode-ipc-ff5798c2-f845-4af6-adf0-c0cb0bb3f5e6.sock
+# environment
+VSCODE_CWD = /
+# environment
+GOPROXY = https://proxy.golang.org,direct
+# environment
+PATH = /opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin
+# environment
+GOPATH = /Users/admin/go
+# environment
+VSCODE_LOG_STACK = false
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# default
+.FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
+# environment
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.18XkasoMZG/Listeners
+# automatic
+%F = $(notdir $%)
+# environment
+VSCODE_PIPE_LOGGING = true
+# environment
+PWD = /Users/admin/Documents/GitHub/go-chat
+# environment
+HOMEBREW_CELLAR = /opt/homebrew/Cellar
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = undefined
+# environment
+MANPATH = /opt/homebrew/share/man::
+# environment
+GOMODCACHE = /Users/admin/go/pkg/mod
+# environment
+HOME = /Users/admin
+# makefile (from `Makefile', line 1)
+PROTO_FILES := api/proto/web/v1/auth.proto api/proto/admin/v1/index.proto
+# default
+MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
+# environment
+VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
+# environment
+LOGNAME = admin
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+XPC_FLAGS = 0x0
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 1
+# default
+MAKE_VERSION := 3.81
+# environment
+USER = admin
+# makefile
+.DEFAULT_GOAL := install
+# environment
+HOMEBREW_BOTTLE_DOMAIN = https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# default
+MAKE_COMMAND := /Applications/Xcode.app/Contents/Developer/usr/bin/make
+# default
+.VARIABLES := 
+# environment
+TMPDIR = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/
+# automatic
+*F = $(notdir $*)
+# environment
+VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.67.2-main.sock
+# makefile
+MAKEFLAGS = Rrqp
+# environment
+MFLAGS = -Rrqp
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.5189386.5189392
+# environment
+HOMEBREW_PREFIX = /opt/homebrew
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# automatic
++F = $(notdir $+)
+# environment
+HOMEBREW_REPOSITORY = /opt/homebrew
+# environment
+__CF_USER_TEXT_ENCODING = 0x1F5:0x19:0x34
+# environment
+COMMAND_MODE = unix2003
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+LC_ALL = C
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# default
+.INCLUDE_DIRS = /usr/local/include
+# environment
+MAKELEVEL := 0
+# environment
+LANG = C
+# environment
+VSCODE_PID = 48274
+# variable set hash-table stats:
+# Load=72/1024=7%, Rehash=0, Collisions=2/98=2%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 16777234, inode 10272424): 18 files, no impossibilities.
+
+# 18 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+build-windows:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 34):
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/http-server.exe ./internal/http
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/ws-server.exe ./internal/websocket
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/job-cli.exe ./internal/job
+	cp ./config.example.yaml ./build/windows/config.yaml
+	
+
+build-linux:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 41):
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/http-server ./internal/http
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/ws-server ./internal/websocket
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/job-cli ./internal/job
+	cp ./config.example.yaml ./build/linux/config.yaml
+	
+
+# Not a target:
+all:
+#  Command-line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+.PHONY: install conf build build-all build-windows build-linux build-mac-m1 build-mac generate protoc
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+protoc:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 77):
+	@if [ -n "$(PROTO_FILES)" ]; then \
+	protoc --proto_path=./third_party \
+	--proto_path=./api/proto \
+	--gotag_out=outdir="./api":./ \
+	--go_out=paths=source_relative:./api \
+	--validate_out=paths=source_relative,lang=go:./api $(PROTO_FILES) \
+	&& echo "protoc generate success"; \
+	fi
+	
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-06-19 12:02:32
+#  File has been updated.
+#  Successfully updated.
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+build-mac:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 55):
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/http-server ./internal/http
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/ws-server ./internal/websocket
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/job-cli ./internal/job
+	cp ./config.example.yaml ./build/mac/config.yaml
+	
+
+tool:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 71):
+	go build -o ./script/mac-ws-tool ./script
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./script/linux-ws-tool ./script
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./script/windows-ws-tool.exe ./script
+	
+
+test:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+ 
+#  commands to execute (from `Makefile', line 68):
+	go test -v ./...
+	
+
+build: generate lint
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 25):
+	go build -o ./bin/http ./internal/http
+	go build -o ./bin/websocket ./internal/websocket
+	go build -o ./bin/job-cli ./internal/job
+	
+
+build-all: generate lint build-windows build-linux build-mac
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+build-mac-m1:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 48):
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/http-server ./internal/http
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/ws-server ./internal/websocket
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/job-cli ./internal/job
+	cp ./config.example.yaml ./build/macm1/config.yaml
+	
+
+generate:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 62):
+	wire ./...
+	
+
+job: generate
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 21):
+	go run ./internal/job
+	
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+http: generate
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 15):
+	go run ./internal/http
+	
+
+websocket: generate
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 18):
+	go run ./internal/websocket
+	
+
+lint:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 65):
+	golangci-lint run --timeout=5m --config ./.golangci.yml
+	
+
+conf:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 12):
+	cp config.example.yaml config.yaml
+	
+
+install:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 5):
+	go install github.com/google/wire/cmd/wire \
+	&& go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.0 \
+	&& go install github.com/envoyproxy/protoc-gen-validate@latest \
+	&& go install github.com/srikrsna/protoc-gen-gotag \
+	
+
+# files hash-table stats:
+# Load=21/1024=2%, Rehash=0, Collisions=1/62=2%
+# VPATH Search Paths
+
+# No `vpath' search paths.
+
+# No general (`VPATH' variable) search path.
+
+# # of strings in strcache: 1
+# # of strcache buffers: 1
+# strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
+# strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
+
+# Finished Make data base on Sun Jun 19 15:06:39 2022
+
+ 

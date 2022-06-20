@@ -1,0 +1,1 @@
+{"buildTargets":["build","build-all","build-linux","build-mac","build-mac-m1","build-windows","conf","generate","http","install","job","lint","protoc","test","tool","websocket"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}
