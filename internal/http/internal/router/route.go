@@ -3,13 +3,14 @@ package router
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"go-chat/config"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/handler"
 	"go-chat/internal/http/internal/middleware"
 	"go-chat/internal/http/internal/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 // NewRouter 初始化配置路由

@@ -2,13 +2,14 @@
 
 ## 1、简介
 
-- 地址： [http://im.gzydong.club](http://im.gzydong.club)
-- 账号： 18798272054 或 18798272055
-- 密码： admin123
+- 1：安装go环境
+- 2：根目录执行make install
+- 3：启动http客户端执行：make http   
+- 4：启动websocet客户端执行：make websocket
 
 ## 2、项目DEMO
 
-- 地址： [http://im.gzydong.club](http://im.gzydong.club)
+- 地址： [https://pc.trhbarh.cn/](https://pc.trhbarh.cn/)
 - 账号： 18798272054 或 18798272055
 - 密码： admin123
 
