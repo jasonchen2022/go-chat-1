@@ -1,8 +1,9 @@
 package dao
 
 import (
-	"github.com/go-redis/redis/v8"
 	"go-chat/internal/entity"
+
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 

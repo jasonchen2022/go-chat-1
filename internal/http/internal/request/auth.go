@@ -7,6 +7,10 @@ type LoginRequest struct {
 	Platform string `form:"platform" json:"platform" binding:"required,oneof=h5 ios windows mac web"`
 }
 
+type SyncRequest struct {
+	UserId int `form:"UserId" json:"UserId" binding:"required" label:"登录账号ID"`
+}
+
 // RegisterRequest 注册接口验证
 type RegisterRequest struct {
 	Nickname string `form:"nickname" json:"nickname" binding:"required,min=2,max=30" label:"账号昵称"`

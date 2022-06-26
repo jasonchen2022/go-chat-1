@@ -6,6 +6,7 @@ import (
 	"go-chat/internal/dao"
 	"go-chat/internal/model"
 	"go-chat/internal/pkg/encrypt"
+
 	"gorm.io/gorm"
 )
 

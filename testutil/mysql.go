@@ -3,11 +3,13 @@ package testutil
 import (
 	"fmt"
 	"go-chat/config"
+	"go-chat/internal/model"
 	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+	"gorm.io/plugin/dbresolver"
 )
 
 func GetDb() *gorm.DB {
@@ -15,6 +17,7 @@ func GetDb() *gorm.DB {
 	conf := GetConfig()
 
 	dsn := getDsn(conf)
+	dsn_ff := getFfDsn(conf)
 
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       dsn,   // DSN data source name
@@ -28,6 +31,10 @@ func GetDb() *gorm.DB {
 			SingularTable: true,              // 使用单数表名，启用该选项，此时，`Article` 的表名应该是 `it_article`
 		},
 	})
+	//指定member表查询另外一个库
+	db.Use(dbresolver.Register(dbresolver.Config{
+		Replicas: []gorm.Dialector{mysql.Open(dsn_ff)},
+	}, &model.Member{}))
 
 	if err != nil {
 		fmt.Printf("mysql connect error :%v", err)
@@ -42,7 +49,7 @@ func GetDb() *gorm.DB {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	db.Debug()
+	//db.Debug()
 
 	return db
 }
@@ -56,5 +63,17 @@ func getDsn(conf *config.Config) string {
 		conf.MySQL.Port,
 		conf.MySQL.Database,
 		conf.MySQL.Charset,
+	)
+}
+
+func getFfDsn(conf *config.Config) string {
+	return fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
+		conf.MySQLFF.UserName,
+		conf.MySQLFF.Password,
+		conf.MySQLFF.Host,
+		conf.MySQLFF.Port,
+		conf.MySQLFF.Database,
+		conf.MySQLFF.Charset,
 	)
 }

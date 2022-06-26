@@ -44,6 +44,8 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	usersDao := dao.NewUserDao(baseDao)
 	userService := service.NewUserService(usersDao)
 	common := v1.NewCommonHandler(conf, smsService, userService)
+	memberDao := dao.NewMemberDao(baseDao)
+	memberService := service.NewMemberService(memberDao)
 	session := cache.NewSession(redisClient)
 	redisLock := cache.NewRedisLock(redisClient)
 	baseService := service.NewBaseService(db, redisClient)
@@ -65,7 +67,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	talkSessionService := service.NewTalkSessionService(baseService, talkSessionDao)
 	articleClassDao := note.NewArticleClassDao(baseDao)
 	articleClassService := note2.NewArticleClassService(baseService, articleClassDao)
-	auth := v1.NewAuthHandler(conf, userService, smsService, session, redisLock, talkMessageService, ipAddressService, talkSessionService, articleClassService)
+	auth := v1.NewAuthHandler(conf, userService, memberService, smsService, session, redisLock, talkMessageService, ipAddressService, talkSessionService, articleClassService)
 	organizeDao := organize.NewOrganizeDao(baseDao)
 	organizeService := organize2.NewOrganizeService(baseService, organizeDao)
 	user := v1.NewUserHandler(userService, smsService, organizeService)
@@ -152,6 +154,6 @@ var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, 
 
 var cacheProviderSet = wire.NewSet(cache.NewSession, cache.NewSid, cache.NewUnreadTalkCache, cache.NewRedisLock, cache.NewWsClientSession, cache.NewLastMessage, cache.NewTalkVote, cache.NewRoom, cache.NewRelation, cache.NewSmsCodeCache)
 
-var daoProviderSet = wire.NewSet(dao.NewBaseDao, dao.NewContactDao, dao.NewGroupMemberDao, dao.NewUserDao, dao.NewGroupDao, dao.NewGroupApply, dao.NewTalkRecordsDao, dao.NewGroupNoticeDao, dao.NewTalkSessionDao, dao.NewEmoticonDao, dao.NewTalkRecordsVoteDao, dao.NewFileSplitUploadDao, note.NewArticleClassDao, note.NewArticleAnnexDao, organize.NewDepartmentDao, organize.NewOrganizeDao, organize.NewPositionDao)
+var daoProviderSet = wire.NewSet(dao.NewBaseDao, dao.NewContactDao, dao.NewGroupMemberDao, dao.NewUserDao, dao.NewMemberDao, dao.NewGroupDao, dao.NewGroupApply, dao.NewTalkRecordsDao, dao.NewGroupNoticeDao, dao.NewTalkSessionDao, dao.NewEmoticonDao, dao.NewTalkRecordsVoteDao, dao.NewFileSplitUploadDao, note.NewArticleClassDao, note.NewArticleAnnexDao, organize.NewDepartmentDao, organize.NewOrganizeDao, organize.NewPositionDao)
 
-var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService)
+var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, service.NewMemberService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService)

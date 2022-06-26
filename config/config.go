@@ -7,6 +7,7 @@ import (
 
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/strutil"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 	App        *App        `json:"app" yaml:"app"`
 	Redis      *Redis      `json:"redis" yaml:"redis"`
 	MySQL      *MySQL      `json:"mysql" yaml:"mysql"`
+	MySQLFF    *MySQL      `json:"mysqlFF" yaml:"mysql_ff"`
 	Jwt        *Jwt        `json:"jwt" yaml:"jwt"`
 	Cors       *Cors       `json:"cors" yaml:"cors"`
 	Log        *Log        `json:"log" yaml:"log"`

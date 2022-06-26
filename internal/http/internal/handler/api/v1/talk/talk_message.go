@@ -3,10 +3,8 @@ package talk
 import (
 	"errors"
 
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/model"
 	"go-chat/internal/service/organize"
-	"gorm.io/gorm"
 
 	"go-chat/internal/dao"
 	"go-chat/internal/entity"
@@ -16,6 +14,9 @@ import (
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/service"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type Message struct {
@@ -45,7 +46,7 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 	if opt.TalkType == entity.ChatPrivateMode {
 		// 这里需要判断双方是否都是企业成员，如果是则无需添加好友即可聊天
 		if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
-			return errors.New("系统繁忙，请稍后再试！！！")
+			return errors.New("系统繁忙，错误代码1000，请稍后再试！！！")
 		} else if isOk {
 			return nil
 		}
@@ -64,7 +65,7 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 				return errors.New("暂无权限发送消息！")
 			}
 
-			return errors.New("系统繁忙，请稍后再试！！！")
+			return errors.New("系统繁忙，错误代码1001，请稍后再试！！！")
 		}
 
 		if groupMemberInfo.IsQuit == 1 {

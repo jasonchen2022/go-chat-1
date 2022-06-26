@@ -7,6 +7,8 @@ import (
 
 	"go-chat/api/web/v1"
 	"go-chat/internal/http/internal/dto"
+	"go-chat/internal/model"
+	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/service/note"
 
@@ -23,6 +25,7 @@ import (
 type Auth struct {
 	config             *config.Config
 	userService        *service.UserService
+	memberService      *service.MemberService
 	smsService         *service.SmsService
 	session            *cache.Session
 	redisLock          *cache.RedisLock
@@ -35,6 +38,7 @@ type Auth struct {
 func NewAuthHandler(
 	config *config.Config,
 	userService *service.UserService,
+	memberService *service.MemberService,
 	smsService *service.SmsService,
 	session *cache.Session,
 	redisLock *cache.RedisLock,
@@ -46,6 +50,7 @@ func NewAuthHandler(
 	return &Auth{
 		config:             config,
 		userService:        userService,
+		memberService:      memberService,
 		smsService:         smsService,
 		session:            session,
 		redisLock:          redisLock,
@@ -92,6 +97,66 @@ func (c *Auth) Login(ctx *gin.Context) {
 	})
 
 	response.Success(ctx, c.createToken(user.Id))
+}
+
+// Login 同步登录接口
+func (c *Auth) Sync(ctx *gin.Context) {
+
+	params := &request.SyncRequest{}
+	if err := ctx.ShouldBindJSON(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	//先查询当前用户存不存在
+	user, _ := c.userService.Dao().FindById(params.UserId)
+	if user == nil {
+		member, err := c.memberService.FindById(params.UserId)
+		if err != nil {
+			response.BusinessError(ctx, err)
+			return
+		}
+		if member != nil {
+			password, _ := encrypt.HashPassword("12345689")
+			_, err := c.userService.Dao().Create(&model.Users{
+				Id:        member.Id,
+				Nickname:  member.Nickname,
+				Mobile:    member.Mobile,
+				Avatar:    member.Avatar,
+				Gender:    member.Gender,
+				Password:  password,
+				Motto:     member.Motto,
+				CreatedAt: time.Now(),
+			})
+			if err != nil {
+				response.BusinessError(ctx, err)
+			}
+
+		}
+	}
+
+	ip := ctx.ClientIP()
+
+	address, _ := c.ipAddressService.FindAddress(ip)
+
+	//登录提醒
+	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
+		UserId:     params.UserId,
+		TalkType:   entity.ChatPrivateMode,
+		ReceiverId: 4257,
+		IsBoot:     true,
+	})
+
+	// 推送登录消息
+	_ = c.talkMessageService.SendLoginMessage(ctx.Request.Context(), &service.LoginMessageOpts{
+		UserId:   params.UserId,
+		Ip:       ip,
+		Address:  address,
+		Platform: "h5",
+		Agent:    ctx.GetHeader("user-agent"),
+	})
+
+	response.Success(ctx, c.createToken(params.UserId))
 }
 
 // Register 注册接口

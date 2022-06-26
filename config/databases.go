@@ -1,6 +1,8 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // MySQL 数据库配置信息
 type MySQL struct {

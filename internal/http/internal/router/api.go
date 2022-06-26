@@ -1,12 +1,13 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-chat/config"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/handler"
 	"go-chat/internal/pkg/jwtutil"
+
+	"github.com/gin-gonic/gin"
 )
 
 // RegisterApiRoute 注册 API 路由
@@ -28,6 +29,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", handler.Auth.Login)                // 登录
+			auth.POST("/sync", handler.Auth.Sync)                  // 同步账号
 			auth.POST("/register", handler.Auth.Register)          // 注册
 			auth.POST("/refresh", authorize, handler.Auth.Refresh) // 刷新 Token
 			auth.POST("/logout", authorize, handler.Auth.Logout)   // 退出登录
@@ -71,6 +73,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			userGroup.POST("/create", handler.Group.Create)            // 创建群组
 			userGroup.POST("/dismiss", handler.Group.Dismiss)          // 解散群组
 			userGroup.POST("/invite", handler.Group.Invite)            // 邀请加入群组
+			userGroup.POST("/join", handler.Group.Join)                // 主动加入群组
 			userGroup.POST("/secede", handler.Group.SignOut)           // 退出群组
 			userGroup.POST("/setting", handler.Group.Setting)          // 设置群组信息
 			userGroup.POST("/handover", handler.Group.Handover)        // 群主转让

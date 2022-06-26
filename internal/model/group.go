@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	GroupMemberMaxNum = 200 // 最大成员数量
+	GroupMemberMaxNum = 2000 // 最大成员数量
 )
 
 type Group struct {

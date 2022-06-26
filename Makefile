@@ -34,28 +34,28 @@ build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/http-server.exe ./internal/http
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/ws-server.exe ./internal/websocket
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/job-cli.exe ./internal/job
-	cp ./config.example.yaml ./build/windows/config.yaml
+	cp ./config.yaml ./build/windows/config.yaml
 
 .PHONY: build-linux
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/linux/config.yaml
+	cp ./config.yaml ./build/linux/config.yaml
 
 .PHONY: build-mac-m1
 build-mac-m1:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/macm1/config.yaml
+	cp ./config.yaml ./build/macm1/config.yaml
 
 .PHONY: build-mac
 build-mac:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/mac/config.yaml
+	cp ./config.yaml ./build/mac/config.yaml
 
 .PHONY: generate
 generate:

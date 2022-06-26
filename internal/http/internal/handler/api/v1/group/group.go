@@ -3,7 +3,6 @@ package group
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
@@ -14,6 +13,8 @@ import (
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Group struct {
@@ -135,6 +136,35 @@ func (c *Group) Invite(ctx *gin.Context) {
 		UserId:    uid,
 		GroupId:   params.GroupId,
 		MemberIds: uids,
+	}); err != nil {
+		response.BusinessError(ctx, "邀请好友加入群聊失败！")
+	} else {
+		response.Success(ctx, nil)
+	}
+}
+
+// Join 加入群聊
+func (c *Group) Join(ctx *gin.Context) {
+	params := &request.GroupCommonRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	key := fmt.Sprintf("group-join:%d", params.GroupId)
+	if !c.redisLock.Lock(ctx, key, 20) {
+		response.BusinessError(ctx, "网络异常，请稍后再试！")
+		return
+	}
+
+	defer c.redisLock.UnLock(ctx, key)
+
+	uid := jwtutil.GetUid(ctx)
+	ids := []int{uid}
+	if err := c.service.InviteMembers(ctx, &service.InviteGroupMembersOpts{
+		UserId:    1, //默认为管理员邀请
+		GroupId:   params.GroupId,
+		MemberIds: ids,
 	}); err != nil {
 		response.BusinessError(ctx, "邀请好友加入群聊失败！")
 	} else {
