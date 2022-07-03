@@ -63,9 +63,36 @@ func (c *Group) Create(ctx *gin.Context) {
 		Name:      params.Name,
 		Avatar:    params.Avatar,
 		Profile:   params.Profile,
+		Type:      1, //暂时默认普通群
 		MemberIds: sliceutil.ParseIds(params.MembersIds),
 	})
 	if err != nil {
+		response.BusinessError(ctx, "创建群聊失败，请稍后再试！")
+		return
+	}
+
+	response.Success(ctx, entity.H{
+		"group_id": gid,
+	})
+}
+
+// Create 创建聊天室分组
+func (c *Group) CreateChat(ctx *gin.Context) {
+	params := &request.GroupCreateChatRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	gid, err := c.service.Create(ctx.Request.Context(), &service.CreateGroupOpts{
+		UserId:    params.AnchorId,
+		Name:      params.Name,
+		Profile:   params.Profile,
+		Type:      -1, //默认聊天室
+		MemberIds: make([]int, 0),
+	})
+	if err != nil {
+		fmt.Printf("创建聊天室出错：%s", err.Error())
 		response.BusinessError(ctx, "创建群聊失败，请稍后再试！")
 		return
 	}
@@ -166,6 +193,7 @@ func (c *Group) Join(ctx *gin.Context) {
 		GroupId:   params.GroupId,
 		MemberIds: ids,
 	}); err != nil {
+		fmt.Printf("进群失败：%s", err.Error())
 		response.BusinessError(ctx, "邀请好友加入群聊失败！")
 	} else {
 		response.Success(ctx, nil)

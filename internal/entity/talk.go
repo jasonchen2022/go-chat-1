@@ -29,5 +29,6 @@ const (
 	MsgTypeFriendApply = 7  // 好友申请
 	MsgTypeLogin       = 8  // 登录通知
 	MsgTypeGroupInvite = 9  // 入群退群消息
-	MsgTypeLocation    = 10 // 位置消息
+	MsgTypeLocation    = 10 // 位置消息,
+	MsgTypeRecall      = 11 // 撤回消息
 )

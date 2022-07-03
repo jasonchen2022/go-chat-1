@@ -170,8 +170,8 @@ func (c *CosFilesystem) UploadPart(filePath string, uploadID string, num int, st
 	return strings.Trim(resp.Header.Get("ETag"), `"`), nil
 }
 
-func (c *CosFilesystem) CompleteMultipartUpload(filePath string, uploadID string, opt *cos.CompleteMultipartUploadOptions) error {
-	_, _, err := c.client.Object.CompleteMultipartUpload(context.Background(), filePath, uploadID, opt)
+func (c *CosFilesystem) CompleteMultipartUpload(filePath string, uploadID string, opt interface{}) error {
+	_, _, err := c.client.Object.CompleteMultipartUpload(context.Background(), filePath, uploadID, opt.(*cos.CompleteMultipartUploadOptions))
 
 	return err
 }

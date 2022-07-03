@@ -2,10 +2,6 @@ package talk
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/dto"
@@ -16,6 +12,11 @@ import (
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Talk struct {
@@ -79,41 +80,50 @@ func (c *Talk) List(ctx *gin.Context) {
 		response.BusinessError(ctx, err)
 		return
 	}
-
 	items := make([]*dto.TalkListItem, 0)
-	for _, item := range data {
-		value := &dto.TalkListItem{
-			Id:         item.Id,
-			TalkType:   item.TalkType,
-			ReceiverId: item.ReceiverId,
-			IsTop:      item.IsTop,
-			IsDisturb:  item.IsDisturb,
-			IsRobot:    item.IsRobot,
-			Avatar:     item.UserAvatar,
-			MsgText:    "...",
-			UpdatedAt:  timeutil.FormatDatetime(item.UpdatedAt),
-		}
+	var wg sync.WaitGroup
+	for i := 0; i < len(data); i++ {
+		wg.Add(1)
+		item := data[i]
+		go func(j int) {
+			value := &dto.TalkListItem{
+				Id:         item.Id,
+				TalkType:   item.TalkType,
+				ReceiverId: item.ReceiverId,
+				IsTop:      item.IsTop,
+				IsDisturb:  item.IsDisturb,
+				IsRobot:    item.IsRobot,
+				Avatar:     item.UserAvatar,
+				MsgText:    "...",
+				UpdatedAt:  timeutil.FormatDatetime(item.UpdatedAt),
+			}
 
-		// TODO 需要优化加缓存
-		if item.TalkType == 1 {
-			value.Name = item.Nickname
-			value.Avatar = item.UserAvatar
-			value.RemarkName = remarks[item.ReceiverId]
-			value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
-			value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
-		} else {
-			value.Name = item.GroupName
-			value.Avatar = item.GroupAvatar
-		}
+			// TODO 需要优化加缓存
+			if item.TalkType == 1 {
+				value.Name = item.Nickname
+				value.Avatar = item.UserAvatar
+				if len(remarks) > 0 {
+					value.RemarkName = remarks[item.ReceiverId]
+				}
+				value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
+				value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
+			} else {
+				value.Name = item.GroupName
+				value.Avatar = item.GroupAvatar
+			}
 
-		// 查询缓存消息
-		if msg, err := c.lastMessage.Get(ctx.Request.Context(), item.TalkType, uid, item.ReceiverId); err == nil {
-			value.MsgText = msg.Content
-			value.UpdatedAt = msg.Datetime
-		}
+			// 查询缓存消息
+			if msg, err := c.lastMessage.Get(ctx.Request.Context(), item.TalkType, uid, item.ReceiverId); err == nil {
+				value.MsgText = msg.Content
+				value.UpdatedAt = msg.Datetime
+			}
 
-		items = append(items, value)
+			items = append(items, value)
+
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 
 	response.Success(ctx, items)
 }

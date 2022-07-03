@@ -124,8 +124,9 @@ func (c *Auth) Sync(ctx *gin.Context) {
 				Mobile:    member.Mobile,
 				Avatar:    member.Avatar,
 				Gender:    member.Gender,
-				Password:  password,
+				Type:      member.Type,
 				Motto:     member.Motto,
+				Password:  password,
 				CreatedAt: time.Now(),
 			})
 			if err != nil {

@@ -2,10 +2,10 @@ package contact
 
 import (
 	"errors"
-	"strconv"
+
+	"go-chat/internal/service/organize"
 
 	"github.com/gin-gonic/gin"
-	"go-chat/internal/service/organize"
 	"gorm.io/gorm"
 
 	"go-chat/internal/cache"
@@ -13,7 +13,6 @@ import (
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/pkg/jwtutil"
-	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/service"
 )
 
@@ -52,10 +51,15 @@ func (c *Contact) List(ctx *gin.Context) {
 		response.BusinessError(ctx, err)
 		return
 	}
-
-	for _, item := range items {
-		item.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(item.Id)))
-	}
+	// var wg sync.WaitGroup
+	// for i := range items {
+	// 	wg.Add(1)
+	// 	item := items[i]
+	// 	go func() {
+	// 		item.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(item.Id)))
+	// 	}()
+	// }
+	// wg.Wait()
 
 	response.Success(ctx, items)
 }

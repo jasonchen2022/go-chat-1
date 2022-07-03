@@ -38,6 +38,10 @@ type IAdapter interface {
 	ReadStream(filePath string) ([]byte, error)
 
 	InitiateMultipartUpload(filePath string, fileName string) (string, error)
+
+	UploadPart(filePath string, uploadID string, num int, stream []byte) (string, error)
+
+	CompleteMultipartUpload(filePath string, uploadID string, opt interface{}) error
 }
 
 // FileStat 文件信息
@@ -54,6 +58,7 @@ type Filesystem struct {
 	Default IAdapter
 	Local   *LocalFilesystem
 	Cos     *CosFilesystem
+	Oss     *OssFilesystem
 }
 
 func NewFilesystem(conf *config.Config) *Filesystem {
@@ -63,10 +68,12 @@ func NewFilesystem(conf *config.Config) *Filesystem {
 
 	s.Local = NewLocalFilesystem(conf)
 	s.Cos = NewCosFilesystem(conf)
-
+	s.Oss = NewOssFilesystem(conf)
 	switch s.driver {
 	case "cos":
 		s.Default = s.Cos
+	case "oss":
+		s.Default = s.Oss
 	default:
 		s.Default = s.Local
 	}

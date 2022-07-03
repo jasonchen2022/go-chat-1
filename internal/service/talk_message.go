@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -485,14 +484,22 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 	if record.IsRevoke == 1 {
 		return nil
 	}
-
-	if record.UserId != uid {
-		return errors.New("无权撤回回消息")
+	//私聊只能撤回自己发的消息
+	if record.TalkType == 1 {
+		if record.UserId != uid {
+			return errors.New("无权撤回消息")
+		}
 	}
-
-	if time.Now().Unix() > record.CreatedAt.Add(3*time.Minute).Unix() {
-		return errors.New("超出有效撤回时间范围，无法进行撤销！")
+	//如果是群聊，管理员可以撤回所有人发的消息
+	if record.TalkType == 2 {
+		if !(s.groupMemberDao.IsMember(record.ReceiverId, uid, true)) {
+			return errors.New("无权撤回群聊消息")
+		}
 	}
+	///无时间限制
+	// if time.Now().Unix() > record.CreatedAt.Add(3*time.Minute).Unix() {
+	// 	return errors.New("超出有效撤回时间范围，无法进行撤销！")
+	// }
 
 	if err = s.db.Model(&model.TalkRecords{Id: recordId}).Update("is_revoke", 1).Error; err != nil {
 		return err

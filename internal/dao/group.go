@@ -27,7 +27,7 @@ func (dao *GroupDao) FindById(id int) (*model.Group, error) {
 func (dao *GroupDao) SearchOvertList(ctx context.Context, name string, page, size int) ([]*model.Group, error) {
 
 	tx := dao.Db().Table("group")
-
+	tx.Where("group.type > ?", 0)
 	if name != "" {
 		tx.Where("group_name LIKE ?", "%"+name+"%")
 	} else {

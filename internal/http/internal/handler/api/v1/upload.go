@@ -2,18 +2,19 @@ package v1
 
 import (
 	"fmt"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"go-chat/internal/entity"
-
 	"go-chat/config"
+	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/jwtutil"
-	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/service"
+	"path"
+	"strconv"
+	"time"
+
+	"github.com/GUAIK-ORG/go-snowflake/snowflake"
+	"github.com/gin-gonic/gin"
 )
 
 type Upload struct {
@@ -42,17 +43,19 @@ func (u *Upload) Avatar(ctx *gin.Context) {
 		response.InvalidParams(ctx, "文件上传失败！")
 		return
 	}
+	ext := path.Ext(file.Filename)
+	fs, _ := filesystem.ReadMultipartStream(file)
+	s, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := s.NextVal()
+	fileName := fmt.Sprintf("chat/avatar/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
-	stream, _ := filesystem.ReadMultipartStream(file)
-	object := fmt.Sprintf("public/media/image/avatar/%s/%s", time.Now().Format("20060102"), strutil.GenImageName("png", 200, 200))
-
-	if err := u.filesystem.Default.Write(stream, object); err != nil {
-		response.BusinessError(ctx, "文件上传失败")
+	if err := u.filesystem.Oss.UploadByte(fileName, fs); err != nil {
+		response.BusinessError(ctx, err.Error())
 		return
 	}
 
 	response.Success(ctx, entity.H{
-		"avatar": u.filesystem.Default.PublicUrl(object),
+		"avatar": u.filesystem.Oss.PublicUrl(fileName),
 	})
 }
 

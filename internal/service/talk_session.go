@@ -59,7 +59,7 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 
 	query := s.db.Table("talk_session list")
 	query.Joins("left join `users` ON list.receiver_id = `users`.id AND list.talk_type = 1")
-	query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2")
+	query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type > 0")
 	query.Where("list.user_id = ? and list.is_delete = 0", uid)
 	query.Order("list.updated_at desc")
 

@@ -52,7 +52,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 		{
 			contact.GET("/list", handler.Contact.List)               // 联系人列表
 			contact.GET("/search", handler.Contact.Search)           // 搜索联系人
-			contact.GET("/detail", handler.Contact.Detail)           // 搜索联系人
+			contact.GET("/detail", handler.Contact.Detail)           // 联系人详情信息
 			contact.POST("/delete", handler.Contact.Delete)          // 删除联系人
 			contact.POST("/edit-remark", handler.Contact.EditRemark) // 编辑联系人备注
 
@@ -64,13 +64,20 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			contact.GET("/apply/unread-num", handler.ContactsApply.ApplyUnreadNum) // 联系人申请未读数
 		}
 
+		// 聊天室相关分组
+		chatGroup := v1.Group("/chat")
+		{
+			chatGroup.POST("/create", handler.Group.CreateChat) // 创建群组
+		}
+
 		// 聊天群相关分组
 		userGroup := v1.Group("/group").Use(authorize)
 		{
-			userGroup.GET("/list", handler.Group.GetGroups)            // 群组列表
-			userGroup.GET("/overt/list", handler.Group.OvertList)      // 公开群组列表
-			userGroup.GET("/detail", handler.Group.Detail)             // 群组详情
-			userGroup.POST("/create", handler.Group.Create)            // 创建群组
+			userGroup.GET("/list", handler.Group.GetGroups)       // 群组列表
+			userGroup.GET("/overt/list", handler.Group.OvertList) // 公开群组列表
+			userGroup.GET("/detail", handler.Group.Detail)        // 群组详情
+			userGroup.POST("/create", handler.Group.Create)       // 创建群组
+
 			userGroup.POST("/dismiss", handler.Group.Dismiss)          // 解散群组
 			userGroup.POST("/invite", handler.Group.Invite)            // 邀请加入群组
 			userGroup.POST("/join", handler.Group.Join)                // 主动加入群组

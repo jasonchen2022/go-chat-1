@@ -13,5 +13,6 @@ type TalkListItem struct {
 	RemarkName string `json:"remark_name"`
 	UnreadNum  int    `json:"unread_num"`
 	MsgText    string `json:"msg_text"`
+	MsgId      int    `json:"msg_id"`
 	UpdatedAt  string `json:"updated_at"`
 }

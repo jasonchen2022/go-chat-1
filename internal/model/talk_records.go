@@ -19,18 +19,29 @@ type TalkRecords struct {
 }
 
 type QueryTalkRecordsItem struct {
-	Id         int       `json:"id"`
-	TalkType   int       `json:"talk_type"`
-	MsgType    int       `json:"msg_type"`
-	UserId     int       `json:"user_id"`
-	ReceiverId int       `json:"receiver_id"`
-	IsRevoke   int       `json:"is_revoke"`
-	IsMark     int       `json:"is_mark"`
-	IsRead     int       `json:"is_read"`
-	QuoteId    int       `json:"quote_id"`
-	WarnUsers  string    `json:"warn_users"`
-	Content    string    `json:"content"`
-	CreatedAt  time.Time `json:"created_at"`
-	Nickname   string    `json:"nickname"`
-	Avatar     string    `json:"avatar"`
+	Id          int       `json:"id"`
+	TalkType    int       `json:"talk_type"`
+	MsgType     int       `json:"msg_type"`
+	UserId      int       `json:"user_id"`
+	ReceiverId  int       `json:"receiver_id"`
+	IsRevoke    int       `json:"is_revoke"`
+	IsMark      int       `json:"is_mark"`
+	IsRead      int       `json:"is_read"`
+	IsLeader    int       `json:"is_leader"`
+	QuoteId     int       `json:"quote_id"`
+	WarnUsers   string    `json:"warn_users"`
+	Content     string    `json:"content"`
+	CreatedAt   time.Time `json:"created_at"`
+	Nickname    string    `json:"nickname"`
+	Avatar      string    `json:"avatar"`
+	FanLevel    int       `json:"fan_level"`
+	FanLabel    string    `json:"fan_label"`
+	MemberLevel int       `json:"member_level"`
+	MemberType  int       `json:"member_type"`
+}
+
+type QueryGroupMemberItem struct {
+	UserId     int `json:"user_id"`
+	IsLeader   int `json:"is_leader"`
+	MemberType int `json:"member_type"`
 }

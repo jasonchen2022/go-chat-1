@@ -1,9 +1,10 @@
 package contact
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/timeutil"
+
+	"github.com/gin-gonic/gin"
 
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
@@ -45,6 +46,7 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 	uid := jwtutil.GetUid(ctx)
 	if !c.contactService.Dao().IsFriend(ctx, uid, params.FriendId, false) {
 		response.Success(ctx, nil)
+		return
 	}
 
 	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
@@ -55,7 +57,6 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 		response.BusinessError(ctx, err)
 		return
 	}
-
 	response.Success(ctx, nil)
 }
 

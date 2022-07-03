@@ -30,7 +30,8 @@ type RemoveMembersOpts struct {
 }
 
 type CreateGroupOpts struct {
-	UserId    int    // 操作人ID
+	UserId    int // 操作人ID
+	Type      int
 	Name      string // 群名称
 	Avatar    string // 群头像
 	Profile   string // 群简介
@@ -47,6 +48,11 @@ type UpdateGroupOpts struct {
 type session struct {
 	ReceiverID int `json:"receiver_id"`
 	IsDisturb  int `json:"is_disturb"`
+}
+
+type GroupMembers struct {
+	Id          int // 群ID
+	MemberCount int //群员总数
 }
 
 type GroupService struct {
@@ -80,6 +86,7 @@ func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpts) (int, 
 		Name:      opts.Name,
 		Profile:   opts.Profile,
 		Avatar:    opts.Avatar,
+		Type:      opts.Type,
 		MaxNum:    model.GroupMemberMaxNum,
 	}
 
@@ -297,7 +304,7 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembe
 	}
 
 	if len(addMembers) == 0 {
-		return errors.New("邀请的好友，都已成为群成员")
+		return nil
 	}
 
 	record := &model.TalkRecords{
@@ -449,7 +456,7 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	tx := s.db.Table("group_member")
 	tx.Select("`group`.id,`group`.group_name,`group`.avatar,`group`.profile,group_member.leader")
 	tx.Joins("left join `group` on `group`.id = group_member.group_id")
-	tx.Where("group_member.user_id = ? and group_member.is_quit = ?", userId, 0)
+	tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type > ?", userId, 0, 0)
 
 	items := make([]*model.GroupItem, 0)
 	if err := tx.Scan(&items).Error; err != nil {
@@ -484,6 +491,25 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 		if value, ok := hash[items[i].Id]; ok {
 			items[i].IsDisturb = value.IsDisturb
 		}
+
+	}
+
+	//查询群员总数
+	db := s.db.Table("group").Select("`group`.id, (select count(1)  from group_member where group.id= group_member.group_id and  group_member.is_quit = 0) as `member_count`")
+	db.Where("id in ?", ids)
+	groups := make([]*GroupMembers, 0)
+	if err := db.Find(&groups).Error; err != nil {
+		return nil, err
+	}
+
+	for i := range items {
+		for j := range groups {
+			if groups[j].Id == items[i].Id {
+				items[i].MemberCount = groups[j].MemberCount
+			}
+
+		}
+
 	}
 
 	return items, nil

@@ -9,8 +9,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/tencentyun/cos-go-sdk-v5"
-
 	"go-chat/config"
 	"go-chat/internal/dao"
 	"go-chat/internal/entity"
@@ -20,6 +18,9 @@ import (
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
+
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/tencentyun/cos-go-sdk-v5"
 )
 
 type MultipartInitiateOpts struct {
@@ -122,6 +123,16 @@ func (s *SplitUploadService) MultipartUpload(ctx context.Context, opts *Multipar
 			"etag": etag,
 		})
 
+	case entity.FileDriveOss:
+		etag, err := s.fileSystem.Oss.UploadPart(info.Path, data.UploadId, data.SplitIndex+1, stream)
+		if err != nil {
+			return err
+		}
+
+		data.Attr = jsonutil.Encode(map[string]string{
+			"etag": etag,
+		})
+
 	default:
 		return errors.New("未知文件驱动类型")
 	}
@@ -173,6 +184,11 @@ func (s *SplitUploadService) merge(info *model.SplitUpload) error {
 		}
 
 		if err := s.fileSystem.Cos.CompleteMultipartUpload(info.Path, info.UploadId, opt); err != nil {
+			return err
+		}
+	case entity.FileDriveOss:
+		opt := &oss.CompleteMultipartUploadResult{}
+		if err := s.fileSystem.Oss.CompleteMultipartUpload(info.Path, info.UploadId, opt); err != nil {
 			return err
 		}
 	default:

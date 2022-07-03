@@ -11,6 +11,16 @@ type GroupCreateRequest struct {
 	Profile    string `form:"profile" json:"profile" binding:"max=255" label:"profile"`
 }
 
+type GroupCreateChatRequest struct {
+	Name     string `form:"name" json:"name" binding:"required" label:"name"`
+	AnchorId int    `form:"anchor_id" json:"anchor_id" binding:"required" label:"anchor_id"`
+	Profile  string `form:"profile" json:"profile" label:"notice"`
+}
+
+type GroupSearchRequest struct {
+	Name string `form:"name" json:"name" binding:"required" label:"name"`
+}
+
 type GroupDismissRequest struct {
 	GroupCommonRequest
 }

@@ -31,6 +31,13 @@ require (
 )
 
 require (
+	github.com/GUAIK-ORG/go-snowflake v0.0.0-20200116064823-220c4260e85f // indirect
+	github.com/aliyun/aliyun-oss-go-sdk v2.2.4+incompatible // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
+)
+
+require (
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect

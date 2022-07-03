@@ -24,25 +24,30 @@ type QueryTalkRecordsOpts struct {
 }
 
 type TalkRecordsItem struct {
-	Id         int         `json:"id"`
-	TalkType   int         `json:"talk_type"`
-	MsgType    int         `json:"msg_type"`
-	UserId     int         `json:"user_id"`
-	ReceiverId int         `json:"receiver_id"`
-	Nickname   string      `json:"nickname"`
-	Avatar     string      `json:"avatar"`
-	IsRevoke   int         `json:"is_revoke"`
-	IsMark     int         `json:"is_mark"`
-	IsRead     int         `json:"is_read"`
-	Content    string      `json:"content,omitempty"`
-	File       interface{} `json:"file,omitempty"`
-	CodeBlock  interface{} `json:"code_block,omitempty"`
-	Forward    interface{} `json:"forward,omitempty"`
-	Invite     interface{} `json:"invite,omitempty"`
-	Vote       interface{} `json:"vote,omitempty"`
-	Login      interface{} `json:"login,omitempty"`
-	Location   interface{} `json:"location,omitempty"`
-	CreatedAt  string      `json:"created_at"`
+	Id          int         `json:"id"`
+	TalkType    int         `json:"talk_type"`
+	MsgType     int         `json:"msg_type"`
+	UserId      int         `json:"user_id"`
+	ReceiverId  int         `json:"receiver_id"`
+	Nickname    string      `json:"nickname"`
+	Avatar      string      `json:"avatar"`
+	IsRevoke    int         `json:"is_revoke"`
+	IsMark      int         `json:"is_mark"`
+	IsRead      int         `json:"is_read"`
+	IsLeader    int         `json:"is_leader"`
+	FanLevel    int         `json:"fan_level"`
+	FanLabel    string      `json:"fan_label"`
+	MemberLevel int         `json:"member_level"`
+	MemberType  int         `json:"member_type"`
+	Content     string      `json:"content,omitempty"`
+	File        interface{} `json:"file,omitempty"`
+	CodeBlock   interface{} `json:"code_block,omitempty"`
+	Forward     interface{} `json:"forward,omitempty"`
+	Invite      interface{} `json:"invite,omitempty"`
+	Vote        interface{} `json:"vote,omitempty"`
+	Login       interface{} `json:"login,omitempty"`
+	Location    interface{} `json:"location,omitempty"`
+	CreatedAt   string      `json:"created_at"`
 }
 
 type TalkRecordsService struct {
@@ -78,6 +83,11 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"1 as member_level",
+			"users.type as member_type",
+			"0 as is_leader",
 		}
 	)
 
@@ -95,6 +105,34 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 		query.Where(subQuery)
 	} else {
 		query.Where("talk_records.receiver_id = ?", opts.ReceiverId)
+
+		//如果群聊则查询当前聊天记录内用户信息
+		var userIds []int
+		for _, item := range items {
+			userIds = append(userIds, item.UserId)
+		}
+		memberQuery := s.db.Table("group_member")
+		memberQuery.Joins("left join users on group_member.user_id = users.id")
+		memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
+		memberQuery.Where("group_member.user_id in ?", userIds)
+		var memberFields = []string{
+			"group_member.user_id",
+			"users.type as member_type",
+			"group_member.is_leader",
+		}
+		var memberItems = make([]*model.QueryGroupMemberItem, 0)
+		memberQuery.Select(memberFields).Scan(&memberItems)
+		if len(memberItems) > 0 {
+			for _, item := range memberItems {
+				for _, record := range items {
+					if item.UserId == record.UserId {
+						record.IsLeader = item.IsLeader
+						record.MemberType = item.MemberType
+					}
+				}
+			}
+		}
+
 	}
 
 	if opts.MsgType != nil && len(opts.MsgType) > 0 {
@@ -136,6 +174,11 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"1 as member_level",
+			"users.type as member_type",
+			"0 as is_leader",
 		}
 	)
 
@@ -192,6 +235,11 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"1 as member_level",
+			"users.type as member_type",
+			"0 as is_leader",
 		}
 	)
 
@@ -244,6 +292,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			invites = append(invites, item.Id)
 		case entity.MsgTypeLocation:
 			locations = append(locations, item.Id)
+		}
+		//已撤回的消息不能显示
+		if item.IsRevoke == 1 {
+			item.Content = ""
 		}
 	}
 
@@ -307,18 +359,23 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 
 	for _, item := range items {
 		data := &TalkRecordsItem{
-			Id:         item.Id,
-			TalkType:   item.TalkType,
-			MsgType:    item.MsgType,
-			UserId:     item.UserId,
-			ReceiverId: item.ReceiverId,
-			Nickname:   item.Nickname,
-			Avatar:     item.Avatar,
-			IsRevoke:   item.IsRevoke,
-			IsMark:     item.IsMark,
-			IsRead:     item.IsRead,
-			Content:    item.Content,
-			CreatedAt:  timeutil.FormatDatetime(item.CreatedAt),
+			Id:          item.Id,
+			TalkType:    item.TalkType,
+			MsgType:     item.MsgType,
+			UserId:      item.UserId,
+			FanLevel:    item.FanLevel,
+			FanLabel:    item.FanLabel,
+			MemberType:  item.MemberType,
+			MemberLevel: item.MemberLevel,
+			ReceiverId:  item.ReceiverId,
+			Nickname:    item.Nickname,
+			Avatar:      item.Avatar,
+			IsRevoke:    item.IsRevoke,
+			IsMark:      item.IsMark,
+			IsRead:      item.IsRead,
+			IsLeader:    item.IsLeader,
+			Content:     item.Content,
+			CreatedAt:   timeutil.FormatDatetime(item.CreatedAt),
 		}
 
 		switch item.MsgType {

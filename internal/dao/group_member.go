@@ -43,7 +43,6 @@ func (dao *GroupMemberDao) IsMember(gid, uid int, cache bool) bool {
 	result := &model.GroupMember{}
 
 	count := dao.Db().Select("id").Where("group_id = ? and user_id = ? and is_quit = ?", gid, uid, 0).First(result).RowsAffected
-
 	if count == 1 {
 		dao.relation.SetGroupRelation(context.Background(), uid, gid)
 	}
