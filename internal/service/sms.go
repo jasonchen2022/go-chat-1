@@ -23,7 +23,7 @@ func NewSmsService(codeCache *cache.SmsCodeCache) *SmsService {
 // CheckSmsCode 验证短信验证码是否正确
 func (s *SmsService) CheckSmsCode(ctx context.Context, channel string, mobile string, code string) bool {
 	value, err := s.smsCodeCache.Get(ctx, channel, mobile)
-
+	fmt.Println("@@@@=>", value)
 	return err == nil && value == code
 }
 
