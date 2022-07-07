@@ -22,7 +22,7 @@ import (
 type Group struct {
 	service            *service.GroupService
 	groupMemberService *service.GroupMemberService
-	talkListService    *service.TalkSessionService
+	talkSessionService *service.TalkSessionService
 	userService        *service.UserService
 	redisLock          *cache.RedisLock
 	contactService     *service.ContactService
@@ -34,7 +34,7 @@ type Group struct {
 func NewGroupHandler(
 	service *service.GroupService,
 	groupMemberService *service.GroupMemberService,
-	talkListService *service.TalkSessionService,
+	talkSessionService *service.TalkSessionService,
 	redisLock *cache.RedisLock,
 	contactService *service.ContactService,
 	userService *service.UserService,
@@ -45,7 +45,7 @@ func NewGroupHandler(
 	return &Group{
 		service:            service,
 		groupMemberService: groupMemberService,
-		talkListService:    talkListService,
+		talkSessionService: talkSessionService,
 		redisLock:          redisLock,
 		contactService:     contactService,
 		userService:        userService,
@@ -259,8 +259,8 @@ func (c *Group) SignOut(ctx *gin.Context) {
 	}
 
 	// 删除聊天会话
-	sid := c.talkListService.Dao().FindBySessionId(uid, params.GroupId, entity.ChatGroupMode)
-	_ = c.talkListService.Delete(ctx, jwtutil.GetUid(ctx), sid)
+	sid := c.talkSessionService.Dao().FindBySessionId(uid, params.GroupId, entity.ChatGroupMode)
+	_ = c.talkSessionService.Delete(ctx, jwtutil.GetUid(ctx), sid)
 
 	response.Success(ctx, nil)
 }
@@ -357,20 +357,28 @@ func (c *Group) Detail(ctx *gin.Context) {
 	info["manager_nickname"] = ""
 	info["visit_card"] = c.groupMemberService.Dao().GetMemberRemark(params.GroupId, uid)
 	info["is_disturb"] = 0
-	info["notice"] = entity.H{}
+	info["is_top"] = 0
+	info["is_show_nickname"] = 0
+	info["notice"] = entity.H{} //公告
 
 	if notice, _ := c.groupNoticeService.Dao().GetLatestNotice(ctx, params.GroupId); err == nil {
 		info["notice"] = notice
 	}
 
-	if c.talkListService.Dao().IsDisturb(uid, groupInfo.Id, 2) {
-		info["is_disturb"] = 1
+	if nickname, err := c.userService.Dao().GetNickName(uid); err == nil {
+		info["manager_nickname"] = nickname
 	}
+	//群成员
+	members := c.groupMemberService.Dao().GetMembers(params.GroupId)
+	info["members"] = members
 
-	if userInfo, err := c.userService.Dao().FindById(uid); err == nil {
-		info["manager_nickname"] = userInfo.Nickname
+	//会话
+	talkSesstion, err := c.talkSessionService.FindTalkSession(ctx, params.GroupId, uid)
+	if err == nil {
+		info["is_top"] = talkSesstion.IsTop
+		info["is_disturb"] = talkSesstion.IsDisturb
+		info["is_show_nickname"] = talkSesstion.IsShowNickname
 	}
-
 	response.Success(ctx, info)
 }
 

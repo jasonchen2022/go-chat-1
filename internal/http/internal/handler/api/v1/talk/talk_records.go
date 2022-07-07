@@ -3,8 +3,9 @@ package talk
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/pkg/timeutil"
+
+	"github.com/gin-gonic/gin"
 
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
@@ -135,6 +136,7 @@ func (c *Records) SearchHistoryRecords(ctx *gin.Context) {
 		ReceiverId: params.ReceiverId,
 		RecordId:   params.RecordId,
 		Limit:      params.Limit,
+		Keyword:    params.Keyword,
 	})
 
 	if err != nil {

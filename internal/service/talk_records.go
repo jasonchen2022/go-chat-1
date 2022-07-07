@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"go-chat/internal/cache"
 	"go-chat/internal/dao"
 	"go-chat/internal/entity"
@@ -16,12 +17,13 @@ import (
 )
 
 type QueryTalkRecordsOpts struct {
-	TalkType   int   // 对话类型
-	UserId     int   // 获取消息的用户
-	ReceiverId int   // 接收者ID
-	MsgType    []int // 消息类型
-	RecordId   int   // 上次查询的最小消息ID
-	Limit      int   // 数据行数
+	TalkType   int    // 对话类型
+	UserId     int    // 获取消息的用户
+	ReceiverId int    // 接收者ID
+	MsgType    []int  // 消息类型
+	RecordId   int    // 上次查询的最小消息ID
+	Limit      int    // 数据行数
+	Keyword    string //搜搜关键字
 }
 
 type TalkRecordsItem struct {
@@ -99,6 +101,10 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 
 	if opts.RecordId > 0 {
 		query.Where("talk_records.id < ?", opts.RecordId)
+	}
+
+	if opts.Keyword != "" {
+		query.Where("talk_records.content like ?", fmt.Sprintf("%%%s%%", opts.Keyword))
 	}
 
 	if opts.TalkType == entity.ChatPrivateMode {

@@ -140,6 +140,15 @@ func (s *TalkSessionService) Top(ctx context.Context, opts *TalkSessionTopOpts) 
 	return err
 }
 
+// Top 会话是否置顶
+func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, uid int) (*model.TalkSession, error) {
+	talkSession := &model.TalkSession{}
+	if err := s.db.Model(&model.TalkSession{}).Where("id = ? and user_id = ?", groupId, uid).Scan(talkSession).Limit(1).Error; err != nil {
+		return talkSession, err
+	}
+	return talkSession, nil
+}
+
 // Disturb 会话免打扰
 func (s *TalkSessionService) Disturb(ctx context.Context, opts *TalkSessionDisturbOpts) error {
 	err := s.db.Model(&model.TalkSession{}).
