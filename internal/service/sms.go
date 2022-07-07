@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"go-chat/internal/cache"
 	"go-chat/internal/pkg/strutil"
@@ -56,25 +57,23 @@ func (s *SmsService) SendSmsCode(ctx context.Context, channel string, mobile str
 	password := md5.Sum([]byte("zhibo999"))
 	smscontent := "【11zb】您的本次验证码为:" + string(code) + ",该验证码5分钟有效"
 	ss := fmt.Sprintf("%x", password)
-	// sendurl:=fmt.Sprintf("")
 	sendurl := smsapi + "sms?u=" + account + "&p=" + ss + "&m=" + mobile + "&c=" + url.QueryEscape(smscontent)
-	// fmt.Printf("url:%s", sendurl)
 	res, err := http.Get(sendurl)
 
-	defer res.Body.Close()
 	if err != nil {
+		defer res.Body.Close()
 		return "", err
+	} else {
+		defer res.Body.Close()
 	}
 	body, _ := ioutil.ReadAll(res.Body)
-	// fmt.Printf("ssss:%s", string(body))
 	if string(body) == "0" {
 		// 添加发送记录
 		if err := s.smsCodeCache.Set(ctx, channel, mobile, code, 60*5); err != nil {
 			return "", err
 		}
-
 		return code, nil
 	} else {
-		return "", err
+		return "", errors.New("发送短信错误")
 	}
 }
