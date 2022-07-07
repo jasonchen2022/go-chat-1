@@ -29,3 +29,12 @@ func (s *MemberService) FindById(userId int) (*model.Member, error) {
 	}
 	return member, nil
 }
+
+// 查询管理员用户
+func (s *MemberService) FindAdmin() ([]*model.Member, error) {
+	userIds, err := s.dao.FindAdmin()
+	if err != nil {
+		return nil, err
+	}
+	return userIds, nil
+}

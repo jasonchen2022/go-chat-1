@@ -83,7 +83,7 @@ func (c *Auth) Login(ctx *gin.Context) {
 	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
 		UserId:     user.Id,
 		TalkType:   entity.ChatPrivateMode,
-		ReceiverId: 4257,
+		ReceiverId: 1,
 		IsBoot:     true,
 	})
 
@@ -120,7 +120,7 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			password, _ := encrypt.HashPassword("12345689")
 			_, err := c.userService.Dao().Create(&model.Users{
 				Id:        member.Id,
-				Nickname:  member.Nickname,
+				Nickname:  member.UserName,
 				Mobile:    member.Mobile,
 				Avatar:    member.Avatar,
 				Gender:    member.Gender,
@@ -131,6 +131,7 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			})
 			if err != nil {
 				response.BusinessError(ctx, err)
+				return
 			}
 
 		}
@@ -144,7 +145,7 @@ func (c *Auth) Sync(ctx *gin.Context) {
 	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
 		UserId:     params.UserId,
 		TalkType:   entity.ChatPrivateMode,
-		ReceiverId: 4257,
+		ReceiverId: 1,
 		IsBoot:     true,
 	})
 

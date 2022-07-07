@@ -2,12 +2,14 @@ package group
 
 import (
 	"fmt"
+	"time"
 
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/model"
+	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
@@ -19,34 +21,37 @@ import (
 
 type Group struct {
 	service            *service.GroupService
-	memberService      *service.GroupMemberService
+	groupMemberService *service.GroupMemberService
 	talkListService    *service.TalkSessionService
 	userService        *service.UserService
 	redisLock          *cache.RedisLock
 	contactService     *service.ContactService
 	groupNoticeService *service.GroupNoticeService
 	messageService     *service.TalkMessageService
+	memberService      *service.MemberService
 }
 
 func NewGroupHandler(
 	service *service.GroupService,
-	memberService *service.GroupMemberService,
+	groupMemberService *service.GroupMemberService,
 	talkListService *service.TalkSessionService,
 	redisLock *cache.RedisLock,
 	contactService *service.ContactService,
 	userService *service.UserService,
 	groupNoticeService *service.GroupNoticeService,
 	messageService *service.TalkMessageService,
+	memberService *service.MemberService,
 ) *Group {
 	return &Group{
 		service:            service,
-		memberService:      memberService,
+		groupMemberService: groupMemberService,
 		talkListService:    talkListService,
 		redisLock:          redisLock,
 		contactService:     contactService,
 		userService:        userService,
 		groupNoticeService: groupNoticeService,
 		messageService:     messageService,
+		memberService:      memberService,
 	}
 }
 
@@ -83,13 +88,52 @@ func (c *Group) CreateChat(ctx *gin.Context) {
 		response.InvalidParams(ctx, err)
 		return
 	}
+	members, err := c.memberService.FindAdmin()
+	if err != nil {
+		response.BusinessError(ctx, "获取管理员账号列表失败")
+		return
+	}
+	var userIds []int
+	for _, member := range members {
+		userIds = append(userIds, member.Id)
+	}
+	if len(userIds) > 0 {
+		users, err := c.userService.Dao().FindByIds(userIds)
+		if err != nil {
+			response.BusinessError(ctx, "创建管理员账号失败")
+			return
+		}
+		password, _ := encrypt.HashPassword("12345689")
+		for _, member := range members {
+			isExit := false
+			for _, user := range users {
+				if member.Id == user.Id {
+					isExit = true
+				}
+			}
+			if !isExit {
+				c.userService.Dao().Create(&model.Users{
+					Id:        member.Id,
+					Nickname:  member.UserName,
+					Mobile:    member.Mobile,
+					Avatar:    member.Avatar,
+					Gender:    member.Gender,
+					Type:      member.Type,
+					Motto:     member.Motto,
+					Password:  password,
+					CreatedAt: time.Now(),
+				})
+			}
+
+		}
+	}
 
 	gid, err := c.service.Create(ctx.Request.Context(), &service.CreateGroupOpts{
 		UserId:    params.AnchorId,
 		Name:      params.Name,
 		Profile:   params.Profile,
 		Type:      -1, //默认聊天室
-		MemberIds: make([]int, 0),
+		MemberIds: userIds,
 	})
 	if err != nil {
 		fmt.Printf("创建聊天室出错：%s", err.Error())
@@ -111,7 +155,7 @@ func (c *Group) Dismiss(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.memberService.Dao().IsMaster(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
 		response.BusinessError(ctx, "暂无权限解散群组！")
 		return
 	}
@@ -154,7 +198,7 @@ func (c *Group) Invite(ctx *gin.Context) {
 		return
 	}
 
-	if !c.memberService.Dao().IsMember(params.GroupId, uid, true) {
+	if !c.groupMemberService.Dao().IsMember(params.GroupId, uid, true) {
 		response.BusinessError(ctx, "非群组成员，无权邀请好友！")
 		return
 	}
@@ -230,7 +274,7 @@ func (c *Group) Setting(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.memberService.Dao().IsLeader(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
 		response.BusinessError(ctx, "无权限操作")
 		return
 	}
@@ -264,7 +308,7 @@ func (c *Group) RemoveMembers(ctx *gin.Context) {
 
 	uid := jwtutil.GetUid(ctx)
 
-	if !c.memberService.Dao().IsLeader(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
 		response.BusinessError(ctx, "无权限操作")
 		return
 	}
@@ -311,7 +355,7 @@ func (c *Group) Detail(ctx *gin.Context) {
 	info["created_at"] = timeutil.FormatDatetime(groupInfo.CreatedAt)
 	info["is_manager"] = uid == groupInfo.CreatorId
 	info["manager_nickname"] = ""
-	info["visit_card"] = c.memberService.Dao().GetMemberRemark(params.GroupId, uid)
+	info["visit_card"] = c.groupMemberService.Dao().GetMemberRemark(params.GroupId, uid)
 	info["is_disturb"] = 0
 	info["notice"] = entity.H{}
 
@@ -338,7 +382,7 @@ func (c *Group) EditRemark(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.memberService.CardEdit(params.GroupId, jwtutil.GetUid(ctx), params.VisitCard); err != nil {
+	if err := c.groupMemberService.CardEdit(params.GroupId, jwtutil.GetUid(ctx), params.VisitCard); err != nil {
 		response.BusinessError(ctx, "修改群备注失败！")
 		return
 	}
@@ -364,7 +408,7 @@ func (c *Group) GetInviteFriends(ctx *gin.Context) {
 		return
 	}
 
-	mids := c.memberService.Dao().GetMemberIds(params.GroupId)
+	mids := c.groupMemberService.Dao().GetMemberIds(params.GroupId)
 	if len(mids) == 0 {
 		response.Success(ctx, items)
 		return
@@ -400,10 +444,10 @@ func (c *Group) GetMembers(ctx *gin.Context) {
 		return
 	}
 
-	if !c.memberService.Dao().IsMember(params.GroupId, jwtutil.GetUid(ctx), false) {
+	if !c.groupMemberService.Dao().IsMember(params.GroupId, jwtutil.GetUid(ctx), false) {
 		response.BusinessError(ctx, "非群成员无权查看成员列表！")
 	} else {
-		response.Success(ctx, c.memberService.Dao().GetMembers(params.GroupId))
+		response.Success(ctx, c.groupMemberService.Dao().GetMembers(params.GroupId))
 	}
 }
 
@@ -434,7 +478,7 @@ func (c *Group) OvertList(ctx *gin.Context) {
 		ids = append(ids, val.Id)
 	}
 
-	count, err := c.memberService.Dao().CountGroupMemberNum(ids)
+	count, err := c.groupMemberService.Dao().CountGroupMemberNum(ids)
 	if err != nil {
 		response.BusinessError(ctx, "查询异常！")
 		return
@@ -445,7 +489,7 @@ func (c *Group) OvertList(ctx *gin.Context) {
 		countMap[member.GroupId] = member.Count
 	}
 
-	checks, err := c.memberService.Dao().CheckUserGroup(ids, jwtutil.GetUid(ctx))
+	checks, err := c.groupMemberService.Dao().CheckUserGroup(ids, jwtutil.GetUid(ctx))
 	if err != nil {
 		response.BusinessError(ctx, "查询异常！")
 		return
@@ -487,7 +531,7 @@ func (c *Group) Handover(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.memberService.Dao().IsMaster(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
 		response.BusinessError(ctx, "暂无权限！")
 		return
 	}
@@ -497,7 +541,7 @@ func (c *Group) Handover(ctx *gin.Context) {
 		return
 	}
 
-	err := c.memberService.Handover(params.GroupId, uid, params.UserId)
+	err := c.groupMemberService.Handover(params.GroupId, uid, params.UserId)
 	if err != nil {
 		logger.Error("[Group Handover] 转让群主失败 err :", err.Error())
 		response.BusinessError(ctx, "转让群主失败！")
@@ -516,7 +560,7 @@ func (c *Group) AssignAdmin(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.memberService.Dao().IsMaster(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
 		response.BusinessError(ctx, "暂无权限！")
 		return
 	}
@@ -526,7 +570,7 @@ func (c *Group) AssignAdmin(ctx *gin.Context) {
 		leader = 1
 	}
 
-	err := c.memberService.UpdateLeaderStatus(params.GroupId, params.UserId, leader)
+	err := c.groupMemberService.UpdateLeaderStatus(params.GroupId, params.UserId, leader)
 	if err != nil {
 		logger.Error("[Group AssignAdmin] 设置管理员信息失败 err :", err.Error())
 		response.BusinessError(ctx, "设置管理员信息失败！")
@@ -545,7 +589,7 @@ func (c *Group) NoSpeak(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.memberService.Dao().IsLeader(params.GroupId, uid) {
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
 		response.BusinessError(ctx, "暂无权限！")
 		return
 	}
@@ -555,7 +599,7 @@ func (c *Group) NoSpeak(ctx *gin.Context) {
 		status = 0
 	}
 
-	err := c.memberService.UpdateMuteStatus(params.GroupId, params.UserId, status)
+	err := c.groupMemberService.UpdateMuteStatus(params.GroupId, params.UserId, status)
 	if err != nil {
 		logger.Error("[Group NoSpeak] 设置群成员禁言状态失败 err :", err.Error())
 		response.BusinessError(ctx, "操作失败！")

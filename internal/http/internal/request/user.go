@@ -8,6 +8,11 @@ type ChangeDetailRequest struct {
 	Motto    string `form:"motto" json:"motto" binding:"max=255" label:"motto"`
 }
 
+// ChangeMuteRequest ...
+type ChangeMuteRequest struct {
+	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
+}
+
 // ChangePasswordRequest ...
 type ChangePasswordRequest struct {
 	OldPassword string `form:"old_password" json:"old_password" binding:"required" label:"old_password"`

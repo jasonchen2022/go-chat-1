@@ -32,6 +32,17 @@ func (dao *UsersDao) FindById(userId int) (*model.Users, error) {
 	return user, nil
 }
 
+// FindByIds ID查询
+func (dao *UsersDao) FindByIds(userIds []int) ([]*model.Users, error) {
+	user := make([]*model.Users, 0)
+
+	if err := dao.Db().Model(&model.Users{}).Where("id in ?", userIds).Scan(user).Error; err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 // FindByMobile 手机号查询
 func (dao *UsersDao) FindByMobile(mobile string) (*model.Users, error) {
 	user := &model.Users{}

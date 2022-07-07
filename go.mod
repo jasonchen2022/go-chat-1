@@ -34,6 +34,7 @@ require (
 	github.com/GUAIK-ORG/go-snowflake v0.0.0-20200116064823-220c4260e85f // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.4+incompatible // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/wxnacy/wgo v1.0.4 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 )
 

@@ -85,7 +85,7 @@ func (c *OssFilesystem) Append(filePath string) {
 
 //获取公共地址
 func (o *OssFilesystem) PublicUrl(filePath string) string {
-	return fmt.Sprintf("https://%s/11zb/%s", o.conf.Filesystem.Oss.Endpoint, filePath)
+	return fmt.Sprintf("https://11zb.%s/%s", o.conf.Filesystem.Oss.Endpoint, filePath)
 }
 
 func (c *OssFilesystem) PrivateUrl(filePath string, timeout int) string {

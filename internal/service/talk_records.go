@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"sort"
-
 	"go-chat/internal/cache"
 	"go-chat/internal/dao"
 	"go-chat/internal/entity"
@@ -12,6 +10,9 @@ import (
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
+	"sort"
+
+	"github.com/wxnacy/wgo/arrays"
 )
 
 type QueryTalkRecordsOpts struct {
@@ -39,6 +40,7 @@ type TalkRecordsItem struct {
 	FanLabel    string      `json:"fan_label"`
 	MemberLevel int         `json:"member_level"`
 	MemberType  int         `json:"member_type"`
+	IsMute      int         `json:"is_mute"`
 	Content     string      `json:"content,omitempty"`
 	File        interface{} `json:"file,omitempty"`
 	CodeBlock   interface{} `json:"code_block,omitempty"`
@@ -87,6 +89,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"null as fan_label",
 			"1 as member_level",
 			"users.type as member_type",
+			"users.is_mute",
 			"0 as is_leader",
 		}
 	)
@@ -105,34 +108,6 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 		query.Where(subQuery)
 	} else {
 		query.Where("talk_records.receiver_id = ?", opts.ReceiverId)
-
-		//如果群聊则查询当前聊天记录内用户信息
-		var userIds []int
-		for _, item := range items {
-			userIds = append(userIds, item.UserId)
-		}
-		memberQuery := s.db.Table("group_member")
-		memberQuery.Joins("left join users on group_member.user_id = users.id")
-		memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
-		memberQuery.Where("group_member.user_id in ?", userIds)
-		var memberFields = []string{
-			"group_member.user_id",
-			"users.type as member_type",
-			"group_member.is_leader",
-		}
-		var memberItems = make([]*model.QueryGroupMemberItem, 0)
-		memberQuery.Select(memberFields).Scan(&memberItems)
-		if len(memberItems) > 0 {
-			for _, item := range memberItems {
-				for _, record := range items {
-					if item.UserId == record.UserId {
-						record.IsLeader = item.IsLeader
-						record.MemberType = item.MemberType
-					}
-				}
-			}
-		}
-
 	}
 
 	if opts.MsgType != nil && len(opts.MsgType) > 0 {
@@ -149,6 +124,44 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 
 	if len(items) == 0 {
 		return make([]*TalkRecordsItem, 0), err
+	} else {
+		//如果群聊则查询当前聊天记录内用户信息
+		if opts.TalkType == entity.ChatGroupMode {
+			var userIds []int64
+			for _, item := range items {
+				if arrays.ContainsInt(userIds, int64(item.UserId)) < 0 {
+					userIds = append(userIds, int64(item.UserId))
+				}
+
+			}
+			memberQuery := s.db.Table("group_member")
+			memberQuery.Joins("left join users on group_member.user_id = users.id")
+			memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
+			memberQuery.Where("group_member.user_id in ?", userIds)
+			var memberFields = []string{
+				"group_member.user_id",
+				"users.type as member_type",
+				"users.is_mute",
+				"group_member.leader as is_leader",
+			}
+			var memberItems = make([]*model.QueryGroupMemberItem, 0)
+
+			//更新用户信息
+			if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
+				if len(memberItems) > 0 {
+					for _, item := range memberItems {
+						for _, record := range items {
+							if item.UserId == record.UserId {
+								record.IsLeader = item.IsLeader
+								record.MemberType = item.MemberType
+								record.IsMute = item.IsMute
+							}
+						}
+					}
+				}
+			}
+
+		}
 	}
 
 	return s.HandleTalkRecords(ctx, items)
@@ -162,7 +175,7 @@ func (s *TalkRecordsService) SearchTalkRecords() {
 func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) (*TalkRecordsItem, error) {
 	var (
 		err    error
-		item   *model.QueryTalkRecordsItem
+		record *model.QueryTalkRecordsItem
 		fields = []string{
 			"talk_records.id",
 			"talk_records.talk_type",
@@ -178,6 +191,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"null as fan_label",
 			"1 as member_level",
 			"users.type as member_type",
+			"users.is_mute",
 			"0 as is_leader",
 		}
 	)
@@ -186,11 +200,38 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 	query.Joins("left join users on talk_records.user_id = users.id")
 	query.Where("talk_records.id = ?", recordId)
 
-	if err = query.Select(fields).Take(&item).Error; err != nil {
+	if err = query.Select(fields).Take(&record).Error; err != nil {
 		return nil, err
 	}
 
-	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{item})
+	//如果群聊则查询当前聊天记录内用户信息
+	if record.TalkType == entity.ChatGroupMode {
+		memberQuery := s.db.Table("group_member")
+		memberQuery.Joins("left join users on group_member.user_id = users.id")
+		memberQuery.Where("group_member.group_id = ? and is_quit =0 ", record.ReceiverId)
+		memberQuery.Where("group_member.user_id = ? ", record.UserId)
+		var memberFields = []string{
+			"group_member.user_id",
+			"users.type as member_type",
+			"users.is_mute",
+			"group_member.leader as is_leader",
+		}
+		var memberItems = make([]*model.QueryGroupMemberItem, 0)
+
+		if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
+			if len(memberItems) > 0 {
+				for _, item := range memberItems {
+					if item.UserId == record.UserId {
+						record.IsLeader = item.IsLeader
+						record.MemberType = item.MemberType
+						record.IsMute = item.IsMute
+					}
+				}
+			}
+		}
+
+	}
+	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{record})
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +280,7 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 			"null as fan_label",
 			"1 as member_level",
 			"users.type as member_type",
+			"users.is_mute",
 			"0 as is_leader",
 		}
 	)
@@ -257,14 +299,14 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 
 func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*model.QueryTalkRecordsItem) ([]*TalkRecordsItem, error) {
 	var (
-		files     []int
-		codes     []int
-		forwards  []int
-		invites   []int
-		votes     []int
-		logins    []int
-		locations []int
-
+		files         []int
+		codes         []int
+		forwards      []int
+		invites       []int
+		votes         []int
+		logins        []int
+		locations     []int
+		notices       []string
 		fileItems     []*model.TalkRecordsFile
 		codeItems     []*model.TalkRecordsCode
 		forwardItems  []*model.TalkRecordsForward
@@ -340,11 +382,46 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 	}
 
 	hashInvites := make(map[int]*model.TalkRecordsInvite)
+	var noticeResult []*model.QueryUserItem
+	var operateUserResult []*model.QueryUserItem
 	if len(invites) > 0 {
 		s.db.Model(&model.TalkRecordsInvite{}).Where("record_id in ?", invites).Scan(&inviteItems)
 		for i := range inviteItems {
 			hashInvites[inviteItems[i].RecordId] = inviteItems[i]
+			if inviteItems[i].Type == 1 || inviteItems[i].Type == 3 {
+				notices = append(notices, inviteItems[i].UserIds)
+			}
+
 		}
+		//邀请通知用户
+		if len(notices) > 0 {
+			var inviteUserIds []int
+			for _, item := range notices {
+				tempUserIds := sliceutil.ParseIds(item)
+				for i := 0; i < len(tempUserIds); i++ {
+					inviteUserIds = append(inviteUserIds, tempUserIds[i])
+				}
+			}
+			s.db.Table("users").Select("id", "nickname").Where("id in ?", inviteUserIds).Scan(&noticeResult)
+		}
+		//邀请操作人管理员ID
+		if len(hashInvites) > 0 {
+			var operateUserIds []int
+			for _, item := range hashInvites {
+				var isExit bool = false
+				for i := 0; i < len(operateUserIds); i++ {
+					if item.OperateUserId == operateUserIds[i] {
+						isExit = true
+					}
+				}
+				if !isExit {
+					operateUserIds = append(operateUserIds, item.OperateUserId)
+				}
+
+			}
+			s.db.Table("users").Select("id", "nickname").Where("id in ?", operateUserIds).Scan(&operateUserResult)
+		}
+
 	}
 
 	hashLocations := make(map[int]*model.TalkRecordsLocation)
@@ -356,7 +433,6 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 	}
 
 	newItems := make([]*TalkRecordsItem, 0, len(items))
-
 	for _, item := range items {
 		data := &TalkRecordsItem{
 			Id:          item.Id,
@@ -374,6 +450,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			IsMark:      item.IsMark,
 			IsRead:      item.IsRead,
 			IsLeader:    item.IsLeader,
+			IsMute:      item.IsMute,
 			Content:     item.Content,
 			CreatedAt:   timeutil.FormatDatetime(item.CreatedAt),
 		}
@@ -471,10 +548,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					"id":       value.OperateUserId,
 					"nickname": "",
 				}
-
-				var user *model.Users
-				if err := s.db.First(&user, value.OperateUserId).Error; err == nil {
-					operateUser["nickname"] = user.Nickname
+				for _, user := range operateUserResult {
+					if value.OperateUserId == user.Id {
+						operateUser["nickname"] = user.Nickname
+					}
 				}
 
 				m := map[string]interface{}{
@@ -484,8 +561,14 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 				}
 
 				if value.Type == 1 || value.Type == 3 {
-					var results []map[string]interface{}
-					s.db.Model(&model.Users{}).Select("id", "nickname").Where("id in ?", sliceutil.ParseIds(value.UserIds)).Scan(&results)
+					var results []*model.QueryUserItem
+					for _, userId := range sliceutil.ParseIds(value.UserIds) {
+						for _, user := range noticeResult {
+							if userId == user.Id {
+								results = append(results, user)
+							}
+						}
+					}
 					m["users"] = results
 				} else {
 					m["users"] = operateUser

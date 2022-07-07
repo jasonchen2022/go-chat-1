@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
@@ -10,6 +9,8 @@ import (
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/service"
 	"go-chat/internal/service/organize"
+
+	"github.com/gin-gonic/gin"
 )
 
 type User struct {
@@ -63,6 +64,36 @@ func (u *User) Setting(ctx *gin.Context) {
 			"keyboard_event_notify": "",
 		},
 	})
+}
+
+// Mute 禁言
+func (u *User) Mute(ctx *gin.Context) {
+	params := &request.ChangeMuteRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+	user, err := u.service.Dao().FindById(params.UserId)
+	if err == nil {
+		if user.IsMute == 1 {
+			_, _ = u.service.Dao().BaseUpdate(&model.Users{}, entity.MapStrAny{
+				"id": params.UserId,
+			}, entity.MapStrAny{
+				"is_mute": 0,
+			})
+			response.Success(ctx, nil, "解禁成功")
+		} else {
+			_, _ = u.service.Dao().BaseUpdate(&model.Users{}, entity.MapStrAny{
+				"id": params.UserId,
+			}, entity.MapStrAny{
+				"is_mute": 1,
+			})
+			response.Success(ctx, nil, "禁言成功")
+		}
+	} else {
+		response.NewError(ctx, -1, err.Error())
+	}
+
 }
 
 // ChangeDetail 修改个人用户信息

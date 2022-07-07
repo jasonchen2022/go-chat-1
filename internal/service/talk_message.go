@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -9,8 +8,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/GUAIK-ORG/go-snowflake/snowflake"
 	"gorm.io/gorm"
 
 	"go-chat/config"
@@ -18,12 +18,10 @@ import (
 	"go-chat/internal/dao"
 	"go-chat/internal/entity"
 	"go-chat/internal/model"
-	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
-	"go-chat/internal/pkg/utils"
 )
 
 type SysTextMessageOpts struct {
@@ -52,7 +50,7 @@ type FileMessageOpts struct {
 	UserId     int
 	TalkType   int
 	ReceiverId int
-	UploadId   string
+	File       *multipart.FileHeader
 }
 
 type ImageMessageOpts struct {
@@ -159,9 +157,11 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 		return err
 	}
 
-	s.afterHandle(ctx, record, map[string]string{
+	if e := s.afterHandle(ctx, record, map[string]string{
 		"text": strutil.MtSubstr(record.Content, 0, 30),
-	})
+	}); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -199,7 +199,9 @@ func (s *TalkMessageService) SendCodeMessage(ctx context.Context, opts *CodeMess
 		return err
 	}
 
-	s.afterHandle(ctx, record, map[string]string{"text": "[代码消息]"})
+	if e := s.afterHandle(ctx, record, map[string]string{"text": "[代码消息]"}); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -222,14 +224,15 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 	}
 
 	ext := strutil.FileSuffix(opts.File.Filename)
+	sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := sn.NextVal()
+	fileName := fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
-	m := utils.ReadFileImage(bytes.NewReader(stream))
-
-	filePath := fmt.Sprintf("public/media/image/talk/%s/%s", timeutil.DateNumber(), strutil.GenImageName(ext, m.Width, m.Height))
-
-	if err := s.fileSystem.Default.Write(stream, filePath); err != nil {
+	if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
 		return err
 	}
+
+	filePath := s.fileSystem.Oss.PublicUrl(fileName)
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
@@ -246,7 +249,7 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			Suffix:       ext,
 			Size:         int(opts.File.Size),
 			Path:         filePath,
-			Url:          s.fileSystem.Default.PublicUrl(filePath),
+			Url:          filePath,
 		}).Error; err != nil {
 			return err
 		}
@@ -258,7 +261,9 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 		return err
 	}
 
-	s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"})
+	if e := s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"}); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -276,22 +281,21 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 		}
 	)
 
-	file, err := s.splitUploadDao.GetFile(opts.UserId, opts.UploadId)
+	stream, err := filesystem.ReadMultipartStream(opts.File)
 	if err != nil {
 		return err
 	}
 
-	filePath := fmt.Sprintf("private/files/talks/%s/%s.%s", timeutil.DateNumber(), encrypt.Md5(strutil.Random(16)), file.FileExt)
-	url := ""
-	if entity.GetMediaType(file.FileExt) <= 3 {
-		filePath = fmt.Sprintf("public/media/%s/%s.%s", timeutil.DateNumber(), encrypt.Md5(strutil.Random(16)), file.FileExt)
-		url = s.fileSystem.Default.PublicUrl(filePath)
-	}
+	ext := strutil.FileSuffix(opts.File.Filename)
+	sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := sn.NextVal()
+	fileName := fmt.Sprintf("chat/file/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
-	if err := s.fileSystem.Default.Copy(file.Path, filePath); err != nil {
-		logrus.Error("文件拷贝失败 err: ", err.Error())
+	if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
 		return err
 	}
+
+	filePath := s.fileSystem.Oss.PublicUrl(fileName)
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
@@ -302,13 +306,13 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 			RecordId:     record.Id,
 			UserId:       opts.UserId,
 			Source:       1,
-			Type:         entity.GetMediaType(file.FileExt),
-			Drive:        file.Drive,
-			OriginalName: file.OriginalName,
-			Suffix:       file.FileExt,
-			Size:         int(file.FileSize),
+			Type:         entity.GetMediaType(ext),
+			Drive:        entity.FileDriveMode(s.fileSystem.Driver()),
+			OriginalName: opts.File.Filename,
+			Suffix:       ext,
+			Size:         int(opts.File.Size),
 			Path:         filePath,
-			Url:          url,
+			Url:          filePath,
 		}).Error; err != nil {
 			return err
 		}
@@ -320,7 +324,9 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 		return err
 	}
 
-	s.afterHandle(ctx, record, map[string]string{"text": "[文件消息]"})
+	if e := s.afterHandle(ctx, record, map[string]string{"text": "[文件消息]"}); e != nil {
+		return e
+	}
 
 	return nil
 }
@@ -615,7 +621,7 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 		record = &model.TalkRecords{
 			TalkType:   entity.ChatPrivateMode,
 			MsgType:    entity.MsgTypeLogin,
-			UserId:     4257,
+			UserId:     1,
 			ReceiverId: opts.UserId,
 		}
 	)
@@ -641,14 +647,22 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	})
 
 	if err == nil {
-		s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒！"})
+		if e := s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒！"}); e != nil {
+			return e
+		}
+
 	}
 
 	return err
 }
 
 // 发送消息后置处理
-func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) {
+func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
+	var is_mute int
+	s.db.Table("users").Where("id = ?", record.UserId).Select([]string{"is_mute"}).Scan(&is_mute).Limit(1)
+	if is_mute == 1 {
+		return errors.New("用户已被禁言")
+	}
 	if record.TalkType == entity.ChatPrivateMode {
 		s.unreadTalkCache.Increment(ctx, record.UserId, record.ReceiverId)
 
@@ -671,7 +685,6 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 			"record_id":   record.Id,
 		}),
 	})
-
 	// 点对点消息采用精确投递
 	if record.TalkType == entity.ChatPrivateMode {
 		sids := s.sidServer.All(ctx, 1)
@@ -692,4 +705,5 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	} else {
 		s.rds.Publish(ctx, entity.IMGatewayAll, content)
 	}
+	return nil
 }

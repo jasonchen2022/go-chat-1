@@ -38,10 +38,12 @@ type QueryTalkRecordsItem struct {
 	FanLabel    string    `json:"fan_label"`
 	MemberLevel int       `json:"member_level"`
 	MemberType  int       `json:"member_type"`
+	IsMute      int       `json:"is_mute"`
 }
 
 type QueryGroupMemberItem struct {
 	UserId     int `json:"user_id"`
 	IsLeader   int `json:"is_leader"`
 	MemberType int `json:"member_type"`
+	IsMute     int `json:"is_mute"`
 }

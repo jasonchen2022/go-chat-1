@@ -10,6 +10,7 @@ import (
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
+	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/strutil"
@@ -28,10 +29,11 @@ type Message struct {
 	contactService     *service.ContactService
 	groupMemberService *service.GroupMemberService
 	organizeService    *organize.OrganizeService
+	filesystem         *filesystem.Filesystem
 }
 
-func NewTalkMessageHandler(service *service.TalkMessageService, talkService *service.TalkService, talkRecordsVoteDao *dao.TalkRecordsVoteDao, forwardService *service.TalkMessageForwardService, splitUploadService *service.SplitUploadService, contactService *service.ContactService, groupMemberService *service.GroupMemberService, organizeService *organize.OrganizeService) *Message {
-	return &Message{service: service, talkService: talkService, talkRecordsVoteDao: talkRecordsVoteDao, forwardService: forwardService, splitUploadService: splitUploadService, contactService: contactService, groupMemberService: groupMemberService, organizeService: organizeService}
+func NewTalkMessageHandler(service *service.TalkMessageService, talkService *service.TalkService, talkRecordsVoteDao *dao.TalkRecordsVoteDao, forwardService *service.TalkMessageForwardService, splitUploadService *service.SplitUploadService, contactService *service.ContactService, groupMemberService *service.GroupMemberService, organizeService *organize.OrganizeService, filesystem *filesystem.Filesystem) *Message {
+	return &Message{service: service, talkService: talkService, talkRecordsVoteDao: talkRecordsVoteDao, forwardService: forwardService, splitUploadService: splitUploadService, contactService: contactService, groupMemberService: groupMemberService, organizeService: organizeService, filesystem: filesystem}
 }
 
 type AuthorityOpts struct {
@@ -206,11 +208,16 @@ func (c *Message) File(ctx *gin.Context) {
 		return
 	}
 
+	file, err := ctx.FormFile("file")
+	if err != nil {
+		response.InvalidParams(ctx, "file 字段必传！")
+		return
+	}
 	if err := c.service.SendFileMessage(ctx.Request.Context(), &service.FileMessageOpts{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
-		UploadId:   params.UploadId,
+		File:       file,
 	}); err != nil {
 		response.BusinessError(ctx, err)
 	} else {

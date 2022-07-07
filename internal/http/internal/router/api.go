@@ -42,6 +42,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 		{
 			user.GET("/detail", handler.User.Detail)                   // 获取个人信息
 			user.GET("/setting", handler.User.Setting)                 // 获取个人信息
+			user.POST("/mute", handler.User.Mute)                      //   禁言
 			user.POST("/change/detail", handler.User.ChangeDetail)     // 修改用户信息
 			user.POST("/change/password", handler.User.ChangePassword) // 修改用户密码
 			user.POST("/change/mobile", handler.User.ChangeMobile)     // 修改用户手机号
@@ -149,9 +150,8 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 
 		upload := v1.Group("/upload").Use(authorize)
 		{
+			upload.POST("/file", handler.Upload.File)
 			upload.POST("/avatar", handler.Upload.Avatar)
-			upload.POST("/multipart/initiate", handler.Upload.InitiateMultipart)
-			upload.POST("/multipart", handler.Upload.MultipartUpload)
 		}
 
 		note := v1.Group("/note").Use(authorize)

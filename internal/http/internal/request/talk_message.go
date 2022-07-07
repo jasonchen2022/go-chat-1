@@ -19,9 +19,8 @@ type ImageMessageRequest struct {
 }
 
 type FileMessageRequest struct {
-	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
-	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
-	UploadId   string `form:"upload_id" json:"upload_id" binding:"required"`
+	TalkType   int `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 }
 
 type VoteMessageRequest struct {

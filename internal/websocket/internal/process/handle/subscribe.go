@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
 	"go-chat/internal/pkg/timeutil"
+
+	"github.com/sirupsen/logrus"
 
 	"go-chat/config"
 	"go-chat/internal/cache"
@@ -95,7 +96,6 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	if len(cids) == 0 {
 		return
 	}
-
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
 	c.SetMessage(&im.Message{
