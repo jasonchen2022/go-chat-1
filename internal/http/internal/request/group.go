@@ -30,6 +30,11 @@ type GroupInviteRequest struct {
 	Ids string `form:"ids" json:"ids" binding:"required,ids"`
 }
 
+type GroupRenameRequest struct {
+	GroupCommonRequest
+	GroupName string `form:"group_name" json:"group_name" binding:"required"`
+}
+
 type GroupSecedeRequest struct {
 	GroupCommonRequest
 }

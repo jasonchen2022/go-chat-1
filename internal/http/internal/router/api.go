@@ -78,6 +78,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			userGroup.GET("/overt/list", handler.Group.OvertList) // 公开群组列表
 			userGroup.GET("/detail", handler.Group.Detail)        // 群组详情
 			userGroup.POST("/create", handler.Group.Create)       // 创建群组
+			userGroup.POST("/rename", handler.Group.Rename)       // 设置群名称
 
 			userGroup.POST("/dismiss", handler.Group.Dismiss)          // 解散群组
 			userGroup.POST("/invite", handler.Group.Invite)            // 邀请加入群组

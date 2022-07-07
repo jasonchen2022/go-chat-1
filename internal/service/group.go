@@ -168,6 +168,14 @@ func (s *GroupService) Update(ctx context.Context, opts *UpdateGroupOpts) error 
 	return err
 }
 
+// Update 更新群名称
+func (s *GroupService) Rename(ctx context.Context, opts *UpdateGroupOpts) error {
+	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
+		"group_name": opts.Name,
+	})
+	return err
+}
+
 // Dismiss 解散群组[群主权限]
 func (s *GroupService) Dismiss(ctx context.Context, groupId int, uid int) error {
 	err := s.db.Transaction(func(tx *gorm.DB) error {

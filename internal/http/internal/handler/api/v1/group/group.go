@@ -616,3 +616,29 @@ func (c *Group) NoSpeak(ctx *gin.Context) {
 
 	response.Success(ctx, entity.H{})
 }
+
+// 修改群名
+func (c *Group) Rename(ctx *gin.Context) {
+	params := &request.GroupRenameRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	uid := jwtutil.GetUid(ctx)
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
+		response.BusinessError(ctx, "暂无权限！")
+		return
+	}
+	err := c.service.Rename(ctx.Request.Context(), &service.UpdateGroupOpts{
+		GroupId: params.GroupId,
+		Name:    params.GroupName,
+	})
+	if err != nil {
+		logger.Error("[Group NoSpeak] 设置群名称失败 err :", err.Error())
+		response.BusinessError(ctx, "操作失败！")
+		return
+	}
+
+	response.Success(ctx, entity.H{})
+}
