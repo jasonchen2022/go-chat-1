@@ -114,38 +114,35 @@ func (c *Auth) Sync(ctx *gin.Context) {
 		response.InvalidParams(ctx, err)
 		return
 	}
-
+	member, err := c.memberService.FindById(params.UserId)
+	if err != nil || member == nil {
+		response.BusinessError(ctx, err)
+		return
+	}
 	//先查询当前用户存不存在
-	user, _ := c.userService.Dao().FindById(params.UserId)
+	user, _ := c.userService.Dao().FindByMobile(member.Mobile)
 	if user == nil {
-		member, err := c.memberService.FindById(params.UserId)
+		password, _ := encrypt.HashPassword("12345689")
+		avatar := member.Avatar
+		if avatar == "" {
+			avatar = "https://11zb.oss-cn-hangzhou.aliyuncs.com/chat/avatar/20220707/avatar_1.png"
+		}
+		_, err := c.userService.Dao().Create(&model.Users{
+			Id:        member.Id,
+			Nickname:  member.UserName,
+			Mobile:    member.Mobile,
+			Avatar:    avatar,
+			Gender:    member.Gender,
+			Type:      member.Type,
+			Motto:     member.Motto,
+			Password:  password,
+			CreatedAt: time.Now(),
+		})
 		if err != nil {
 			response.BusinessError(ctx, err)
 			return
 		}
-		if member != nil {
-			password, _ := encrypt.HashPassword("12345689")
-			avatar := member.Avatar
-			if avatar == "" {
-				avatar = "https://11zb.oss-cn-hangzhou.aliyuncs.com/chat/avatar/20220707/avatar_1.png"
-			}
-			_, err := c.userService.Dao().Create(&model.Users{
-				Id:        member.Id,
-				Nickname:  member.UserName,
-				Mobile:    member.Mobile,
-				Avatar:    avatar,
-				Gender:    member.Gender,
-				Type:      member.Type,
-				Motto:     member.Motto,
-				Password:  password,
-				CreatedAt: time.Now(),
-			})
-			if err != nil {
-				response.BusinessError(ctx, err)
-				return
-			}
 
-		}
 	}
 
 	ip := ctx.ClientIP()
