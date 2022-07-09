@@ -190,3 +190,22 @@ func (u *User) ChangeEmail(ctx *gin.Context) {
 
 	// todo 1.验证邮件激活码是否正确
 }
+
+/*
+*发现好友  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (u *User) RandomUser(ctx *gin.Context) {
+	params := &request.RandUserRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	users, err := u.service.RandomUser(jwtutil.GetUid(ctx), params.Index)
+	if err != nil {
+		response.Success(ctx, err, "获取发现用户列表出错")
+	}
+	response.Success(ctx, users, "成功")
+}

@@ -2,6 +2,8 @@ package dao
 
 import (
 	"go-chat/internal/model"
+	"math/rand"
+	"time"
 )
 
 type UsersDao struct {
@@ -70,4 +72,59 @@ func (dao *UsersDao) IsMobileExist(mobile string) bool {
 	rowsAffects := dao.Db().Select("id").Where(&model.Users{Mobile: mobile}).First(user).RowsAffected
 
 	return rowsAffects != 0
+}
+
+/*
+*发现好友  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
+
+	userNew := &model.Users{}
+	//查出表中  最大id
+	dao.Db().Last(userNew)
+
+	ids := make([]int, 0)
+
+	rand.Seed(time.Now().UnixNano())
+
+	users := make([]*model.Users, 0)
+	//防止随机得到的id不存在  或者和当前用户一样的  循环次数定为100
+	for i := 0; i < 100; i++ {
+		//根据最大id进行随机
+		random := rand.Intn(userNew.Id)
+		if random != userId && !isValueInArr(random, ids) {
+			ids = append(ids, random)
+		}
+	}
+
+	if err := dao.Db().Debug().Model(&model.Users{}).Where("id in ?", ids).Scan(&users).Error; err != nil {
+		return nil, err
+	}
+
+	resUsers := make([]*model.Users, 0)
+
+	for _, value := range users {
+		if len(resUsers) < index {
+			resUsers = append(resUsers, value)
+		}
+		if len(resUsers) == index {
+			break
+		}
+	}
+
+	// fmt.Println("@@@@====index=", index)
+	// fmt.Println("@@@@====", jsonutil.Encode(resUsers))
+	return resUsers, nil
+}
+
+//判断数组中是否包含某个值
+func isValueInArr(value int, arr []int) bool {
+	for _, v := range arr {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

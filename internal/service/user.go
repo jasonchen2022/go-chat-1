@@ -117,3 +117,16 @@ func (s *UserService) UpdatePassword(uid int, oldPassword string, password strin
 
 	return nil
 }
+
+/*
+*发现好友  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (s *UserService) RandomUser(userId, index int) ([]*model.Users, error) {
+	users, err := s.dao.RandomUser(userId, index)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
