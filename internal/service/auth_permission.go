@@ -7,7 +7,6 @@ import (
 	"go-chat/internal/dao/organize"
 	"go-chat/internal/entity"
 	"go-chat/internal/model"
-	"go-chat/internal/pkg/logger"
 )
 
 type AuthPermissionService struct {
@@ -29,10 +28,15 @@ type AuthPermission struct {
 func (a *AuthPermissionService) IsAuth(ctx context.Context, prem *AuthPermission) bool {
 	if prem.TalkType == entity.ChatPrivateMode {
 		// 这里需要判断双方是否都是企业成员，如果是则无需添加好友即可聊天
-		if isOk, err := a.organizeDao.IsQiyeMember(prem.UserId, prem.ReceiverId); err != nil {
-			logger.Error("[AuthPermission IsAuth] 查询数据异常 err: ", err)
-			return false
-		} else if isOk {
+		// if isOk, err := a.organizeDao.IsQiyeMember(prem.UserId, prem.ReceiverId); err != nil {
+		// 	logger.Error("[AuthPermission IsAuth] 查询数据异常 err: ", err)
+		// 	return false
+		// } else if isOk {
+		// 	return true
+		// }
+
+		//判断当前发起者是否管理员或主播，如果是则无需添加好友即可聊天
+		if a.contactDao.IsLeader(prem.UserId) {
 			return true
 		}
 

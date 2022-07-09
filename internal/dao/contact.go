@@ -26,6 +26,13 @@ func NewContactDao(baseDao *BaseDao, relation *cache.Relation) *ContactDao {
 	return &ContactDao{BaseDao: baseDao, relation: relation}
 }
 
+//判断当前发送者是否管理员
+func (dao *ContactDao) IsLeader(userId int) bool {
+	var member_type int
+	dao.db.Table("users").Where("id = ?", userId).Select([]string{"type"}).Scan(&member_type).Limit(1)
+	return member_type > 0
+}
+
 // IsFriend 判断是否为好友关系
 func (dao *ContactDao) IsFriend(ctx context.Context, uid int, friendId int, cache bool) bool {
 	if cache && dao.relation.IsContactRelation(ctx, uid, friendId) == nil {
