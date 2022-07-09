@@ -127,6 +127,7 @@ func (c *Auth) Sync(ctx *gin.Context) {
 		if avatar == "" {
 			avatar = "https://11zb.oss-cn-hangzhou.aliyuncs.com/chat/avatar/20220707/avatar_1.png"
 		}
+
 		_, err := c.userService.Dao().Create(&model.Users{
 			Id:        member.Id,
 			Nickname:  member.UserName,
