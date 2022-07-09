@@ -642,3 +642,27 @@ func (c *Group) Rename(ctx *gin.Context) {
 
 	response.Success(ctx, entity.H{})
 }
+
+//修改群头像
+func (c *Group) Avatar(ctx *gin.Context) {
+	params := &request.GroupAvatarRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+	uid := jwtutil.GetUid(ctx)
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
+		response.BusinessError(ctx, "暂无权限！")
+		return
+	}
+	err := c.service.Avatar(ctx.Request.Context(), &service.UpdateGroupOpts{
+		GroupId: params.GroupId,
+		Avatar:  params.Avatar,
+	})
+	if err != nil {
+		logger.Error("[Group NoSpeak] 设置群头像失败 err :", err.Error())
+		response.BusinessError(ctx, "操作失败！")
+		return
+	}
+	response.Success(ctx, entity.H{})
+}

@@ -176,6 +176,14 @@ func (s *GroupService) Rename(ctx context.Context, opts *UpdateGroupOpts) error 
 	return err
 }
 
+//更新群头像
+func (s *GroupService) Avatar(ctx context.Context, opts *UpdateGroupOpts) error {
+	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
+		"avatar": opts.Avatar,
+	})
+	return err
+}
+
 // Dismiss 解散群组[群主权限]
 func (s *GroupService) Dismiss(ctx context.Context, groupId int, uid int) error {
 	err := s.db.Transaction(func(tx *gorm.DB) error {

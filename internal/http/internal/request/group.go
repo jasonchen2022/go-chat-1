@@ -35,6 +35,11 @@ type GroupRenameRequest struct {
 	GroupName string `form:"group_name" json:"group_name" binding:"required"`
 }
 
+type GroupAvatarRequest struct {
+	GroupCommonRequest
+	Avatar string `form:"avatar" json:"avatar" binding:""`
+}
+
 type GroupSecedeRequest struct {
 	GroupCommonRequest
 }

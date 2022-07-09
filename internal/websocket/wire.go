@@ -54,6 +54,7 @@ var providerSet = wire.NewSet(
 	service.NewClientService,
 	service.NewGroupMemberService,
 	service.NewContactService,
+	service.NewSensitiveMatchService,
 
 	// handle
 	handle2.NewDefaultWebSocket,

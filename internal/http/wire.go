@@ -92,6 +92,7 @@ var serviceProviderSet = wire.NewSet(
 	service.NewEmoticonService,
 	service.NewTalkRecordsService,
 	service.NewContactService,
+	service.NewSensitiveMatchService,
 	service.NewContactsApplyService,
 	service.NewSplitUploadService,
 	service.NewIpAddressService,

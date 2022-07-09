@@ -56,14 +56,15 @@ type TalkRecordsItem struct {
 
 type TalkRecordsService struct {
 	*BaseService
-	talkVoteCache      *cache.TalkVote
-	talkRecordsVoteDao *dao.TalkRecordsVoteDao
-	groupMemberDao     *dao.GroupMemberDao
-	dao                *dao.TalkRecordsDao
+	talkVoteCache         *cache.TalkVote
+	talkRecordsVoteDao    *dao.TalkRecordsVoteDao
+	groupMemberDao        *dao.GroupMemberDao
+	dao                   *dao.TalkRecordsDao
+	sensitiveMatchService *SensitiveMatchService
 }
 
-func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao) *TalkRecordsService {
-	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao}
+func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService) *TalkRecordsService {
+	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService}
 }
 
 func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
@@ -437,6 +438,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			hashLocations[locationItems[i].RecordId] = locationItems[i]
 		}
 	}
+	senService := s.sensitiveMatchService.GetService()
 
 	newItems := make([]*TalkRecordsItem, 0, len(items))
 	for _, item := range items {
@@ -460,7 +462,12 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			Content:     item.Content,
 			CreatedAt:   timeutil.FormatDatetime(item.CreatedAt),
 		}
-
+		if data.MemberType <= 0 {
+			_, content := senService.Match(data.Content, '*')
+			if content != "" {
+				data.Content = content
+			}
+		}
 		switch item.MsgType {
 		case entity.MsgTypeFile:
 			if value, ok := hashFiles[item.Id]; ok {

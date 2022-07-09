@@ -10,7 +10,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Sun Jun 19 15:06:39 2022
+# Make data base, printed on Sat Jul  9 11:50:18 2022
 
 # Variables
 
@@ -31,7 +31,7 @@ CURDIR := /Users/admin/Documents/GitHub/go-chat
 # makefile
 SHELL = /bin/sh
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"42e84e0914b17800d483f69e299e1b00.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"42e84e0914b17800d483f69e299e1b00.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/30d9c6cd9483b2cc586687151bcbcd635f373630","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/42e84e0914b17800d483f69e299e1b00.zh-cn/corrupted.info","_languagePackSupport":true}
 # environment
 _ = /usr/bin/make
 # makefile (from `Makefile', line 1)
@@ -45,7 +45,7 @@ __CFBundleIdentifier = com.microsoft.VSCode
 # environment
 INFOPATH = /opt/homebrew/share/info:
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/vscode-ipc-ff5798c2-f845-4af6-adf0-c0cb0bb3f5e6.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/vscode-ipc-b83ae536-7c3b-44fd-9ac1-8e4a890e9c9d.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -61,7 +61,7 @@ ELECTRON_RUN_AS_NODE = 1
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.18XkasoMZG/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.JlIn0y2XZx/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
@@ -83,11 +83,11 @@ PROTO_FILES := api/proto/web/v1/auth.proto api/proto/admin/v1/index.proto
 # default
 MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
+VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/30d9c6cd9483b2cc586687151bcbcd635f373630
 # environment
 LOGNAME = admin
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # automatic
@@ -119,7 +119,7 @@ TMPDIR = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.67.2-main.sock
+VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.68.1-main.sock
 # makefile
 MAKEFLAGS = Rrqp
 # environment
@@ -127,7 +127,7 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = application.com.microsoft.VSCode.5189386.5189392
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.16277762.16277768
 # environment
 HOMEBREW_PREFIX = /opt/homebrew
 # automatic
@@ -157,7 +157,7 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 48274
+VSCODE_PID = 36544
 # variable set hash-table stats:
 # Load=72/1024=7%, Rehash=0, Collisions=2/98=2%
 
@@ -167,9 +167,9 @@ VSCODE_PID = 48274
 
 # Directories
 
-# . (device 16777234, inode 10272424): 18 files, no impossibilities.
+# . (device 16777233, inode 10272424): 22 files, no impossibilities.
 
-# 18 files, no impossibilities in 1 directories.
+# 22 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -186,7 +186,7 @@ build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/http-server.exe ./internal/http
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/ws-server.exe ./internal/websocket
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o ./build/windows/bin/job-cli.exe ./internal/job
-	cp ./config.example.yaml ./build/windows/config.yaml
+	cp ./config.yaml ./build/windows/config.yaml
 	
 
 build-linux:
@@ -198,7 +198,7 @@ build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/linux/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/linux/config.yaml
+	cp ./config.yaml ./build/linux/config.yaml
 	
 
 # Not a target:
@@ -240,7 +240,7 @@ protoc:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-19 12:02:32
+#  Last modified 2022-06-25 23:54:58
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -255,7 +255,7 @@ build-mac:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ./build/mac/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/mac/config.yaml
+	cp ./config.yaml ./build/mac/config.yaml
 	
 
 tool:
@@ -303,7 +303,7 @@ build-mac-m1:
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/http-server ./internal/http
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/ws-server ./internal/websocket
 	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o ./build/macm1/bin/job-cli ./internal/job
-	cp ./config.example.yaml ./build/macm1/config.yaml
+	cp ./config.yaml ./build/macm1/config.yaml
 	
 
 generate:
@@ -387,6 +387,6 @@ install:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Sun Jun 19 15:06:39 2022
+# Finished Make data base on Sat Jul  9 11:50:18 2022
 
  

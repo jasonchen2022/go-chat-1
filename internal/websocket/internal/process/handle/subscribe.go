@@ -8,8 +8,6 @@ import (
 
 	"go-chat/internal/pkg/timeutil"
 
-	"github.com/sirupsen/logrus"
-
 	"go-chat/config"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
@@ -17,20 +15,25 @@ import (
 	"go-chat/internal/pkg/im"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/service"
+
+	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type onConsumeFunc func(data string)
 
 type SubscribeConsume struct {
-	conf           *config.Config
-	ws             *cache.WsClientSession
-	room           *cache.Room
-	recordsService *service.TalkRecordsService
-	contactService *service.ContactService
+	conf                  *config.Config
+	ws                    *cache.WsClientSession
+	room                  *cache.Room
+	recordsService        *service.TalkRecordsService
+	contactService        *service.ContactService
+	db                    *gorm.DB
+	sensitiveMatchService *service.SensitiveMatchService
 }
 
-func NewSubscribeConsume(conf *config.Config, ws *cache.WsClientSession, room *cache.Room, recordsService *service.TalkRecordsService, contactService *service.ContactService) *SubscribeConsume {
-	return &SubscribeConsume{conf: conf, ws: ws, room: room, recordsService: recordsService, contactService: contactService}
+func NewSubscribeConsume(conf *config.Config, ws *cache.WsClientSession, room *cache.Room, recordsService *service.TalkRecordsService, contactService *service.ContactService, db *gorm.DB, sensitiveMatchService *service.SensitiveMatchService) *SubscribeConsume {
+	return &SubscribeConsume{conf: conf, ws: ws, room: room, recordsService: recordsService, contactService: contactService, db: db, sensitiveMatchService: sensitiveMatchService}
 }
 
 func (s *SubscribeConsume) Handle(event string, data string) {
@@ -91,6 +94,20 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	if err != nil {
 		logrus.Error("[SubscribeConsume] 读取对话记录失败 err: ", err.Error())
 		return
+	}
+	if data.Content != "" {
+		//检测敏感词
+		var member_type int
+		s.db.Table("users").Where("id = ?", data.UserId).Select([]string{"type"}).Scan(&member_type).Limit(1)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(data.Content, '*')
+			if content != "" {
+				data.Content = content
+			}
+
+		}
 	}
 
 	if len(cids) == 0 {

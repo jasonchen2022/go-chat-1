@@ -658,11 +658,13 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 
 // 发送消息后置处理
 func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
+	//1.检测发送消息用户账号是否被禁止发言
 	var is_mute int
 	s.db.Table("users").Where("id = ?", record.UserId).Select([]string{"is_mute"}).Scan(&is_mute).Limit(1)
 	if is_mute == 1 {
 		return errors.New("用户已被禁言")
 	}
+
 	if record.TalkType == entity.ChatPrivateMode {
 		s.unreadTalkCache.Increment(ctx, record.UserId, record.ReceiverId)
 

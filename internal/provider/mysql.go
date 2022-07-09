@@ -45,10 +45,10 @@ func NewMySQLClient(conf *config.Config) *gorm.DB {
 	}), gormConfig)
 
 	dsn_ff := conf.MySQLFF.GetDsn()
-	//指定member表查询另外一个库
+	//注意：指定实体查询另外一个库
 	db.Use(dbresolver.Register(dbresolver.Config{
 		Replicas: []gorm.Dialector{mysql.Open(dsn_ff)},
-	}, &model.Member{}))
+	}, &model.Member{}, &model.DictData{}))
 	if err != nil {
 		panic(fmt.Errorf("mysql connect error :%v", err))
 	}
