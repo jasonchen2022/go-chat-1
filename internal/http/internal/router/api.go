@@ -47,7 +47,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			user.POST("/change/password", handler.User.ChangePassword) // 修改用户密码
 			user.POST("/change/mobile", handler.User.ChangeMobile)     // 修改用户手机号
 			user.POST("/change/email", handler.User.ChangeEmail)       // 修改用户邮箱
-			user.POST("/random/user", handler.User.RandomUser)         // 发现用户列表
+			user.POST("/find/friends", handler.User.RandomUser)        // 发现用户列表
 		}
 
 		contact := v1.Group("/contact").Use(authorize)
