@@ -38,7 +38,7 @@ func (u *Upload) Avatar(ctx *gin.Context) {
 
 	file, err := ctx.FormFile("image")
 	if err != nil {
-		response.InvalidParams(ctx, "文件上传失败！")
+		response.InvalidParams(ctx, "参数[image]为必填")
 		return
 	}
 

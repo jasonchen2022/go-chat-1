@@ -22,13 +22,13 @@ func GenerateToken(guard string, secret string, ops *Options) string {
 	claims := AuthClaims{
 		Guard: guard,
 		StandardClaims: jwt.StandardClaims{
-			Audience:  ops.Audience,
+			Audience:  "every",
 			ExpiresAt: ops.ExpiresAt,
 			Id:        ops.Id,
 			IssuedAt:  ops.IssuedAt,
-			Issuer:    ops.Issuer,
+			Issuer:    "jwt_yh",
 			NotBefore: ops.NotBefore,
-			Subject:   ops.Subject,
+			Subject:   "YH",
 		},
 	}
 
@@ -42,7 +42,6 @@ func GenerateToken(guard string, secret string, ops *Options) string {
 // ParseToken 解析 JWT Token
 func ParseToken(token string, secret string) (*AuthClaims, error) {
 	claims := &AuthClaims{}
-
 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
