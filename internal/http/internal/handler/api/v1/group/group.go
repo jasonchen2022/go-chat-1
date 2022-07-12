@@ -132,7 +132,7 @@ func (c *Group) CreateChat(ctx *gin.Context) {
 		UserId:    params.AnchorId,
 		Name:      params.Name,
 		Profile:   params.Profile,
-		Type:      -1, //默认聊天室
+		Type:      3, //默认聊天室
 		MemberIds: userIds,
 	})
 	if err != nil {

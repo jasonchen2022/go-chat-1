@@ -2,11 +2,13 @@ package cron
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"go-chat/internal/entity"
 	"go-chat/internal/model"
 	"go-chat/internal/pkg/filesystem"
+
 	"gorm.io/gorm"
 )
 
@@ -19,14 +21,19 @@ func NewClearArticle(db *gorm.DB, fileSystem *filesystem.Filesystem) *ClearArtic
 	return &ClearArticleHandle{db: db, fileSystem: fileSystem}
 }
 
+func (c *ClearArticleHandle) GetServiceName() string {
+	return "ClearArticleHandle"
+}
+
 // Spec 配置定时任务规则
 // 每天凌晨1点执行
 func (c *ClearArticleHandle) Spec() string {
-	return "0 1 * * *"
+	// return "0 1 * * *"
+	return "* * * * *"
 }
 
 func (c *ClearArticleHandle) Handle(ctx context.Context) error {
-
+	log.Println("ClearArticleHandle 开始执行:0...")
 	c.clearAnnex()
 
 	c.clearNote()

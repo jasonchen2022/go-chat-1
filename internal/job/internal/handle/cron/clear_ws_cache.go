@@ -21,6 +21,10 @@ func (c *ClearWsCacheHandle) Spec() string {
 	return "*/30 * * * *"
 }
 
+func (c *ClearWsCacheHandle) GetServiceName() string {
+	return "ClearWsCacheHandle"
+}
+
 func (c *ClearWsCacheHandle) Handle(ctx context.Context) error {
 
 	for _, sid := range c.server.GetExpireServerAll(ctx) {

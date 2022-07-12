@@ -29,7 +29,7 @@ func NewContactDao(baseDao *BaseDao, relation *cache.Relation) *ContactDao {
 //判断当前发送者是否管理员
 func (dao *ContactDao) IsLeader(userId int) bool {
 	var member_type int
-	dao.db.Table("users").Where("id = ?", userId).Select([]string{"type"}).Scan(&member_type).Limit(1)
+	dao.db.Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type)
 	return member_type > 0
 }
 

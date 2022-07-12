@@ -42,6 +42,7 @@ var providerSet = wire.NewSet(
 	cron2.NewClearArticle,
 	cron2.NewClearWsCacheHandle,
 	cron2.NewClearExpireServer,
+	cron2.NewClearGroupHandle,
 	wire.Struct(new(cron.Handles), "*"),
 
 	// Queue Command

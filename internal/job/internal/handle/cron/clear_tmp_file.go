@@ -7,6 +7,7 @@ import (
 
 	"go-chat/internal/model"
 	"go-chat/internal/pkg/filesystem"
+
 	"gorm.io/gorm"
 )
 
@@ -17,6 +18,10 @@ type ClearTmpFileHandle struct {
 
 func NewClearTmpFile(db *gorm.DB, fileSystem *filesystem.Filesystem) *ClearTmpFileHandle {
 	return &ClearTmpFileHandle{db: db, fileSystem: fileSystem}
+}
+
+func (c *ClearTmpFileHandle) GetServiceName() string {
+	return "ClearTmpFileHandle"
 }
 
 // Spec 配置定时任务规则

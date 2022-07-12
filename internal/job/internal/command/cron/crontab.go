@@ -9,9 +9,10 @@ import (
 	"reflect"
 	"syscall"
 
+	crontab "go-chat/internal/job/internal/handle/cron"
+
 	"github.com/robfig/cron/v3"
 	"github.com/urfave/cli/v2"
-	crontab "go-chat/internal/job/internal/handle/cron"
 )
 
 type Command *cli.Command
@@ -22,6 +23,8 @@ type CrontabHandle interface {
 
 	// Handle 任务执行入口
 	Handle(ctx context.Context) error
+
+	GetServiceName() string
 }
 
 // Handles 注册的任务请务必实现 CrontabHandle 接口
@@ -30,6 +33,7 @@ type Handles struct {
 	ClearArticleHandle      *crontab.ClearArticleHandle
 	ClearTmpFileHandle      *crontab.ClearTmpFileHandle
 	ClearExpireServerHandle *crontab.ClearExpireServerHandle
+	ClearGroupHandle        *crontab.ClearGroupHandle //定时删除一天前的聊天记录
 }
 
 func NewCrontabCommand(handles *Handles) Command {
@@ -46,7 +50,7 @@ func NewCrontabCommand(handles *Handles) Command {
 							fmt.Printf("CrontabHandle err: %v \n", err)
 						}
 					}()
-
+					log.Println("Crontab 定时任务已启动=" + job.GetServiceName())
 					_ = job.Handle(ctx.Context)
 				})
 			}

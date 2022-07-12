@@ -34,11 +34,13 @@ func Initialize(ctx context.Context, conf *config.Config) *Provider {
 	clearArticleHandle := cron.NewClearArticle(db, filesystemFilesystem)
 	clearTmpFileHandle := cron.NewClearTmpFile(db, filesystemFilesystem)
 	clearExpireServerHandle := cron.NewClearExpireServer(sidServer)
+	clearGroupHandle := cron.NewClearGroupHandle(db)
 	handles := &cron2.Handles{
 		ClearWsCacheHandle:      clearWsCacheHandle,
 		ClearArticleHandle:      clearArticleHandle,
 		ClearTmpFileHandle:      clearTmpFileHandle,
 		ClearExpireServerHandle: clearExpireServerHandle,
+		ClearGroupHandle:   clearGroupHandle,
 	}
 	cronCommand := cron2.NewCrontabCommand(handles)
 	subcommands := &queue.Subcommands{}
@@ -63,4 +65,4 @@ func Initialize(ctx context.Context, conf *config.Config) *Provider {
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewHttpClient, client.NewHttpClient, filesystem.NewFilesystem, cache.NewSid, dao.NewBaseDao, cron2.NewCrontabCommand, cron.NewClearTmpFile, cron.NewClearArticle, cron.NewClearWsCacheHandle, cron.NewClearExpireServer, wire.Struct(new(cron2.Handles), "*"), queue.NewQueueCommand, wire.Struct(new(queue.Subcommands), "*"), other2.NewOtherCommand, other2.NewExampleCommand, wire.Struct(new(other2.Subcommands), "*"), other.NewExampleHandle, wire.Struct(new(command.Commands), "*"), wire.Struct(new(Provider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewHttpClient, client.NewHttpClient, filesystem.NewFilesystem, cache.NewSid, dao.NewBaseDao, cron2.NewCrontabCommand, cron.NewClearTmpFile, cron.NewClearArticle, cron.NewClearWsCacheHandle, cron.NewClearExpireServer, cron.NewClearGroupHandle, wire.Struct(new(cron2.Handles), "*"), queue.NewQueueCommand, wire.Struct(new(queue.Subcommands), "*"), other2.NewOtherCommand, other2.NewExampleCommand, wire.Struct(new(other2.Subcommands), "*"), other.NewExampleHandle, wire.Struct(new(command.Commands), "*"), wire.Struct(new(Provider), "*"))

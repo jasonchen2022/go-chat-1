@@ -39,7 +39,7 @@ func (dao *UsersDao) FindById(userId int) (*model.Users, error) {
 // GetNickName ID查询
 func (dao *UsersDao) GetNickName(userId int) (string, error) {
 	var nickname string
-	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Select("nickname").Scan(&nickname).Limit(1).Error; err != nil {
+	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Select("nickname").Limit(1).Scan(&nickname).Error; err != nil {
 		return "", err
 	}
 	return nickname, nil

@@ -98,7 +98,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	if data.Content != "" {
 		//检测敏感词
 		var member_type int
-		s.db.Table("users").Where("id = ?", data.UserId).Select([]string{"type"}).Scan(&member_type).Limit(1)
+		s.db.Table("users").Where("id = ?", data.UserId).Select([]string{"type"}).Limit(1).Scan(&member_type)
 		//游客或普通会员不能发送敏感消息
 		if member_type <= 0 {
 			senService := s.sensitiveMatchService.GetService()
