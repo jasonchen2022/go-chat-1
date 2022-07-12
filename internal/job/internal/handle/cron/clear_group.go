@@ -2,9 +2,11 @@ package cron
 
 import (
 	"context"
+	"fmt"
 	"go-chat/internal/model"
 	"log"
 	"strconv"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -46,6 +48,7 @@ func (c *ClearGroupHandle) ClearInvalidGroup() {
 	}
 
 	log.Println("ClearGroupHandle 开始执行删除条数:" + strconv.Itoa(len(ids)))
+	fmt.Println("ClearGroupHandle 开始执行", time.Now().AddDate(0, 0, -1))
 	if len(ids) > 0 {
 
 		// c.db.Delete(&model.Group{}, "id in ?", ids)

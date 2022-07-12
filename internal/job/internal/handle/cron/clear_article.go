@@ -2,7 +2,6 @@ package cron
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go-chat/internal/entity"
@@ -28,12 +27,10 @@ func (c *ClearArticleHandle) GetServiceName() string {
 // Spec 配置定时任务规则
 // 每天凌晨1点执行
 func (c *ClearArticleHandle) Spec() string {
-	// return "0 1 * * *"
-	return "* * * * *"
+	return "0 1 * * *"
 }
 
 func (c *ClearArticleHandle) Handle(ctx context.Context) error {
-	log.Println("ClearArticleHandle 开始执行:0...")
 	c.clearAnnex()
 
 	c.clearNote()

@@ -2,7 +2,6 @@ package cron
 
 import (
 	"context"
-	"log"
 
 	"go-chat/internal/cache"
 )
@@ -25,8 +24,6 @@ func (c *ClearExpireServerHandle) GetServiceName() string {
 }
 
 func (c *ClearExpireServerHandle) Handle(ctx context.Context) error {
-
-	log.Println("ClearExpireServerHandle 开始执行@:")
 	for _, sid := range c.server.All(ctx, 2) {
 		_ = c.server.Del(ctx, sid)
 		_ = c.server.SetExpireServer(ctx, sid)
