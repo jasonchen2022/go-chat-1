@@ -170,6 +170,7 @@ func (c *Contact) Detail(ctx *gin.Context) {
 		"motto":           user.Motto,
 		"nickname":        user.Nickname,
 		"nickname_remark": "",
+		"member_type":     user.Type, //用户类型(0会员 1主播 2专家 3超管)
 	}
 
 	if uid != params.UserId {
