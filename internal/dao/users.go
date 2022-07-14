@@ -85,7 +85,7 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 
 	users := make([]*model.Users, 0)
 	//只随机主播  type=1
-	if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Scan(&users).Error; err != nil {
+	if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Scan(&users).Error; err != nil {
 		return nil, err
 	}
 	// fmt.Println(jsonutil.Encode(users))

@@ -34,6 +34,6 @@ type ChangeEmailRequest struct {
 }
 
 type RandUserRequest struct {
-	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
-	Index  int `form:"index" json:"index" binding:"required,min=6,max=20" label:"index"`
+	// UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
+	Index int `form:"index" json:"index" binding:"required,min=6,max=20" label:"index"`
 }
