@@ -40,7 +40,7 @@ func Initialize(ctx context.Context, conf *config.Config) *Provider {
 		ClearArticleHandle:      clearArticleHandle,
 		ClearTmpFileHandle:      clearTmpFileHandle,
 		ClearExpireServerHandle: clearExpireServerHandle,
-		ClearGroupHandle:   clearGroupHandle,
+		ClearGroupHandle:        clearGroupHandle,
 	}
 	cronCommand := cron2.NewCrontabCommand(handles)
 	subcommands := &queue.Subcommands{}

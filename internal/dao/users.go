@@ -84,6 +84,7 @@ func (dao *UsersDao) IsMobileExist(mobile string) bool {
 func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 
 	users := make([]*model.Users, 0)
+	//只随机主播  type=1
 	if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Scan(&users).Error; err != nil {
 		return nil, err
 	}
@@ -97,10 +98,10 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 	rand.Seed(time.Now().UnixNano())
 
 	//防止随机得到的id不存在  或者和当前用户一样的  循环次数定为100
-	for i := 0; i < index; i++ {
+	for i := 0; i < 100; i++ {
 		//根据最大id进行随机
 		random := rand.Intn(len(users))
-		if !isValueInArr(random, ids) {
+		if !isValueInArr(random, ids) && len(ids) < index {
 			ids = append(ids, random)
 		}
 	}

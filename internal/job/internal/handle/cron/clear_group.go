@@ -24,11 +24,9 @@ func (c *ClearGroupHandle) GetServiceName() string {
 }
 
 // Spec 配置定时任务规则
-// 每天凌晨1点执行
+// 每10分钟执行
 func (c *ClearGroupHandle) Spec() string {
-	// return "0 1 * * *"
-	return "*/10 * * * *" //每十分钟执行
-	// return "* * * * *"     //每秒执行
+	return "*/10 * * * *"
 }
 
 func (c *ClearGroupHandle) Handle(ctx context.Context) error {
