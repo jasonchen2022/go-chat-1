@@ -1,9 +1,7 @@
 package dao
 
 import (
-	"fmt"
 	"go-chat/internal/model"
-	"go-chat/internal/pkg/jsonutil"
 	"math/rand"
 	"time"
 )
@@ -112,7 +110,7 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 	}
 
 	// fmt.Println(len(users))
-	fmt.Println(jsonutil.Encode(resUsers))
+	// fmt.Println(jsonutil.Encode(resUsers))
 
 	return resUsers, nil
 }
