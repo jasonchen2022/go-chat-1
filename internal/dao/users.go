@@ -79,9 +79,14 @@ func (dao *UsersDao) IsMobileExist(mobile string) bool {
 *userId:登录用户id
 *index:查询用户数
  */
-func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
+func (dao *UsersDao) RandomUser(userId, index int) ([]*model.UserTemp, error) {
 
-	users := make([]*model.Users, 0)
+	//查出当前用户关注过的主播
+	anchors := make([]*model.Fans, 0)
+	dao.Db().Model(&model.Fans{}).Where("mark = ?", 1).Scan(&anchors)
+
+	// fmt.Println(jsonutil.Encode(anchors))
+	users := make([]*model.UserTemp, 0)
 	//只随机主播  type=1
 	if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Scan(&users).Error; err != nil {
 		return nil, err
@@ -104,8 +109,13 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 		}
 	}
 
-	resUsers := make([]*model.Users, 0)
+	resUsers := make([]*model.UserTemp, 0)
 	for _, v := range ids {
+		if isGuanZhu(anchors, users[v].Id) {
+			users[v].IsGaunZhu = 1
+		} else {
+			users[v].IsGaunZhu = 0
+		}
 		resUsers = append(resUsers, users[v])
 	}
 
@@ -115,50 +125,20 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
 	return resUsers, nil
 }
 
-// func (dao *UsersDao) RandomUser(userId, index int) ([]*model.Users, error) {
-
-// 	userNew := &model.Users{}
-// 	//查出表中  最大id
-// 	dao.Db().Last(userNew)
-
-// 	ids := make([]int, 0)
-
-// 	rand.Seed(time.Now().UnixNano())
-
-// 	users := make([]*model.Users, 0)
-// 	//防止随机得到的id不存在  或者和当前用户一样的  循环次数定为100
-// 	for i := 0; i < 100; i++ {
-// 		//根据最大id进行随机
-// 		random := rand.Intn(userNew.Id)
-// 		if random != userId && !isValueInArr(random, ids) {
-// 			ids = append(ids, random)
-// 		}
-// 	}
-
-// 	if err := dao.Db().Debug().Model(&model.Users{}).Where("id in ?", ids).Scan(&users).Error; err != nil {
-// 		return nil, err
-// 	}
-
-// 	resUsers := make([]*model.Users, 0)
-
-// 	for _, value := range users {
-// 		if len(resUsers) < index {
-// 			resUsers = append(resUsers, value)
-// 		}
-// 		if len(resUsers) == index {
-// 			break
-// 		}
-// 	}
-
-// 	// fmt.Println("@@@@====index=", index)
-// 	// fmt.Println("@@@@====", jsonutil.Encode(resUsers))
-// 	return resUsers, nil
-// }
-
 //判断数组中是否包含某个值
 func isValueInArr(value int, arr []int) bool {
 	for _, v := range arr {
 		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+//判断是否关注过
+func isGuanZhu(anchors []*model.Fans, anchorId int) bool {
+	for _, v := range anchors {
+		if v.AnchorId == anchorId {
 			return true
 		}
 	}

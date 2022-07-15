@@ -10,20 +10,20 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Tue Jul 12 15:09:22 2022
+# Make data base, printed on Fri Jul 15 13:19:47 2022
 
 # Variables
 
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
 # automatic
+ 
 ?F = $(notdir $?)
 # environment
 VSCODE_LOG_NATIVE = false
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # automatic
- 
 @D = $(patsubst %/,%,$(dir $@))
 # automatic
 @F = $(notdir $@)
@@ -46,7 +46,7 @@ __CFBundleIdentifier = com.microsoft.VSCode
 # environment
 INFOPATH = /opt/homebrew/share/info:
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/1c/hq929pmx7y30z1__kl0sgjym0000gp/T/vscode-ipc-186ebb15-7d6a-41c1-8c20-6a66c564a3b3.sock
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/1c/hq929pmx7y30z1__kl0sgjym0000gp/T/vscode-ipc-322381a3-0b7a-472d-a752-3a56e80b1422.sock
 # environment
 VSCODE_CWD = /
 # environment
@@ -82,7 +82,7 @@ HOME = /Users/admin
 # makefile (from `Makefile', line 1)
 PROTO_FILES := api/proto/web/v1/auth.proto api/proto/admin/v1/index.proto
 # default
-MAKEFILEPATH = $(shell /usr/bin/xcode-select -print-path 2>/dev/null || echo /Developer)/Makefiles
+MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
 # environment
 VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/4af164ea3a06f701fe3e89a2bcbb421d2026b68f
 # environment
@@ -110,7 +110,7 @@ USER = admin
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # default
-MAKE_COMMAND := /Library/Developer/CommandLineTools/usr/bin/make
+MAKE_COMMAND := /Applications/Xcode.app/Contents/Developer/usr/bin/make
 # default
 .VARIABLES := 
 # environment
@@ -162,6 +162,7 @@ VSCODE_PID = 2055
 
 # Pattern-specific Variable Values
 
+ 
 # No pattern-specific variable values.
 
 # Directories
@@ -239,7 +240,6 @@ protoc:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
- 
 #  Last modified 2022-06-27 12:51:07
 #  File has been updated.
 #  Successfully updated.
@@ -386,6 +386,6 @@ install:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Tue Jul 12 15:09:22 2022
+# Finished Make data base on Fri Jul 15 13:19:47 2022
 
  
