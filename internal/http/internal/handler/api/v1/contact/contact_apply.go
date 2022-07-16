@@ -44,7 +44,7 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
-	if !c.contactService.Dao().IsFriend(ctx, uid, params.FriendId, false) {
+	if c.contactService.Dao().IsFriend(ctx, uid, params.FriendId, false) {
 		response.Success(ctx, nil)
 		return
 	}
