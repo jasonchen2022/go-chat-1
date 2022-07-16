@@ -130,7 +130,8 @@ func (c *Auth) Sync(ctx *gin.Context) {
 
 		_, err := c.userService.Dao().Create(&model.Users{
 			Id:        member.Id,
-			Nickname:  member.UserName,
+			Username:  member.UserName,
+			Nickname:  member.Nickname,
 			Mobile:    member.Mobile,
 			Avatar:    avatar,
 			Gender:    member.Gender,
