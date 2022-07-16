@@ -27,31 +27,32 @@ type QueryTalkRecordsOpts struct {
 }
 
 type TalkRecordsItem struct {
-	Id          int         `json:"id"`
-	TalkType    int         `json:"talk_type"`
-	MsgType     int         `json:"msg_type"`
-	UserId      int         `json:"user_id"`
-	ReceiverId  int         `json:"receiver_id"`
-	Nickname    string      `json:"nickname"`
-	Avatar      string      `json:"avatar"`
-	IsRevoke    int         `json:"is_revoke"`
-	IsMark      int         `json:"is_mark"`
-	IsRead      int         `json:"is_read"`
-	IsLeader    int         `json:"is_leader"`
-	FanLevel    int         `json:"fan_level"`
-	FanLabel    string      `json:"fan_label"`
-	MemberLevel int         `json:"member_level"`
-	MemberType  int         `json:"member_type"`
-	IsMute      int         `json:"is_mute"`
-	Content     string      `json:"content,omitempty"`
-	File        interface{} `json:"file,omitempty"`
-	CodeBlock   interface{} `json:"code_block,omitempty"`
-	Forward     interface{} `json:"forward,omitempty"`
-	Invite      interface{} `json:"invite,omitempty"`
-	Vote        interface{} `json:"vote,omitempty"`
-	Login       interface{} `json:"login,omitempty"`
-	Location    interface{} `json:"location,omitempty"`
-	CreatedAt   string      `json:"created_at"`
+	Id               int         `json:"id"`
+	TalkType         int         `json:"talk_type"`
+	MsgType          int         `json:"msg_type"`
+	UserId           int         `json:"user_id"`
+	ReceiverId       int         `json:"receiver_id"`
+	Nickname         string      `json:"nickname"`
+	Avatar           string      `json:"avatar"`
+	IsRevoke         int         `json:"is_revoke"`
+	IsMark           int         `json:"is_mark"`
+	IsRead           int         `json:"is_read"`
+	IsLeader         int         `json:"is_leader"`
+	FanLevel         int         `json:"fan_level"`
+	FanLabel         string      `json:"fan_label"`
+	MemberLevel      int         `json:"member_level"`
+	MemberLevelTitle string      `json:"member_level_title"`
+	MemberType       int         `json:"member_type"`
+	IsMute           int         `json:"is_mute"`
+	Content          string      `json:"content,omitempty"`
+	File             interface{} `json:"file,omitempty"`
+	CodeBlock        interface{} `json:"code_block,omitempty"`
+	Forward          interface{} `json:"forward,omitempty"`
+	Invite           interface{} `json:"invite,omitempty"`
+	Vote             interface{} `json:"vote,omitempty"`
+	Login            interface{} `json:"login,omitempty"`
+	Location         interface{} `json:"location,omitempty"`
+	CreatedAt        string      `json:"created_at"`
 }
 
 type TalkRecordsService struct {
@@ -90,7 +91,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"users.avatar as avatar",
 			"1 as fan_level",
 			"null as fan_label",
-			"1 as member_level",
+			"users.member_level",
+			"users.member_level_title",
 			"users.type as member_type",
 			"users.is_mute",
 			"0 as is_leader",
@@ -149,6 +151,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				"group_member.user_id",
 				"users.type as member_type",
 				"users.is_mute",
+				"users.member_level",
+				"users.member_level_title",
 				"group_member.leader as is_leader",
 			}
 			var memberItems = make([]*model.QueryGroupMemberItem, 0)
@@ -161,6 +165,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 							if item.UserId == record.UserId {
 								record.IsLeader = item.IsLeader
 								record.MemberType = item.MemberType
+								record.MemberLevel = item.MemberLevel
+								record.MemberLevelTitle = item.MemberLevelTitle
 								record.IsMute = item.IsMute
 							}
 						}
@@ -196,7 +202,8 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"users.avatar as avatar",
 			"1 as fan_level",
 			"null as fan_label",
-			"1 as member_level",
+			"users.member_level",
+			"users.member_level_title",
 			"users.type as member_type",
 			"users.is_mute",
 			"0 as is_leader",
@@ -221,6 +228,8 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"group_member.user_id",
 			"users.type as member_type",
 			"users.is_mute",
+			"users.member_level",
+			"users.member_level_title",
 			"group_member.leader as is_leader",
 		}
 		var memberItems = make([]*model.QueryGroupMemberItem, 0)
@@ -231,6 +240,8 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 					if item.UserId == record.UserId {
 						record.IsLeader = item.IsLeader
 						record.MemberType = item.MemberType
+						record.MemberLevel = item.MemberLevel
+						record.MemberLevelTitle = item.MemberLevelTitle
 						record.IsMute = item.IsMute
 					}
 				}
@@ -443,24 +454,25 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 	newItems := make([]*TalkRecordsItem, 0, len(items))
 	for _, item := range items {
 		data := &TalkRecordsItem{
-			Id:          item.Id,
-			TalkType:    item.TalkType,
-			MsgType:     item.MsgType,
-			UserId:      item.UserId,
-			FanLevel:    item.FanLevel,
-			FanLabel:    item.FanLabel,
-			MemberType:  item.MemberType,
-			MemberLevel: item.MemberLevel,
-			ReceiverId:  item.ReceiverId,
-			Nickname:    item.Nickname,
-			Avatar:      item.Avatar,
-			IsRevoke:    item.IsRevoke,
-			IsMark:      item.IsMark,
-			IsRead:      item.IsRead,
-			IsLeader:    item.IsLeader,
-			IsMute:      item.IsMute,
-			Content:     item.Content,
-			CreatedAt:   timeutil.FormatDatetime(item.CreatedAt),
+			Id:               item.Id,
+			TalkType:         item.TalkType,
+			MsgType:          item.MsgType,
+			UserId:           item.UserId,
+			FanLevel:         item.FanLevel,
+			FanLabel:         item.FanLabel,
+			MemberType:       item.MemberType,
+			MemberLevel:      item.MemberLevel,
+			MemberLevelTitle: item.MemberLevelTitle,
+			ReceiverId:       item.ReceiverId,
+			Nickname:         item.Nickname,
+			Avatar:           item.Avatar,
+			IsRevoke:         item.IsRevoke,
+			IsMark:           item.IsMark,
+			IsRead:           item.IsRead,
+			IsLeader:         item.IsLeader,
+			IsMute:           item.IsMute,
+			Content:          item.Content,
+			CreatedAt:        timeutil.FormatDatetime(item.CreatedAt),
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')

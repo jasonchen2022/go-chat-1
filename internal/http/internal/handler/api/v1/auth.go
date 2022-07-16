@@ -129,16 +129,18 @@ func (c *Auth) Sync(ctx *gin.Context) {
 		}
 
 		_, err := c.userService.Dao().Create(&model.Users{
-			Id:        member.Id,
-			Username:  member.UserName,
-			Nickname:  member.Nickname,
-			Mobile:    member.Mobile,
-			Avatar:    avatar,
-			Gender:    member.Gender,
-			Type:      member.Type,
-			Motto:     member.Motto,
-			Password:  password,
-			CreatedAt: time.Now(),
+			Id:               member.Id,
+			MemberLevel:      member.MemberLevel,
+			MemberLevelTitle: member.MemberLevelTitle,
+			Username:         member.UserName,
+			Nickname:         member.Nickname,
+			Mobile:           member.Mobile,
+			Avatar:           avatar,
+			Gender:           member.Gender,
+			Type:             member.Type,
+			Motto:            member.Motto,
+			Password:         password,
+			CreatedAt:        time.Now(),
 		})
 		if err != nil {
 			response.BusinessError(ctx, err)
