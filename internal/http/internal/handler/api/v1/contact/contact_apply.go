@@ -135,3 +135,40 @@ func (c *ContactApply) List(ctx *gin.Context) {
 
 	response.SuccessPaginate(ctx, items, 1, 1000, len(items))
 }
+
+//在线客服--创建好友
+func (c *ContactApply) OnlineService(ctx *gin.Context) {
+	params := &request.ContactOnlineServiceRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	//判断是否已经是好友
+	uid := jwtutil.GetUid(ctx)
+	if c.contactService.Dao().IsFriend(ctx, uid, params.ReceiverId, false) {
+		response.Success(ctx, nil)
+		return
+	}
+
+	//创建双向好友
+	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
+		UserId:   uid,
+		Remarks:  "在线客服",
+		FriendId: params.ReceiverId,
+	}); err != nil {
+		response.BusinessError(ctx, err)
+		return
+	}
+
+	_, err := c.service.Accept(ctx, &service.ContactApplyAcceptOpts{
+		Remarks: "在线客服",
+		ApplyId: uid,
+		UserId:  params.ReceiverId,
+	})
+	if err != nil {
+		response.BusinessError(ctx, err)
+		return
+	}
+	response.Success(ctx, nil)
+}

@@ -31,3 +31,7 @@ type ContactApplyDeclineRequest struct {
 	Remarks string `form:"remark" json:"remark" binding:"required" label:"remark"`
 	ApplyId int    `form:"apply_id" json:"apply_id" binding:"required" label:"apply_id"`
 }
+
+type ContactOnlineServiceRequest struct {
+	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required" label:"receiver_id"`
+}

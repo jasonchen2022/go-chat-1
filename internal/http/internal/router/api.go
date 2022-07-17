@@ -64,6 +64,8 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			contact.POST("/apply/accept", handler.ContactsApply.Accept)            // 同意人申请列表
 			contact.POST("/apply/decline", handler.ContactsApply.Decline)          // 拒绝人申请列表
 			contact.GET("/apply/unread-num", handler.ContactsApply.ApplyUnreadNum) // 联系人申请未读数
+
+			contact.POST("/apply/online/service", handler.ContactsApply.OnlineService) // 在线客服
 		}
 
 		// 聊天室相关分组
