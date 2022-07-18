@@ -58,7 +58,7 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 			return nil
 		}
 
-		return errors.New("暂无权限发送消息！")
+		return errors.New("暂无权限发送消息或已解除好友关系！")
 	} else {
 		groupMemberInfo := &model.GroupMember{}
 		err := c.groupMemberService.Db().First(groupMemberInfo, "group_id = ? and user_id = ?", opt.ReceiverId, opt.UserId).Error
@@ -71,7 +71,7 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 		}
 
 		if groupMemberInfo.IsQuit == 1 {
-			return errors.New("暂无权限发送消息！")
+			return errors.New("暂无权限发送消息!!")
 		}
 
 		if groupMemberInfo.IsMute == 1 {
