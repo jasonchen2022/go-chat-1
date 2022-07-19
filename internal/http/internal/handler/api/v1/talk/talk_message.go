@@ -42,6 +42,13 @@ type AuthorityOpts struct {
 	ReceiverId int // 接收者ID
 }
 
+//判断当前发送者是否管理员
+func (dao *Message) IsLeader(userId int) bool {
+	var member_type int
+	dao.service.Db().Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type)
+	return member_type > 0
+}
+
 // 权限验证
 func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 
@@ -50,6 +57,10 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 		if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
 			return errors.New("系统繁忙，错误代码1000，请稍后再试！！！")
 		} else if isOk {
+			return nil
+		}
+
+		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) {
 			return nil
 		}
 
