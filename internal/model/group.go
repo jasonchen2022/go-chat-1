@@ -16,7 +16,7 @@ type Group struct {
 	Profile   string    `gorm:"column:profile;NOT NULL" json:"profile"`                 // 群介绍
 	IsDismiss int       `gorm:"column:is_dismiss;default:0;NOT NULL" json:"is_dismiss"` // 是否已解散[0:否;1:是;]
 	Avatar    string    `gorm:"column:avatar;NOT NULL" json:"avatar"`                   // 群头像
-	MaxNum    int       `gorm:"column:max_num;default:200;NOT NULL" json:"max_num"`     // 最大群成员数量
+	MaxNum    int       `gorm:"column:max_num;default:5000;NOT NULL" json:"max_num"`    // 最大群成员数量
 	IsOvert   int       `gorm:"column:is_overt;default:0;NOT NULL" json:"is_overt"`     // 是否公开可见[0:否;1:是;]
 	IsMute    int       `gorm:"column:is_mute;default:0;NOT NULL" json:"is_mute"`       // 是否全员禁言 [0:否;1:是;]，提示:不包含群主或管理员
 	CreatedAt time.Time `gorm:"column:created_at;NOT NULL" json:"created_at"`           // 创建时间

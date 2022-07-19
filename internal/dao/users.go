@@ -46,8 +46,7 @@ func (dao *UsersDao) GetNickName(userId int) (string, error) {
 // FindByIds ID查询
 func (dao *UsersDao) FindByIds(userIds []int) ([]*model.Users, error) {
 	user := make([]*model.Users, 0)
-
-	if err := dao.Db().Model(&model.Users{}).Where("id in ?", userIds).Scan(user).Error; err != nil {
+	if err := dao.Db().Model(&model.Users{}).Where("id in ?", userIds).Scan(&user).Error; err != nil {
 		return nil, err
 	}
 
