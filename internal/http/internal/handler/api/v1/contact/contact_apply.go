@@ -161,12 +161,12 @@ func (c *ContactApply) OnlineService(ctx *gin.Context) {
 		return
 	}
 
-	_, err := c.service.Accept(ctx, &service.ContactApplyAcceptOpts{
-		Remarks: "在线客服",
-		ApplyId: uid,
-		UserId:  params.ReceiverId,
-	})
-	if err != nil {
+	//创建双向好友
+	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
+		UserId:   params.ReceiverId,
+		Remarks:  "在线客服",
+		FriendId: uid,
+	}); err != nil {
 		response.BusinessError(ctx, err)
 		return
 	}

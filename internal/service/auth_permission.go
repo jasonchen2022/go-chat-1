@@ -39,6 +39,10 @@ func (a *AuthPermissionService) IsAuth(ctx context.Context, prem *AuthPermission
 		if a.contactDao.IsLeader(prem.UserId) {
 			return true
 		}
+		//判断当前接收者是不是管理员，否则可以直接发起会话
+		if a.contactDao.IsLeader(prem.ReceiverId) {
+			return true
+		}
 
 		return a.contactDao.IsFriend(ctx, prem.UserId, prem.ReceiverId, false)
 	} else if prem.TalkType == entity.ChatGroupMode {
