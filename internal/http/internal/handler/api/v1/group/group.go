@@ -342,6 +342,10 @@ func (c *Group) Detail(ctx *gin.Context) {
 		return
 	}
 
+	if groupInfo == nil {
+		response.BusinessError(ctx, "数据不存在")
+		return
+	}
 	if groupInfo.Id == 0 {
 		response.BusinessError(ctx, "数据不存在")
 		return
