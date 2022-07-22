@@ -123,8 +123,8 @@ func (s *UserService) UpdatePassword(uid int, oldPassword string, password strin
 *userId:登录用户id
 *index:查询用户数
  */
-func (s *UserService) RandomUser(userId, index int) ([]*model.UserTemp, error) {
-	users, err := s.dao.RandomUser(userId, index)
+func (s *UserService) RandomUser(userId, index int, userName string) ([]*model.UserTemp, error) {
+	users, err := s.dao.RandomUser(userId, index, userName)
 	if err != nil {
 		return nil, err
 	}

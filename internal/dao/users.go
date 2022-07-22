@@ -78,7 +78,7 @@ func (dao *UsersDao) IsMobileExist(mobile string) bool {
 *userId:登录用户id
 *index:查询用户数
  */
-func (dao *UsersDao) RandomUser(userId, index int) ([]*model.UserTemp, error) {
+func (dao *UsersDao) RandomUser(userId, index int, userName string) ([]*model.UserTemp, error) {
 
 	//查出当前用户关注过的主播
 	anchors := make([]*model.Fans, 0)
@@ -86,10 +86,18 @@ func (dao *UsersDao) RandomUser(userId, index int) ([]*model.UserTemp, error) {
 
 	// fmt.Println(jsonutil.Encode(anchors))
 	users := make([]*model.UserTemp, 0)
-	//只随机主播  type=1
-	if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Scan(&users).Error; err != nil {
-		return nil, err
+	if userName == "" {
+		//只随机主播  type=1
+		if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Scan(&users).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		//只随机主播  type=1
+		if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
+			return nil, err
+		}
 	}
+
 	// fmt.Println(jsonutil.Encode(users))
 	if len(users) <= 6 {
 		return users, nil

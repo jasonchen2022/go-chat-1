@@ -203,7 +203,7 @@ func (u *User) RandomUser(ctx *gin.Context) {
 		return
 	}
 
-	users, err := u.service.RandomUser(jwtutil.GetUid(ctx), params.Index)
+	users, err := u.service.RandomUser(jwtutil.GetUid(ctx), params.Index, params.UserName)
 	if err != nil {
 		response.Success(ctx, err, "获取发现用户列表出错")
 	}
