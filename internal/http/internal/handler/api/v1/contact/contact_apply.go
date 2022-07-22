@@ -5,6 +5,7 @@ import (
 	"go-chat/internal/pkg/timeutil"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
@@ -150,25 +151,20 @@ func (c *ContactApply) OnlineService(ctx *gin.Context) {
 		response.Success(ctx, nil)
 		return
 	}
-
-	//创建双向好友
-	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
-		UserId:   uid,
-		Remarks:  "在线客服",
-		FriendId: params.ReceiverId,
-	}); err != nil {
-		response.BusinessError(ctx, err)
-		return
-	}
-
-	//创建双向好友
-	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
-		UserId:   params.ReceiverId,
-		Remarks:  "在线客服",
-		FriendId: uid,
-	}); err != nil {
-		response.BusinessError(ctx, err)
-		return
-	}
+	c.service.Db().Transaction(func(tx *gorm.DB) error {
+		//创建双向好友
+		c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
+			UserId:   uid,
+			Remarks:  "在线客服",
+			FriendId: params.ReceiverId,
+		})
+		//创建双向好友
+		c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
+			UserId:   params.ReceiverId,
+			Remarks:  "在线客服",
+			FriendId: uid,
+		})
+		return nil
+	})
 	response.Success(ctx, nil)
 }

@@ -153,6 +153,12 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 		Content:    opts.Text,
 	}
 
+	//校验权限
+	c := s.checkUserAuth(record.UserId)
+	if c != nil {
+		return c
+	}
+
 	if err := s.db.Create(record).Error; err != nil {
 		return err
 	}
@@ -217,7 +223,11 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			ReceiverId: opts.ReceiverId,
 		}
 	)
-
+	//校验权限
+	c := s.checkUserAuth(record.UserId)
+	if c != nil {
+		return c
+	}
 	stream, err := filesystem.ReadMultipartStream(opts.File)
 	if err != nil {
 		return err
@@ -280,6 +290,12 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 			ReceiverId: opts.ReceiverId,
 		}
 	)
+
+	//校验权限
+	c := s.checkUserAuth(record.UserId)
+	if c != nil {
+		return c
+	}
 
 	stream, err := filesystem.ReadMultipartStream(opts.File)
 	if err != nil {
@@ -656,14 +672,18 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	return err
 }
 
-// 发送消息后置处理
-func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
+func (s *TalkMessageService) checkUserAuth(userId int) error {
 	//1.检测发送消息用户账号是否被禁止发言
 	var is_mute int
-	s.db.Table("users").Where("id = ?", record.UserId).Select([]string{"is_mute"}).Limit(1).Scan(&is_mute)
+	s.db.Table("users").Where("id = ?", userId).Select([]string{"is_mute"}).Limit(1).Scan(&is_mute)
 	if is_mute == 1 {
-		return errors.New("用户已被禁言")
+		return errors.New("你已被禁言，请文明聊天！")
 	}
+	return nil
+}
+
+// 发送消息后置处理
+func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
 
 	if record.TalkType == entity.ChatPrivateMode {
 		s.unreadTalkCache.Increment(ctx, record.UserId, record.ReceiverId)
