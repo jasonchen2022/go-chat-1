@@ -70,3 +70,18 @@ func (s *ContactService) GetContactIds(ctx context.Context, uid int) []int64 {
 
 	return ids
 }
+
+//建立好友关系
+func (s *ContactService) Create(ctx context.Context, opts *ContactApplyCreateOpts) error {
+	apply := &model.Contact{
+		UserId:   opts.UserId,
+		FriendId: opts.FriendId,
+		Remark:   opts.Remarks,
+		Status:   1,
+	}
+
+	if err := s.db.Create(apply).Error; err != nil {
+		return err
+	}
+	return nil
+}
