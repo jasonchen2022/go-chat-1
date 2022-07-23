@@ -13,4 +13,5 @@ type UserTemp struct {
 	IsRobot   int    `json:"is_robot"`   // 是否机器人[0:否;1:是;]
 	IsMute    int    `json:"is_mute"`    // 是否禁言 [0:否;1:是;]
 	IsGaunZhu int    `json:"is_guanzhu"` // 是否已关注 [0:否;1:是;]
+	FansCount int    `json:"fans_count"` // 粉丝数
 }

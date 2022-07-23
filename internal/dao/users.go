@@ -98,6 +98,9 @@ func (dao *UsersDao) RandomUser(userId, index int, userName string) ([]*model.Us
 		}
 	}
 
+	for _, v := range users {
+		v.FansCount = fansCount(anchors, v.Id)
+	}
 	// fmt.Println(jsonutil.Encode(users))
 	if len(users) <= 6 {
 		return users, nil
@@ -150,4 +153,14 @@ func isGuanZhu(anchors []*model.Fans, anchorId int) bool {
 		}
 	}
 	return false
+}
+
+func fansCount(anchors []*model.Fans, user_id int) int {
+	i := 0
+	for _, v := range anchors {
+		if v.AnchorId == user_id {
+			i = i + 1
+		}
+	}
+	return i
 }
