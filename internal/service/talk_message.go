@@ -674,10 +674,15 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 
 func (s *TalkMessageService) checkUserAuth(userId int) error {
 	//1.检测发送消息用户账号是否被禁止发言
-	var is_mute int
-	s.db.Table("users").Where("id = ?", userId).Select([]string{"is_mute"}).Limit(1).Scan(&is_mute)
-	if is_mute == 1 {
+	user := &model.QueryUserTypeItem{}
+	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
+		return err
+	}
+	if user.IsMute == 1 {
 		return errors.New("你已被禁言，请文明聊天！")
+	}
+	if user.Type == -1 {
+		return errors.New("游客请先登录后再发言！")
 	}
 	return nil
 }
