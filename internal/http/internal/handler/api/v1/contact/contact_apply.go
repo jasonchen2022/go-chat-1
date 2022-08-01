@@ -155,13 +155,11 @@ func (c *ContactApply) OnlineService(ctx *gin.Context) {
 		//创建双向好友
 		c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
 			UserId:   uid,
-			Remarks:  "在线客服",
 			FriendId: params.ReceiverId,
 		})
 		//创建双向好友
 		c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
 			UserId:   params.ReceiverId,
-			Remarks:  "在线客服",
 			FriendId: uid,
 		})
 		return nil

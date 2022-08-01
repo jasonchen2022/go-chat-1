@@ -56,10 +56,19 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 		"`users`.avatar as user_avatar", "`users`.nickname",
 		"`group`.group_name", "`group`.avatar as group_avatar",
 	}
+	user := &model.QueryUserTypeItem{}
+	if err := s.db.Table("users").Where(&model.Users{Id: uid}).First(user).Error; err != nil {
+		return nil, err
+	}
 
 	query := s.db.Table("talk_session list")
 	query.Joins("left join `users` ON list.receiver_id = `users`.id AND list.talk_type = 1")
-	query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type > 0")
+	//只有管理员用户才拥有聊天室权限
+	if user.Type < 1 {
+		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type = 1")
+	} else {
+		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type > 0")
+	}
 	query.Where("list.user_id = ? and list.is_delete = 0", uid)
 	query.Order("list.updated_at desc")
 
