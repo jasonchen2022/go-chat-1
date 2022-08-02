@@ -75,7 +75,6 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 	if err = query.Select(fields).Scan(&items).Error; err != nil {
 		return nil, err
 	}
-
 	return items, nil
 }
 

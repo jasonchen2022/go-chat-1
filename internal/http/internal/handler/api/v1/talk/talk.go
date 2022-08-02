@@ -8,7 +8,6 @@ import (
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/pkg/encrypt"
-	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
@@ -75,7 +74,6 @@ func (c *Talk) List(ctx *gin.Context) {
 			friends = append(friends, item.ReceiverId)
 		}
 	}
-	fmt.Printf("JSON: %s", jsonutil.Encode(data))
 
 	remarks, err := c.contactService.Dao().GetFriendRemarks(ctx, uid, friends)
 	if err != nil {
@@ -86,7 +84,7 @@ func (c *Talk) List(ctx *gin.Context) {
 	var wg sync.WaitGroup
 	for i := 0; i < len(data); i++ {
 		item := data[i]
-		if item.Nickname != "" {
+		if item.Nickname != "" || item.GroupName != "" {
 			wg.Add(1)
 			go func(j int) {
 				value := &dto.TalkListItem{

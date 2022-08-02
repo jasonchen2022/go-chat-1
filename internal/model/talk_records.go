@@ -40,6 +40,8 @@ type QueryTalkRecordsItem struct {
 	MemberLevel      int       `json:"member_level"`
 	MemberLevelTitle string    `json:"member_level_title"`
 	IsMute           int       `json:"is_mute"`
+	GroupName        string    `json:"group_name"`
+	GroupAvatar      string    `json:"group_avatar"`
 }
 
 type QueryGroupMemberItem struct {
@@ -49,4 +51,6 @@ type QueryGroupMemberItem struct {
 	MemberLevel      int    `json:"member_level"`
 	MemberLevelTitle string `json:"member_level_title"`
 	IsMute           int    `json:"is_mute"`
+	GroupName        string `json:"group_name"`
+	GroupAvatar      string `json:"group_avatar"`
 }

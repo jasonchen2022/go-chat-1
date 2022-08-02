@@ -53,6 +53,8 @@ type TalkRecordsItem struct {
 	Login            interface{} `json:"login,omitempty"`
 	Location         interface{} `json:"location,omitempty"`
 	CreatedAt        string      `json:"created_at"`
+	GroupName        string      `json:"group_name"`
+	GroupAvatar      string      `json:"group_avatar"`
 }
 
 type TalkRecordsService struct {
@@ -145,6 +147,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			}
 			memberQuery := s.db.Table("group_member")
 			memberQuery.Joins("left join users on group_member.user_id = users.id")
+			memberQuery.Joins("left join group on group.id = group_member.group_id")
 			memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
 			memberQuery.Where("group_member.user_id in ?", userIds)
 			var memberFields = []string{
@@ -154,6 +157,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				"users.member_level",
 				"users.member_level_title",
 				"group_member.leader as is_leader",
+				"group.group_name",
+				"group.avatar as group_avatar",
 			}
 			var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
@@ -168,6 +173,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 								record.MemberLevel = item.MemberLevel
 								record.MemberLevelTitle = item.MemberLevelTitle
 								record.IsMute = item.IsMute
+								record.GroupName = item.GroupName
+								record.GroupAvatar = item.GroupAvatar
 							}
 						}
 					}
@@ -222,6 +229,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 	if record.TalkType == entity.ChatGroupMode {
 		memberQuery := s.db.Table("group_member")
 		memberQuery.Joins("left join users on group_member.user_id = users.id")
+		memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
 		memberQuery.Where("group_member.group_id = ? and is_quit =0 ", record.ReceiverId)
 		memberQuery.Where("group_member.user_id = ? ", record.UserId)
 		var memberFields = []string{
@@ -231,6 +239,8 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"users.member_level",
 			"users.member_level_title",
 			"group_member.leader as is_leader",
+			"`group`.group_name",
+			"`group`.avatar as group_avatar",
 		}
 		var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
@@ -243,12 +253,15 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 						record.MemberLevel = item.MemberLevel
 						record.MemberLevelTitle = item.MemberLevelTitle
 						record.IsMute = item.IsMute
+						record.GroupName = item.GroupName
+						record.GroupAvatar = item.GroupAvatar
 					}
 				}
 			}
 		}
 
 	}
+
 	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{record})
 	if err != nil {
 		return nil, err
@@ -473,6 +486,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			IsMute:           item.IsMute,
 			Content:          item.Content,
 			CreatedAt:        timeutil.FormatDatetime(item.CreatedAt),
+			GroupName:        item.GroupName,
+			GroupAvatar:      item.GroupAvatar,
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')
