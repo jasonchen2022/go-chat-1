@@ -472,8 +472,16 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	tx := s.db.Table("group_member")
 	tx.Select("`group`.id,`group`.group_name,`group`.avatar,`group`.profile,group_member.leader")
 	tx.Joins("left join `group` on `group`.id = group_member.group_id")
-	tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type > ?", userId, 0, 0)
-
+	user := &model.QueryUserTypeItem{}
+	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
+		return nil, err
+	}
+	//只有管理员用户才拥有聊天室权限
+	if user.Type < 1 {
+		tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type = ?", userId, 0, 1)
+	} else {
+		tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type > ?", userId, 0, 0)
+	}
 	items := make([]*model.GroupItem, 0)
 	if err := tx.Scan(&items).Error; err != nil {
 		return nil, err
