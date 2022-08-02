@@ -130,3 +130,15 @@ func (s *UserService) RandomUser(userId, index int, userName string) ([]*model.U
 	}
 	return users, nil
 }
+
+/*
+*是否管理员  （除登录用户外）
+*userId:登录用户id
+ */
+func (s *UserService) IsManager(userId int) bool {
+	user := &model.QueryUserTypeItem{}
+	if err := s.dao.Db().Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
+		return false
+	}
+	return user.Type < 1
+}

@@ -49,14 +49,31 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 		response.Success(ctx, nil)
 		return
 	}
+	//判断是否是管理员，是管理员直接添加用户为好友
+	if c.userService.IsManager(uid) {
+		c.service.Db().Transaction(func(tx *gorm.DB) error {
+			//创建双向好友
+			c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
+				UserId:   uid,
+				FriendId: params.FriendId,
+			})
+			//创建双向好友
+			c.contactService.Create(ctx, &service.ContactApplyCreateOpts{
+				UserId:   params.FriendId,
+				FriendId: uid,
+			})
+			return nil
+		})
+	} else {
 
-	if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
-		UserId:   jwtutil.GetUid(ctx),
-		Remarks:  params.Remarks,
-		FriendId: params.FriendId,
-	}); err != nil {
-		response.BusinessError(ctx, err)
-		return
+		if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
+			UserId:   jwtutil.GetUid(ctx),
+			Remarks:  params.Remarks,
+			FriendId: params.FriendId,
+		}); err != nil {
+			response.BusinessError(ctx, err)
+			return
+		}
 	}
 	response.Success(ctx, nil)
 }
