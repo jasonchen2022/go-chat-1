@@ -36,3 +36,9 @@ type QueryUserTypeItem struct {
 	IsMute int `json:"is_mute"`
 	Type   int `json:"type"`
 }
+
+type QueryMemberItem struct {
+	Id               int    `json:"id"`
+	MemberLevel      int    `json:"member_level"`
+	MemberLevelTitle string `json:"member_level_title"`
+}

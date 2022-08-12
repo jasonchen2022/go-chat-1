@@ -715,7 +715,6 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	// 点对点消息采用精确投递
 	if record.TalkType == entity.ChatPrivateMode {
 		sids := s.sidServer.All(ctx, 1)
-
 		// 小于两台服务器则采用全局广播
 		if len(sids) <= 3 {
 			s.rds.Publish(ctx, entity.IMGatewayAll, content)

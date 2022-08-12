@@ -147,7 +147,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			}
 			memberQuery := s.db.Table("group_member")
 			memberQuery.Joins("left join users on group_member.user_id = users.id")
-			memberQuery.Joins("left join group on group.id = group_member.group_id")
+			memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
 			memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
 			memberQuery.Where("group_member.user_id in ?", userIds)
 			var memberFields = []string{
@@ -157,8 +157,8 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				"users.member_level",
 				"users.member_level_title",
 				"group_member.leader as is_leader",
-				"group.group_name",
-				"group.avatar as group_avatar",
+				"`group`.group_name",
+				"`group`.avatar as group_avatar",
 			}
 			var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
@@ -610,6 +610,15 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 						}
 					}
 					m["users"] = results
+					//如果是入群通知则再查一次用户数据
+					if len(results) > 0 {
+						user := &model.QueryMemberItem{}
+						if err := s.dao.Db().Table("users").Where(&model.Users{Id: results[0].Id}).First(user).Error; err == nil {
+							data.MemberLevel = user.MemberLevel
+							data.MemberLevelTitle = user.MemberLevelTitle
+						}
+					}
+
 				} else {
 					m["users"] = operateUser
 				}
