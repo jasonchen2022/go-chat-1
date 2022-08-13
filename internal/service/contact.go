@@ -5,6 +5,8 @@ import (
 
 	"go-chat/internal/dao"
 	"go-chat/internal/model"
+
+	"gorm.io/gorm"
 )
 
 type ContactService struct {
@@ -84,4 +86,35 @@ func (s *ContactService) Create(ctx context.Context, opts *ContactApplyCreateOpt
 		return err
 	}
 	return nil
+}
+
+//添加11直播官方为双向好友
+func (s *ContactService) AddCustomerFriend(ctx context.Context, uid int) error {
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if !(s.Dao().IsFriend(ctx, uid, 7715, false)) {
+			apply := &model.Contact{
+				UserId:   uid,
+				FriendId: 7715,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply).Error; err != nil {
+				return err
+			}
+
+			apply_friend := &model.Contact{
+				UserId:   7715,
+				FriendId: uid,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply_friend).Error; err != nil {
+				return err
+			}
+
+		}
+		return nil
+	})
+	return err
 }

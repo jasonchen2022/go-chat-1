@@ -33,6 +33,7 @@ type Auth struct {
 	ipAddressService   *service.IpAddressService
 	talkSessionService *service.TalkSessionService
 	noteClassService   *note.ArticleClassService
+	contactService     *service.ContactService
 }
 
 func NewAuthHandler(
@@ -46,6 +47,7 @@ func NewAuthHandler(
 	ipAddressService *service.IpAddressService,
 	talkSessionService *service.TalkSessionService,
 	noteClassService *note.ArticleClassService,
+	contactService *service.ContactService,
 ) *Auth {
 	return &Auth{
 		config:             config,
@@ -58,6 +60,7 @@ func NewAuthHandler(
 		ipAddressService:   ipAddressService,
 		talkSessionService: talkSessionService,
 		noteClassService:   noteClassService,
+		contactService:     contactService,
 	}
 }
 
@@ -146,7 +149,12 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			response.BusinessError(ctx, err)
 			return
 		}
+		//添加11直播官方为好友
+		c.contactService.AddCustomerFriend(ctx, member.Id)
 
+	} else {
+		//添加11直播官方为好友
+		c.contactService.AddCustomerFriend(ctx, member.Id)
 	}
 
 	ip := ctx.ClientIP()
