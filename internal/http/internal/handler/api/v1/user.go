@@ -53,7 +53,7 @@ func (u *User) Setting(ctx *gin.Context) {
 			"motto":    user.Motto,
 			"gender":   user.Gender,
 			"is_qiye":  isOk,
-			"mobile":   user.Mobile,
+			"mobile":   "",
 			"email":    user.Email,
 		},
 		"setting": entity.H{
