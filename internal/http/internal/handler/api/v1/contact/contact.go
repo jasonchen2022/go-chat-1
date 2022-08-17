@@ -64,6 +64,33 @@ func (c *Contact) List(ctx *gin.Context) {
 	response.Success(ctx, items)
 }
 
+func (c *Contact) TotalPage(ctx *gin.Context) {
+	items, err := c.service.TotalPage(ctx, jwtutil.GetUid(ctx))
+
+	if err != nil {
+		response.BusinessError(ctx, err)
+		return
+	}
+
+	response.Success(ctx, items)
+}
+
+func (c *Contact) ListByPage(ctx *gin.Context) {
+
+	params := &request.ContactQueryRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+	items, err := c.service.ListByPage(ctx, jwtutil.GetUid(ctx), params.PageIndex)
+	// fmt.Println("PageIndexPageIndex==", params.PageIndex)
+	if err != nil {
+		response.BusinessError(ctx, err)
+		return
+	}
+	response.Success(ctx, items)
+}
+
 // Delete 删除联系人
 func (c *Contact) Delete(ctx *gin.Context) {
 	params := &request.ContactDeleteRequest{}

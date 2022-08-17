@@ -53,6 +53,8 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 		contact := v1.Group("/contact").Use(authorize)
 		{
 			contact.GET("/list", handler.Contact.List)               // 联系人列表
+			contact.GET("/listbypage", handler.Contact.ListByPage)   // 联系人列表分页
+			contact.GET("/totalpage", handler.Contact.TotalPage)     // 总页数
 			contact.GET("/search", handler.Contact.Search)           // 搜索联系人
 			contact.GET("/detail", handler.Contact.Detail)           // 联系人详情信息
 			contact.POST("/delete", handler.Contact.Delete)          // 删除联系人

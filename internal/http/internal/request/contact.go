@@ -8,6 +8,9 @@ type ContactEditRemarkRequest struct {
 type ContactDeleteRequest struct {
 	FriendId int `form:"friend_id" json:"friend_id" binding:"required" label:"friend_id"`
 }
+type ContactQueryRequest struct {
+	PageIndex int `form:"page" json:"page" binding:"required" label:"page"`
+}
 
 type ContactDetailRequest struct {
 	UserId int `form:"user_id" json:"user_id" binding:"required,min=1" label:"user_id"`

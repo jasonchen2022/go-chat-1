@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"math"
 
 	"go-chat/internal/dao"
 	"go-chat/internal/model"
@@ -63,6 +64,54 @@ func (s *ContactService) List(ctx context.Context, uid int) ([]*model.ContactLis
 	}
 
 	return items, nil
+}
+
+func (s *ContactService) ListByPage(ctx context.Context, uid int, page int) ([]*model.ContactListItem, error) {
+
+	pageIndex := (page - 1) * 20
+	tx := s.db.Model(&model.Contact{})
+	tx.Select([]string{
+		"users.id",
+		"users.nickname",
+		"users.avatar",
+		"users.motto",
+		"users.gender",
+		"contact.remark",
+	})
+
+	tx.Joins("inner join `users` ON `users`.id = contact.friend_id")
+	tx.Where("`contact`.user_id = ? and contact.status = ? LIMIT ?,20;", uid, 1, pageIndex)
+
+	items := make([]*model.ContactListItem, 0)
+	if err := tx.Scan(&items).Error; err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (s *ContactService) TotalPage(ctx context.Context, uid int) (int, error) {
+
+	tx := s.db.Model(&model.Contact{})
+	tx.Select([]string{
+		"users.id",
+		"users.nickname",
+		"users.avatar",
+		"users.motto",
+		"users.gender",
+		"contact.remark",
+	})
+
+	tx.Joins("inner join `users` ON `users`.id = contact.friend_id")
+	tx.Where("`contact`.user_id = ? and contact.status = ? ", uid, 1)
+
+	items := make([]*model.ContactListItem, 0)
+	if err := tx.Scan(&items).Error; err != nil {
+		return 0, err
+	}
+	//    page:=math.Ceil(len(items)/50)
+	page := int(math.Ceil(float64(len(items)) / float64(20)))
+	return page, nil
 }
 
 func (s *ContactService) GetContactIds(ctx context.Context, uid int) []int64 {
