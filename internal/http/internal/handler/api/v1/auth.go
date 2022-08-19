@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"go-chat/api/web/v1"
@@ -151,7 +152,8 @@ func (c *Auth) Sync(ctx *gin.Context) {
 		}
 		//添加11直播官方为好友
 		c.contactService.AddCustomerFriend(ctx, member.Id)
-		if member.Type > 0 {
+
+		if member.Type > -1 && !strings.Contains(member.UserName, "游客_") {
 			//发送官方消息
 			_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), params.UserId)
 

@@ -680,16 +680,13 @@ func (s *TalkMessageService) SendDefaultMessage(ctx context.Context, receiverId 
 			MsgType:    entity.MsgTypeText,
 			UserId:     7715,
 			ReceiverId: receiverId,
-			Content:    "欢迎加入11直播, 如在使用过程中发现任何问题 ,全程为您提供服务",
+			Content:    "欢迎加入11直播,如在使用过程中发现任何问题,全程为您提供服务",
 		}
 	)
 	if err = s.db.Create(record).Error; err == nil {
 		return err
 	}
-	if e := s.afterHandle(ctx, record, map[string]string{"text": "欢迎加入11直播, 如在使用过程中发现任何问题 ,全程为您提供服务"}); e != nil {
-		return e
-	}
-	return err
+	return nil
 }
 
 func (s *TalkMessageService) checkUserAuth(userId int) error {
