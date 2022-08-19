@@ -42,6 +42,7 @@ type QueryTalkRecordsItem struct {
 	IsMute           int       `json:"is_mute"`
 	GroupName        string    `json:"group_name"`
 	GroupAvatar      string    `json:"group_avatar"`
+	GroupType        int       `json:"group_type"`
 }
 
 type QueryGroupMemberItem struct {
@@ -53,4 +54,5 @@ type QueryGroupMemberItem struct {
 	IsMute           int    `json:"is_mute"`
 	GroupName        string `json:"group_name"`
 	GroupAvatar      string `json:"group_avatar"`
+	GroupType        int    `json:"group_type"`
 }

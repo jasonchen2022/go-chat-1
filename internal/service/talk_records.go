@@ -55,6 +55,7 @@ type TalkRecordsItem struct {
 	CreatedAt        string      `json:"created_at"`
 	GroupName        string      `json:"group_name"`
 	GroupAvatar      string      `json:"group_avatar"`
+	GroupType        int         `json:"group_type"`
 }
 
 type TalkRecordsService struct {
@@ -159,6 +160,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				"group_member.leader as is_leader",
 				"`group`.group_name",
 				"`group`.avatar as group_avatar",
+				"`group`.type as group_type",
 			}
 			var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
@@ -175,6 +177,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 								record.IsMute = item.IsMute
 								record.GroupName = item.GroupName
 								record.GroupAvatar = item.GroupAvatar
+								record.GroupType = item.GroupType
 							}
 						}
 					}
@@ -284,6 +287,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"group_member.leader as is_leader",
 			"`group`.group_name",
 			"`group`.avatar as group_avatar",
+			"`group`.type as group_type",
 		}
 		var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
@@ -298,6 +302,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 						record.IsMute = item.IsMute
 						record.GroupName = item.GroupName
 						record.GroupAvatar = item.GroupAvatar
+						record.GroupType = item.GroupType
 					}
 				}
 			}
@@ -531,6 +536,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			CreatedAt:        timeutil.FormatDatetime(item.CreatedAt),
 			GroupName:        item.GroupName,
 			GroupAvatar:      item.GroupAvatar,
+			GroupType:        item.GroupType,
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')

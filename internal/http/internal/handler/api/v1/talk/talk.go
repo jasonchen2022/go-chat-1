@@ -220,10 +220,6 @@ func (c *Talk) Create(ctx *gin.Context) {
 
 	if item.TalkType == entity.ChatPrivateMode {
 		item.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), params.ReceiverId, uid)
-		//兼容离线消息bug
-		if item.UnreadNum > 1 {
-			item.UnreadNum -= 1
-		}
 		item.RemarkName = c.contactService.Dao().GetFriendRemark(ctx.Request.Context(), uid, params.ReceiverId, true)
 
 		if user, err := c.userService.Dao().FindById(item.ReceiverId); err == nil {
