@@ -177,6 +177,11 @@ func (c *Auth) Sync(ctx *gin.Context) {
 		Platform: "h5",
 		Agent:    ctx.GetHeader("user-agent"),
 	})
+	if member.Type != -1 {
+		//发送官方消息
+		_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), params.UserId)
+
+	}
 
 	response.Success(ctx, c.createToken(params.UserId))
 }

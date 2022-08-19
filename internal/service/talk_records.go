@@ -187,6 +187,49 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 	return s.HandleTalkRecords(ctx, items)
 }
 
+//获取用户未读消息
+func (s *TalkRecordsService) GetNotReadTalkRecords(ctx context.Context, uid int) ([]*TalkRecordsItem, error) {
+	var (
+		err    error
+		items  = make([]*model.QueryTalkRecordsItem, 0)
+		fields = []string{
+			"talk_records.id",
+			"talk_records.talk_type",
+			"talk_records.msg_type",
+			"talk_records.user_id",
+			"talk_records.receiver_id",
+			"talk_records.is_revoke",
+			"talk_records.is_read",
+			"talk_records.content",
+			"talk_records.created_at",
+			"users.nickname",
+			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"users.member_level",
+			"users.member_level_title",
+			"users.type as member_type",
+			"users.is_mute",
+			"0 as is_leader",
+		}
+	)
+
+	query := s.db.Table("talk_records")
+	query.Joins("left join users on talk_records.receiver_id = users.id")
+	//私聊
+	query.Where("talk_records.receiver_id = ? and talk_records.is_read = 0 and talk_records.talk_type = 1 and talk_records.user_id !=1", uid)
+	query.Where("NOT EXISTS (SELECT 1 FROM `talk_records_delete` WHERE talk_records_delete.record_id = talk_records.id AND talk_records_delete.user_id = ? LIMIT 1)", uid)
+	query.Select(fields).Order("talk_records.id desc")
+
+	if err = query.Scan(&items).Error; err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return make([]*TalkRecordsItem, 0), err
+	}
+	return s.HandleTalkRecords(ctx, items)
+}
+
 // SearchTalkRecords 对话搜索消息
 func (s *TalkRecordsService) SearchTalkRecords() {
 

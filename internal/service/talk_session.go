@@ -3,14 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"gorm.io/gorm"
 
 	"go-chat/internal/dao"
 	"go-chat/internal/model"
-	"go-chat/internal/pkg/jsonutil"
 )
 
 type TalkSessionCreateOpts struct {
@@ -62,7 +60,6 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 	if err := s.db.Table("users").Where(&model.Users{Id: uid}).First(user).Error; err != nil {
 		return nil, err
 	}
-	fmt.Printf("用户：%s", jsonutil.Encode(user))
 	query := s.db.Table("talk_session list")
 	query.Joins("left join `users` ON list.receiver_id = `users`.id AND list.talk_type = 1")
 	//只有管理员用户才拥有聊天室权限

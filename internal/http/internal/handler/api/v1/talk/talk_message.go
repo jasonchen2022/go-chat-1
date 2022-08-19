@@ -82,7 +82,7 @@ func (c *Message) authority(ctx *gin.Context, opt *AuthorityOpts) error {
 		}
 
 		if groupMemberInfo.IsQuit == 1 {
-			return errors.New("暂无权限发送消息!!")
+			return errors.New("暂无权限发送消息")
 		}
 
 		if groupMemberInfo.IsMute == 1 {

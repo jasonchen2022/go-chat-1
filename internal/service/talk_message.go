@@ -672,6 +672,26 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	return err
 }
 
+func (s *TalkMessageService) SendDefaultMessage(ctx context.Context, receiverId int) error {
+	var (
+		err    error
+		record = &model.TalkRecords{
+			TalkType:   entity.ChatPrivateMode,
+			MsgType:    entity.MsgTypeText,
+			UserId:     7715,
+			ReceiverId: receiverId,
+			Content:    "欢迎加入11直播, 如在使用过程中发现任何问题 ,全程为您提供服务",
+		}
+	)
+	if err = s.db.Create(record).Error; err == nil {
+		return err
+	}
+	if e := s.afterHandle(ctx, record, map[string]string{"text": "欢迎加入11直播, 如在使用过程中发现任何问题 ,全程为您提供服务"}); e != nil {
+		return e
+	}
+	return err
+}
+
 func (s *TalkMessageService) checkUserAuth(userId int) error {
 	//1.检测发送消息用户账号是否被禁止发言
 	user := &model.QueryUserTypeItem{}
@@ -685,6 +705,11 @@ func (s *TalkMessageService) checkUserAuth(userId int) error {
 		return errors.New("游客请先登录后再发言！")
 	}
 	return nil
+}
+
+//公开发送信息接口
+func (s *TalkMessageService) HandleSendMessage(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
+	return s.afterHandle(ctx, record, opts)
 }
 
 // 发送消息后置处理
