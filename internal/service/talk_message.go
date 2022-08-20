@@ -706,7 +706,38 @@ func (s *TalkMessageService) checkUserAuth(userId int) error {
 
 //公开发送信息接口
 func (s *TalkMessageService) HandleSendMessage(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
-	return s.afterHandle(ctx, record, opts)
+	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
+		Content:  opts["text"],
+		Datetime: timeutil.DateTime(),
+	})
+
+	content := jsonutil.Encode(map[string]interface{}{
+		"event": entity.EventTalk,
+		"data": jsonutil.Encode(map[string]interface{}{
+			"sender_id":   record.UserId,
+			"receiver_id": record.ReceiverId,
+			"talk_type":   record.TalkType,
+			"record_id":   record.Id,
+		}),
+	})
+	// 点对点消息采用精确投递
+	if record.TalkType == entity.ChatPrivateMode {
+		sids := s.sidServer.All(ctx, 1)
+		// 小于两台服务器则采用全局广播
+		if len(sids) <= 3 {
+			s.rds.Publish(ctx, entity.IMGatewayAll, content)
+		} else {
+			to := []int{record.UserId, record.ReceiverId}
+			for _, sid := range s.sidServer.All(ctx, 1) {
+				for _, uid := range to {
+					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
+						s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // 发送消息后置处理
