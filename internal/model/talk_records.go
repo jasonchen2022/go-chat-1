@@ -56,3 +56,8 @@ type QueryGroupMemberItem struct {
 	GroupAvatar      string `json:"group_avatar"`
 	GroupType        int    `json:"group_type"`
 }
+
+type GroupTypeCache struct {
+	ReceiverId int `json:"receiver_id"`
+	Type       int `json:"type"`
+}
