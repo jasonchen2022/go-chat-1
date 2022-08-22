@@ -698,9 +698,6 @@ func (s *TalkMessageService) checkUserAuth(userId int) error {
 	if user.IsMute == 1 {
 		return errors.New("你已被禁言，请文明聊天！")
 	}
-	if user.Type == -1 {
-		return errors.New("游客请先登录后再发言！")
-	}
 	return nil
 }
 
