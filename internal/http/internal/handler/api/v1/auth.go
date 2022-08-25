@@ -150,10 +150,10 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			response.BusinessError(ctx, err)
 			return
 		}
-		//添加11直播官方为好友
-		c.contactService.AddCustomerFriend(ctx, member.Id)
 
-		if member.Type > -1 && !strings.Contains(member.UserName, "游客_") {
+		if member.Type > -1 && !(strings.Contains(member.UserName, "游客_")) {
+			//添加11直播官方为好友
+			c.contactService.AddCustomerFriend(ctx, member.Id)
 			//发送官方消息
 			_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), params.UserId)
 
