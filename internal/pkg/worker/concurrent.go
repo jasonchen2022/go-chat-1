@@ -21,8 +21,13 @@ func NewConcurrent(num int) *Concurrent {
 }
 
 func (w *Concurrent) Add(fn func()) {
+	if fn == nil {
+		return
+	}
+
 	w.ch <- struct{}{}
 	w.wg.Add(1)
+
 	go func() {
 		defer func() {
 			w.wg.Done()

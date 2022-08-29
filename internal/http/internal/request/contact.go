@@ -9,7 +9,8 @@ type ContactDeleteRequest struct {
 	FriendId int `form:"friend_id" json:"friend_id" binding:"required" label:"friend_id"`
 }
 type ContactQueryRequest struct {
-	PageIndex int `form:"page" json:"page" binding:"required" label:"page"`
+	PageIndex int    `form:"page" json:"page" binding:"required" label:"page"`
+	Keyword   string `form:"keyword" json:"pkeywordage" label:"keyword"`
 }
 
 type ContactDetailRequest struct {

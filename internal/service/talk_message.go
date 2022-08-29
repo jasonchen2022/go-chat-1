@@ -733,7 +733,7 @@ func (s *TalkMessageService) HandleSendMessage(ctx context.Context, record *mode
 		if len(sids) <= 3 {
 			s.rds.Publish(ctx, entity.IMGatewayAll, content)
 		} else {
-			to := []int{record.UserId, record.ReceiverId}
+			to := []int{record.ReceiverId}
 			for _, sid := range s.sidServer.All(ctx, 1) {
 				for _, uid := range to {
 					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {

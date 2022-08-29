@@ -66,7 +66,7 @@ func (s *ContactService) List(ctx context.Context, uid int) ([]*model.ContactLis
 	return items, nil
 }
 
-func (s *ContactService) ListByPage(ctx context.Context, uid int, page int) ([]*model.ContactListItem, error) {
+func (s *ContactService) ListByPage(ctx context.Context, uid int, page int, keyword string) ([]*model.ContactListItem, error) {
 
 	pageIndex := (page - 1) * 20
 	tx := s.db.Model(&model.Contact{})
@@ -80,7 +80,11 @@ func (s *ContactService) ListByPage(ctx context.Context, uid int, page int) ([]*
 	})
 
 	tx.Joins("inner join `users` ON `users`.id = contact.friend_id")
-	tx.Where("`contact`.user_id = ? and contact.status = ? LIMIT ?,20;", uid, 1, pageIndex)
+	tx.Where("`contact`.user_id = ? ", uid)
+	if keyword != "" {
+		tx.Where("`users`.username LIKE ? ", "%"+keyword+"%")
+	}
+	tx.Where("contact.status = ? LIMIT ?,20;", 1, pageIndex)
 
 	items := make([]*model.ContactListItem, 0)
 	if err := tx.Scan(&items).Error; err != nil {

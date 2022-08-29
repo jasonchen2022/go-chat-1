@@ -7,7 +7,6 @@ import (
 	"go-chat/internal/http/internal/dto"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/pkg/strutil"
@@ -75,28 +74,11 @@ func (c *Talk) List(ctx *gin.Context) {
 		return
 	}
 
-	//异步
-	go func() {
-		//读取离线未读消息记录
-		records, err := c.talkRecordService.GetNotReadTalkRecords(ctx, uid)
-		if err == nil {
-			for _, item := range records {
-				record := &model.TalkRecords{
-					TalkType:   item.TalkType,
-					MsgType:    item.MemberType,
-					UserId:     item.UserId,
-					ReceiverId: item.ReceiverId,
-					Content:    item.Content,
-					Id:         item.Id,
-				}
-				if e := c.talkMessageService.HandleSendMessage(ctx, record, map[string]string{
-					"text": strutil.MtSubstr(record.Content, 0, 30),
-				}); e != nil {
-					fmt.Printf("发送离线消息错误：%s", e.Error())
-				}
-			}
-		}
-	}()
+	// 获取未读消息数
+	unReads := c.unreadTalkCache.GetAll(ctx, uid)
+	if len(unReads) > 0 {
+		c.talkListService.BatchAddList(ctx, uid, unReads)
+	}
 
 	friends := make([]int, 0)
 	for _, item := range data {
@@ -105,6 +87,7 @@ func (c *Talk) List(ctx *gin.Context) {
 		}
 	}
 
+	// 获取好友备注
 	remarks, err := c.contactService.Dao().GetFriendRemarks(ctx, uid, friends)
 	if err != nil {
 		response.BusinessError(ctx, err)

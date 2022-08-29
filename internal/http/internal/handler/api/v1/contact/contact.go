@@ -82,7 +82,7 @@ func (c *Contact) ListByPage(ctx *gin.Context) {
 		response.InvalidParams(ctx, err)
 		return
 	}
-	items, err := c.service.ListByPage(ctx, jwtutil.GetUid(ctx), params.PageIndex)
+	items, err := c.service.ListByPage(ctx, jwtutil.GetUid(ctx), params.PageIndex, params.Keyword)
 	// fmt.Println("PageIndexPageIndex==", params.PageIndex)
 	if err != nil {
 		response.BusinessError(ctx, err)
