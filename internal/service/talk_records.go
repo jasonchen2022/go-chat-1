@@ -481,7 +481,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					inviteUserIds = append(inviteUserIds, tempUserIds[i])
 				}
 			}
-			s.db.Table("users").Select("id", "nickname").Where("id in ?", inviteUserIds).Scan(&noticeResult)
+			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
 		}
 		//邀请操作人管理员ID
 		if len(hashInvites) > 0 {
@@ -661,11 +661,9 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					m["users"] = results
 					//如果是入群通知则再查一次用户数据
 					if len(results) > 0 {
-						user := &model.QueryMemberItem{}
-						if err := s.dao.Db().Table("users").Where(&model.Users{Id: results[0].Id}).First(user).Error; err == nil {
-							data.MemberLevel = user.MemberLevel
-							data.MemberLevelTitle = user.MemberLevelTitle
-						}
+						data.MemberLevel = results[0].MemberLevel
+						data.MemberLevelTitle = results[0].MemberLevelTitle
+						data.MemberType = results[0].MemberType
 					}
 
 				} else {

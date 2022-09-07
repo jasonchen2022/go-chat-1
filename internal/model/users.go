@@ -27,8 +27,11 @@ func (m *Users) TableName() string {
 }
 
 type QueryUserItem struct {
-	Id       int    `json:"id"`
-	Nickname string `json:"nickname"`
+	Id               int    `json:"id"`
+	Nickname         string `json:"nickname"`
+	MemberLevel      int    `json:"member_level"`
+	MemberType       int    `json:"member_type"`
+	MemberLevelTitle string `json:"member_level_title"`
 }
 
 type QueryUserTypeItem struct {
