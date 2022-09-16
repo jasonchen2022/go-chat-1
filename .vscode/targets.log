@@ -10,17 +10,14 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Mon Jul 18 15:45:59 2022
+# Make data base, printed on Thu Sep 15 12:18:55 2022
 
 # Variables
 
- 
 # automatic
 <D = $(patsubst %/,%,$(dir $<))
 # automatic
 ?F = $(notdir $?)
-# environment
-VSCODE_LOG_NATIVE = false
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # automatic
@@ -32,41 +29,36 @@ CURDIR := /Users/admin/Documents/GitHub/go-chat
 # makefile
 SHELL = /bin/sh
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"bbca1a7059cee8a1b93da8947fee1c4f.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/4af164ea3a06f701fe3e89a2bcbb421d2026b68f","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"52a557de5c39607b04949a9e2e3aeee5.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/784b0177c56c607789f9638da7b6bf3230d47a8c","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/corrupted.info","_languagePackSupport":true}
 # environment
 _ = /usr/bin/make
+ 
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
 VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # environment
-VSCODE_VERBOSE_LOGGING = true
-# environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
 INFOPATH = /opt/homebrew/share/info:
-# environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/1c/hq929pmx7y30z1__kl0sgjym0000gp/T/vscode-ipc-eab7546a-ebfc-4e3f-b0f2-a1bbb206b0a5.sock
 # environment
 VSCODE_CWD = /
 # environment
 GOPROXY = https://proxy.golang.org,direct
 # environment
-PATH = /opt/homebrew/opt/php@8.0/sbin:/opt/homebrew/opt/php@8.0/bin:/opt/homebrew/opt/php@7.4/sbin:/opt/homebrew/opt/php@7.4/bin:/opt/homebrew/opt/php@8.0/sbin:/opt/homebrew/opt/php@8.0/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands
+PATH = /opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin
 # environment
 GOPATH = /Users/admin/go
 # environment
-VSCODE_LOG_STACK = false
+LaunchInstanceID = D556C6EC-89A9-4224-96EC-8D0AB55184D1
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.v4WxYncsH3/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.QC2bGO4EU6/Listeners
 # automatic
 %F = $(notdir $%)
-# environment
-VSCODE_PIPE_LOGGING = true
 # environment
 PWD = /Users/admin/Documents/GitHub/go-chat
 # environment
@@ -84,7 +76,7 @@ PROTO_FILES := api/proto/web/v1/auth.proto api/proto/admin/v1/index.proto
 # default
 MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/4af164ea3a06f701fe3e89a2bcbb421d2026b68f
+VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/784b0177c56c607789f9638da7b6bf3230d47a8c
 # environment
 LOGNAME = admin
 # environment
@@ -107,6 +99,8 @@ MAKE_VERSION := 3.81
 USER = admin
 # makefile
 .DEFAULT_GOAL := install
+# environment
+HOMEBREW_BOTTLE_DOMAIN = https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # default
@@ -114,11 +108,13 @@ MAKE_COMMAND := /Applications/Xcode.app/Contents/Developer/usr/bin/make
 # default
 .VARIABLES := 
 # environment
-TMPDIR = /var/folders/1c/hq929pmx7y30z1__kl0sgjym0000gp/T/
+TMPDIR = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.68.0-main.sock
+VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.71.0-main.sock
+# environment
+MallocNanoZone = 0
 # makefile
 MAKEFLAGS = Rrqp
 # environment
@@ -126,18 +122,17 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = application.com.microsoft.VSCode.310146.310152
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.29887021.29887027
 # environment
 HOMEBREW_PREFIX = /opt/homebrew
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
- 
 # automatic
 +F = $(notdir $+)
 # environment
 HOMEBREW_REPOSITORY = /opt/homebrew
 # environment
-__CF_USER_TEXT_ENCODING = 0x1F6:0x19:0x34
+__CF_USER_TEXT_ENCODING = 0x1F5:0x19:0x34
 # environment
 COMMAND_MODE = unix2003
 # default
@@ -146,6 +141,8 @@ MAKEFILES :=
 <F = $(notdir $<)
 # environment
 LC_ALL = C
+# environment
+SECURITYSESSIONID = 186b3
 # automatic
 ^F = $(notdir $^)
 # default
@@ -157,9 +154,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 1413
+VSCODE_PID = 626
 # variable set hash-table stats:
-# Load=71/1024=7%, Rehash=0, Collisions=2/97=2%
+# Load=70/1024=7%, Rehash=0, Collisions=2/96=2%
 
 # Pattern-specific Variable Values
 
@@ -167,9 +164,9 @@ VSCODE_PID = 1413
 
 # Directories
 
-# . (device 16777234, inode 2633199): 22 files, no impossibilities.
+# . (device 16777231, inode 10272424): 23 files, no impossibilities.
 
-# 22 files, no impossibilities in 1 directories.
+# 23 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -240,7 +237,7 @@ protoc:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-06-27 12:51:07
+#  Last modified 2022-06-26 03:54:58
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
@@ -309,6 +306,7 @@ generate:
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
 #  File does not exist.
+ 
 #  File has not been updated.
 #  commands to execute (from `Makefile', line 62):
 	wire ./...
@@ -334,7 +332,6 @@ http: generate
 #  File has not been updated.
 #  commands to execute (from `Makefile', line 15):
 	go run ./internal/http
- 
 	
 
 websocket: generate
@@ -387,6 +384,6 @@ install:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Mon Jul 18 15:45:59 2022
+# Finished Make data base on Thu Sep 15 12:18:55 2022
 
  

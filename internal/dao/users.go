@@ -3,6 +3,7 @@ package dao
 import (
 	"go-chat/internal/model"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -92,10 +93,25 @@ func (dao *UsersDao) RandomUser(userId, index int, userName string) ([]*model.Us
 			return nil, err
 		}
 	} else {
-		//只随机主播  type=1
-		if err := dao.Db().Model(&model.Users{}).Where("type = ?", 1).Where("Id <> ?", userId).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
-			return nil, err
+		//只随机主播  type=0
+		value, err := strconv.Atoi(userName)
+		if err == nil {
+			if len(userName) > 10 {
+				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("mobile = ?", value).Scan(&users).Error; err != nil {
+					return nil, err
+				}
+			} else {
+				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("id = ?", value).Scan(&users).Error; err != nil {
+					return nil, err
+				}
+			}
+
+		} else {
+			if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
+				return nil, err
+			}
 		}
+
 	}
 
 	for _, v := range users {
