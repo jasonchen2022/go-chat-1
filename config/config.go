@@ -23,6 +23,7 @@ type Config struct {
 	Log        *Log        `json:"log" yaml:"log"`
 	Filesystem *Filesystem `json:"filesystem" yaml:"filesystem"`
 	Email      *Email      `json:"email" yaml:"email"`
+	Env        *Env        `json:"env" yaml:"env"`
 }
 
 func ReadConfig(filename string) *Config {
@@ -58,4 +59,11 @@ func (c *Config) SetPort(port int) {
 
 func (c *Config) GetLogPath() string {
 	return c.Log.Path
+}
+
+func (c *Config) GetEnv() string {
+	if c.Env.Mode == "" {
+		return "development"
+	}
+	return c.Env.Mode
 }

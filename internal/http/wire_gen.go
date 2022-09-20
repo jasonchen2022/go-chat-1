@@ -69,7 +69,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	articleClassService := note2.NewArticleClassService(baseService, articleClassDao)
 	contactDao := dao.NewContactDao(baseDao, relation)
 	contactService := service.NewContactService(baseService, contactDao)
-	auth := v1.NewAuthHandler(conf, userService, memberService, smsService, session, redisLock, talkMessageService, ipAddressService, talkSessionService, articleClassService, contactService)
+	auth := v1.NewAuthHandler(conf, userService, memberService, smsService, session, redisLock,lastMessage,unreadTalkCache, talkMessageService, ipAddressService, talkSessionService, articleClassService, contactService)
 	organizeDao := organize.NewOrganizeDao(baseDao)
 	organizeService := organize2.NewOrganizeService(baseService, organizeDao)
 	user := v1.NewUserHandler(userService, smsService, organizeService)

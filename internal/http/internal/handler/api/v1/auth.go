@@ -2,25 +2,25 @@ package v1
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
-
 	"go-chat/api/web/v1"
+	"go-chat/config"
 	"go-chat/internal/http/internal/dto"
 	"go-chat/internal/model"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
+	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service/note"
+	"strconv"
+	"strings"
+	"time"
 
-	"github.com/gin-gonic/gin"
-
-	"go-chat/config"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/request"
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Auth struct {
@@ -30,6 +30,8 @@ type Auth struct {
 	smsService         *service.SmsService
 	session            *cache.Session
 	redisLock          *cache.RedisLock
+	lastMessage        *cache.LastMessage
+	unreadTalkCache    *cache.UnreadTalkCache
 	talkMessageService *service.TalkMessageService
 	ipAddressService   *service.IpAddressService
 	talkSessionService *service.TalkSessionService
@@ -44,6 +46,8 @@ func NewAuthHandler(
 	smsService *service.SmsService,
 	session *cache.Session,
 	redisLock *cache.RedisLock,
+	lastMessage *cache.LastMessage,
+	unreadTalkCache *cache.UnreadTalkCache,
 	talkMessageService *service.TalkMessageService,
 	ipAddressService *service.IpAddressService,
 	talkSessionService *service.TalkSessionService,
@@ -57,6 +61,8 @@ func NewAuthHandler(
 		smsService:         smsService,
 		session:            session,
 		redisLock:          redisLock,
+		lastMessage:        lastMessage,
+		unreadTalkCache:    unreadTalkCache,
 		talkMessageService: talkMessageService,
 		ipAddressService:   ipAddressService,
 		talkSessionService: talkSessionService,
@@ -150,13 +156,11 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			response.BusinessError(ctx, err)
 			return
 		}
-
-		if member.Type > -1 && !(strings.Contains(member.UserName, "游客_")) {
-			//添加11直播官方为好友
-			c.contactService.AddCustomerFriend(ctx, member.Id)
-			//发送官方消息
-			_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), params.UserId)
-
+		//如果是独立IM站，则添加所有好友
+		if c.config.GetEnv() == "alone" {
+			c.sendDefautMsg(ctx, params.UserId)
+		} else if member.Type > -1 && !(strings.Contains(member.UserName, "游客_")) {
+			c.sendDefautMsg(ctx, params.UserId)
 		}
 
 	} else {
@@ -186,6 +190,34 @@ func (c *Auth) Sync(ctx *gin.Context) {
 	})
 
 	response.Success(ctx, c.createToken(params.UserId))
+}
+
+func (c *Auth) sendDefautMsg(ctx *gin.Context, userId int) {
+	//添加11直播官方为好友
+	c.contactService.AddCustomerFriend(ctx, userId)
+	//发送官方消息
+	_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), userId)
+	//创建会话
+	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
+		UserId:     7715,
+		TalkType:   entity.ChatPrivateMode,
+		ReceiverId: userId,
+		IsBoot:     false,
+	})
+	//创建会话
+	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
+		UserId:     userId,
+		TalkType:   entity.ChatPrivateMode,
+		ReceiverId: 7715,
+		IsBoot:     false,
+	})
+	//设置最后一条消息缓存
+	_ = c.lastMessage.Set(ctx, 1, 7715, userId, &cache.LastCacheMessage{
+		Content:  "欢迎加入11直播,如在使用过程中发现任何问题,全程为您提供服务",
+		Datetime: timeutil.DateTime(),
+	})
+	//设置消息未读数
+	c.unreadTalkCache.Increment(ctx.Request.Context(), 7715, userId)
 }
 
 // Register 注册接口

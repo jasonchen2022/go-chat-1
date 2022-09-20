@@ -9,10 +9,8 @@ import (
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
-	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -101,15 +99,16 @@ func (c *Talk) List(ctx *gin.Context) {
 			wg.Add(1)
 			go func(j int) {
 				value := &dto.TalkListItem{
-					Id:         item.Id,
-					TalkType:   item.TalkType,
-					ReceiverId: item.ReceiverId,
-					IsTop:      item.IsTop,
-					IsDisturb:  item.IsDisturb,
-					IsRobot:    item.IsRobot,
-					Avatar:     item.UserAvatar,
-					MsgText:    "...",
-					UpdatedAt:  timeutil.FormatDatetime(item.UpdatedAt),
+					Id:          item.Id,
+					TalkType:    item.TalkType,
+					ReceiverId:  item.ReceiverId,
+					IsTop:       item.IsTop,
+					IsDisturb:   item.IsDisturb,
+					IsRobot:     item.IsRobot,
+					Avatar:      item.UserAvatar,
+					MsgText:     "...",
+					UpdatedTime: item.UpdatedAt.Unix(),
+					UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
 				}
 
 				// TODO 需要优化加缓存
@@ -120,7 +119,7 @@ func (c *Talk) List(ctx *gin.Context) {
 						value.RemarkName = remarks[item.ReceiverId]
 					}
 					value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
-					value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
+					//value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
 				} else {
 					value.Name = item.GroupName
 					value.Avatar = item.GroupAvatar
@@ -141,6 +140,14 @@ func (c *Talk) List(ctx *gin.Context) {
 	}
 	wg.Wait()
 
+	//冒泡排序
+	for i := 0; i < len(items); i++ {
+		for j := i + 1; j < len(items); j++ {
+			if items[i].UpdatedTime > items[j].UpdatedTime {
+				items[i], items[j] = items[j], items[i]
+			}
+		}
+	}
 	response.Success(ctx, items)
 }
 
