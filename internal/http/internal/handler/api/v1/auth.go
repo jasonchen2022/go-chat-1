@@ -199,13 +199,6 @@ func (c *Auth) sendDefautMsg(ctx *gin.Context, userId int) {
 	_ = c.talkMessageService.SendDefaultMessage(ctx.Request.Context(), userId)
 	//创建会话
 	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
-		UserId:     7715,
-		TalkType:   entity.ChatPrivateMode,
-		ReceiverId: userId,
-		IsBoot:     false,
-	})
-	//创建会话
-	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
 		UserId:     userId,
 		TalkType:   entity.ChatPrivateMode,
 		ReceiverId: 7715,
