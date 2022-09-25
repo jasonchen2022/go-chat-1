@@ -10,7 +10,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Thu Sep 15 12:18:55 2022
+# Make data base, printed on Sun Sep 25 17:25:15 2022
 
 # Variables
 
@@ -29,10 +29,9 @@ CURDIR := /Users/admin/Documents/GitHub/go-chat
 # makefile
 SHELL = /bin/sh
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"52a557de5c39607b04949a9e2e3aeee5.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/784b0177c56c607789f9638da7b6bf3230d47a8c","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"52a557de5c39607b04949a9e2e3aeee5.zh-cn","_translationsConfigFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/tcf.json","_cacheRoot":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn","_resolvedLanguagePackCoreLocation":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/e7f30e38c5a4efafeec8ad52861eb772a9ee4dfb","_corruptedFile":"/Users/admin/Library/Application Support/Code/clp/52a557de5c39607b04949a9e2e3aeee5.zh-cn/corrupted.info","_languagePackSupport":true}
 # environment
 _ = /usr/bin/make
- 
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
@@ -49,8 +48,6 @@ GOPROXY = https://proxy.golang.org,direct
 PATH = /opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin
 # environment
 GOPATH = /Users/admin/go
-# environment
-LaunchInstanceID = D556C6EC-89A9-4224-96EC-8D0AB55184D1
 # environment
 ELECTRON_RUN_AS_NODE = 1
 # default
@@ -76,7 +73,7 @@ PROTO_FILES := api/proto/web/v1/auth.proto api/proto/admin/v1/index.proto
 # default
 MAKEFILEPATH := /Applications/Xcode.app/Contents/Developer/Makefiles
 # environment
-VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/784b0177c56c607789f9638da7b6bf3230d47a8c
+VSCODE_CODE_CACHE_PATH = /Users/admin/Library/Application Support/Code/CachedData/e7f30e38c5a4efafeec8ad52861eb772a9ee4dfb
 # environment
 LOGNAME = admin
 # environment
@@ -112,7 +109,7 @@ TMPDIR = /var/folders/2z/sgzjyqmx5bz7v8w1x4x_rky00000gn/T/
 # automatic
 *F = $(notdir $*)
 # environment
-VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.71.0-main.sock
+VSCODE_IPC_HOOK = /Users/admin/Library/Application Support/Code/1.71.1-main.sock
 # environment
 MallocNanoZone = 0
 # makefile
@@ -122,7 +119,7 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = application.com.microsoft.VSCode.29887021.29887027
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.32645232.32645238
 # environment
 HOMEBREW_PREFIX = /opt/homebrew
 # automatic
@@ -141,8 +138,6 @@ MAKEFILES :=
 <F = $(notdir $<)
 # environment
 LC_ALL = C
-# environment
-SECURITYSESSIONID = 186b3
 # automatic
 ^F = $(notdir $^)
 # default
@@ -154,9 +149,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 626
+VSCODE_PID = 11276
 # variable set hash-table stats:
-# Load=70/1024=7%, Rehash=0, Collisions=2/96=2%
+# Load=68/1024=7%, Rehash=0, Collisions=2/94=2%
 
 # Pattern-specific Variable Values
 
@@ -279,6 +274,7 @@ build: generate lint
 #  File does not exist.
 #  File has not been updated.
 #  commands to execute (from `Makefile', line 25):
+ 
 	go build -o ./bin/http ./internal/http
 	go build -o ./bin/websocket ./internal/websocket
 	go build -o ./bin/job-cli ./internal/job
@@ -306,7 +302,6 @@ generate:
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
 #  File does not exist.
- 
 #  File has not been updated.
 #  commands to execute (from `Makefile', line 62):
 	wire ./...
@@ -384,6 +379,6 @@ install:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Thu Sep 15 12:18:55 2022
+# Finished Make data base on Sun Sep 25 17:25:15 2022
 
  

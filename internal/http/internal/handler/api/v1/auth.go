@@ -133,11 +133,6 @@ func (c *Auth) Sync(ctx *gin.Context) {
 	user, _ := c.userService.Dao().FindByMobile(member.Mobile)
 	if user == nil {
 		password, _ := encrypt.HashPassword("12345689")
-		avatar := member.Avatar
-		if avatar == "" {
-			avatar = "https://11zb.oss-cn-hangzhou.aliyuncs.com/chat/avatar/20220707/avatar_1.png"
-		}
-
 		_, err := c.userService.Dao().Create(&model.Users{
 			Id:               member.Id,
 			MemberLevel:      member.MemberLevel,
@@ -145,7 +140,6 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			Username:         member.UserName,
 			Nickname:         member.Nickname,
 			Mobile:           member.Mobile,
-			Avatar:           avatar,
 			Gender:           member.Gender,
 			Type:             member.Type,
 			Motto:            member.Motto,
@@ -163,14 +157,11 @@ func (c *Auth) Sync(ctx *gin.Context) {
 			c.sendDefautMsg(ctx, params.UserId)
 		}
 
-	} else {
-		//添加11直播官方为好友
-		c.contactService.AddCustomerFriend(ctx, member.Id)
 	}
 
-	ip := ctx.ClientIP()
+	//ip := ctx.ClientIP()
 
-	address, _ := c.ipAddressService.FindAddress(ip)
+	//address, _ := c.ipAddressService.FindAddress(ip)
 
 	//登录提醒
 	_, _ = c.talkSessionService.Create(ctx.Request.Context(), &service.TalkSessionCreateOpts{
@@ -181,13 +172,13 @@ func (c *Auth) Sync(ctx *gin.Context) {
 	})
 
 	// 推送登录消息
-	_ = c.talkMessageService.SendLoginMessage(ctx.Request.Context(), &service.LoginMessageOpts{
-		UserId:   params.UserId,
-		Ip:       ip,
-		Address:  address,
-		Platform: "h5",
-		Agent:    ctx.GetHeader("user-agent"),
-	})
+	// _ = c.talkMessageService.SendLoginMessage(ctx.Request.Context(), &service.LoginMessageOpts{
+	// 	UserId:   params.UserId,
+	// 	Ip:       ip,
+	// 	Address:  address,
+	// 	Platform: "h5",
+	// 	Agent:    ctx.GetHeader("user-agent"),
+	// })
 
 	response.Success(ctx, c.createToken(params.UserId))
 }
@@ -206,7 +197,7 @@ func (c *Auth) sendDefautMsg(ctx *gin.Context, userId int) {
 	})
 	//设置最后一条消息缓存
 	_ = c.lastMessage.Set(ctx, 1, 7715, userId, &cache.LastCacheMessage{
-		Content:  "欢迎加入11直播,如在使用过程中发现任何问题,全程为您提供服务",
+		Content:  c.config.App.Welcome,
 		Datetime: timeutil.DateTime(),
 	})
 	//设置消息未读数

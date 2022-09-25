@@ -427,6 +427,9 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 			return err
 		}
 
+		//删除当前聊天列表
+		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", opts.GroupId, opts.UserId)
+
 		if err := tx.Create(&model.TalkRecordsInvite{
 			RecordId:      record.Id,
 			Type:          3,
@@ -470,7 +473,7 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 
 func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	tx := s.db.Table("group_member")
-	tx.Select("`group`.id,`group`.group_name,`group`.avatar,`group`.profile,group_member.leader")
+	tx.Select("`group`.id,`group`.group_name,`group`.type, `group`.avatar,`group`.profile,group_member.leader")
 	tx.Joins("left join `group` on `group`.id = group_member.group_id")
 	user := &model.QueryUserTypeItem{}
 	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {

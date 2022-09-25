@@ -12,7 +12,6 @@ import (
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
 	"strings"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -92,62 +91,65 @@ func (c *Talk) List(ctx *gin.Context) {
 		return
 	}
 	items := make([]*dto.TalkListItem, 0)
-	var wg sync.WaitGroup
+	//var wg sync.WaitGroup
 	for i := 0; i < len(data); i++ {
 		item := data[i]
 		if item.Nickname != "" || item.GroupName != "" {
-			wg.Add(1)
-			go func(j int) {
-				value := &dto.TalkListItem{
-					Id:          item.Id,
-					TalkType:    item.TalkType,
-					ReceiverId:  item.ReceiverId,
-					IsTop:       item.IsTop,
-					IsDisturb:   item.IsDisturb,
-					IsRobot:     item.IsRobot,
-					Avatar:      item.UserAvatar,
-					MsgText:     "...",
-					UpdatedTime: item.UpdatedAt.Unix(),
-					UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
+			// wg.Add(1)
+			// go func(j int) {
+			value := &dto.TalkListItem{
+				Id:          item.Id,
+				TalkType:    item.TalkType,
+				ReceiverId:  item.ReceiverId,
+				IsTop:       item.IsTop,
+				IsDisturb:   item.IsDisturb,
+				IsRobot:     item.IsRobot,
+				Avatar:      item.UserAvatar,
+				MsgText:     "...",
+				UpdatedTime: item.UpdatedAt.Unix(),
+				UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
+			}
+			if item.ReceiverId == 1 {
+				value.MsgText = "账号登录提醒！"
+			}
+
+			// TODO 需要优化加缓存
+			if item.TalkType == 1 {
+				value.Name = item.Nickname
+				value.Avatar = item.UserAvatar
+				if len(remarks) > 0 {
+					value.RemarkName = remarks[item.ReceiverId]
 				}
+				value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
+				//value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
+			} else {
+				value.Name = item.GroupName
+				value.Avatar = item.GroupAvatar
+			}
 
-				// TODO 需要优化加缓存
-				if item.TalkType == 1 {
-					value.Name = item.Nickname
-					value.Avatar = item.UserAvatar
-					if len(remarks) > 0 {
-						value.RemarkName = remarks[item.ReceiverId]
-					}
-					value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
-					//value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
-				} else {
-					value.Name = item.GroupName
-					value.Avatar = item.GroupAvatar
-				}
+			// 查询缓存消息
+			if msg, err := c.lastMessage.Get(ctx.Request.Context(), item.TalkType, uid, item.ReceiverId); err == nil {
+				value.MsgText = msg.Content
+				value.UpdatedAt = msg.Datetime
+			}
 
-				// 查询缓存消息
-				if msg, err := c.lastMessage.Get(ctx.Request.Context(), item.TalkType, uid, item.ReceiverId); err == nil {
-					value.MsgText = msg.Content
-					value.UpdatedAt = msg.Datetime
-				}
+			items = append(items, value)
 
-				items = append(items, value)
-
-				wg.Done()
-			}(i)
+			// 	wg.Done()
+			// }(i)
 		}
 
 	}
-	wg.Wait()
+	//wg.Wait()
 
 	//冒泡排序
-	for i := 0; i < len(items); i++ {
-		for j := i + 1; j < len(items); j++ {
-			if items[i].UpdatedTime > items[j].UpdatedTime {
-				items[i], items[j] = items[j], items[i]
-			}
-		}
-	}
+	// for i := 0; i < len(items); i++ {
+	// 	for j := i + 1; j < len(items); j++ {
+	// 		if items[j].UpdatedTime > items[i].UpdatedTime {
+	// 			items[j], items[i] = items[i], items[j]
+	// 		}
+	// 	}
+	// }
 	response.Success(ctx, items)
 }
 

@@ -30,6 +30,7 @@ func (m *Group) TableName() string {
 type GroupItem struct {
 	Id          int    `json:"id"`
 	GroupName   string `json:"group_name"`
+	Type        int    `json:"type"`
 	Avatar      string `json:"avatar"`
 	Profile     string `json:"profile"`
 	Leader      int    `json:"leader"`

@@ -6,10 +6,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"go-chat/config"
 	"go-chat/internal/cache"
 	"go-chat/internal/entity"
@@ -19,6 +15,11 @@ import (
 	"go-chat/internal/pkg/jwtutil"
 	"go-chat/internal/service"
 	"go-chat/internal/websocket/internal/dto"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 type DefaultWebSocket struct {
@@ -120,7 +121,14 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 	case entity.EventTalkRead:
 		var m *dto.TalkReadMessage
 		if err := json.Unmarshal(message, &m); err == nil {
-			c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
+			if len(m.Data.MsgIds) > 0 {
+				c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
+			} else {
+				recordIds := make([]int, 0)
+				c.groupMemberService.Db().Model(&model.TalkRecords{}).Select("id").Where("user_id = ? and receiver_id = ? and is_read = 0", m.Data.ReceiverId, client.ClientUid()).Limit(30).Scan(&recordIds)
+				c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("user_id = ? and receiver_id = ? and is_read = 0", m.Data.ReceiverId, client.ClientUid()).Update("is_read", 1)
+				m.Data.MsgIds = recordIds
+			}
 
 			c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
 				"event": entity.EventTalkRead,

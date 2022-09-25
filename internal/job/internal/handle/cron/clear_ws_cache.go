@@ -18,7 +18,7 @@ func NewClearWsCacheHandle(server *cache.SidServer) *ClearWsCacheHandle {
 // Spec 配置定时任务规则
 // 每隔30分钟处理 websocket 缓存
 func (c *ClearWsCacheHandle) Spec() string {
-	return "*/30 * * * *"
+	return "*/1 * * * *"
 }
 
 func (c *ClearWsCacheHandle) GetServiceName() string {

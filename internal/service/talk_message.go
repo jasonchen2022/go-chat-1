@@ -681,7 +681,7 @@ func (s *TalkMessageService) SendDefaultMessage(ctx context.Context, receiverId 
 			UserId:     7715,
 			ReceiverId: receiverId,
 			IsRead:     0,
-			Content:    "欢迎加入11直播,如在使用过程中发现任何问题,全程为您提供服务",
+			Content:    s.config.App.Welcome,
 		}
 	)
 	if err = s.db.Create(record).Error; err == nil {
@@ -704,7 +704,7 @@ func (s *TalkMessageService) checkUserAuth(ctx context.Context, userId int, talk
 		var group_type int
 		if err := s.db.Table("`group`").Where("id = ?", receiverId).Select([]string{"type"}).Limit(1).Scan(&group_type).Error; err == nil {
 			if group_type != 3 {
-				return errors.New("游客只能在聊天室发言！")
+				return errors.New("请用手机登录，即可在本群发言")
 			}
 		}
 	}
