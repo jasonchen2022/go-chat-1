@@ -239,6 +239,9 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 			return err
 		}
 
+		//删除当前聊天列表
+		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", groupId, uid)
+
 		if err := tx.Create(&model.TalkRecordsInvite{
 			RecordId:      record.Id,
 			Type:          2,
