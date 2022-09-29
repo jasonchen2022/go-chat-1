@@ -140,5 +140,5 @@ func (s *UserService) IsManager(userId int) bool {
 	if err := s.dao.Db().Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
 		return false
 	}
-	return user.Type < 1
+	return user.Type > 0
 }
