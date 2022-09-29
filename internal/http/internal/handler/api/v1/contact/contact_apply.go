@@ -49,6 +49,12 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 		response.Success(ctx, nil)
 		return
 	}
+	// 无法添加自己为好友
+	if uid == params.FriendId {
+		response.InvalidParams(ctx, "无法添加自己为好友")
+		return
+	}
+
 	//判断是否是管理员，是管理员直接添加用户为好友
 	if c.userService.IsManager(uid) {
 		c.service.Db().Transaction(func(tx *gorm.DB) error {
@@ -64,8 +70,8 @@ func (c *ContactApply) Create(ctx *gin.Context) {
 			})
 			return nil
 		})
-	} else {
 
+	} else {
 		if err := c.service.Create(ctx, &service.ContactApplyCreateOpts{
 			UserId:   jwtutil.GetUid(ctx),
 			Remarks:  params.Remarks,

@@ -102,6 +102,11 @@ func (c *Message) Text(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
+	//不能发给自己
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
 	if err := c.authority(ctx, &AuthorityOpts{
 		TalkType:   params.TalkType,
 		UserId:     uid,
@@ -121,6 +126,7 @@ func (c *Message) Text(ctx *gin.Context) {
 	} else {
 		response.Success(ctx, nil)
 	}
+
 }
 
 // Code 发送代码块消息
@@ -132,6 +138,11 @@ func (c *Message) Code(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
+	//不能发给自己
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
 	if err := c.authority(ctx, &AuthorityOpts{
 		TalkType:   params.TalkType,
 		UserId:     uid,
@@ -180,6 +191,10 @@ func (c *Message) Image(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
 	if err := c.authority(ctx, &AuthorityOpts{
 		TalkType:   params.TalkType,
 		UserId:     uid,
@@ -210,6 +225,11 @@ func (c *Message) File(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
+	//不能发给自己
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
 	if err := c.authority(ctx, &AuthorityOpts{
 		TalkType:   params.TalkType,
 		UserId:     uid,
@@ -287,6 +307,11 @@ func (c *Message) Emoticon(ctx *gin.Context) {
 	}
 
 	uid := jwtutil.GetUid(ctx)
+	//不能发给自己
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
 	if err := c.authority(ctx, &AuthorityOpts{
 		TalkType:   params.TalkType,
 		UserId:     uid,

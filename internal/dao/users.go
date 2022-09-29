@@ -58,7 +58,7 @@ func (dao *UsersDao) FindByIds(userIds []int) ([]*model.Users, error) {
 func (dao *UsersDao) FindByMobile(mobile string) (*model.Users, error) {
 	user := &model.Users{}
 
-	if err := dao.Db().Where(&model.Users{Mobile: mobile}).First(user).Error; err != nil {
+	if err := dao.Db().Where(&model.Users{Mobile: mobile}).Or(&model.Users{Nickname: mobile}).First(user).Error; err != nil {
 		return nil, err
 	}
 
