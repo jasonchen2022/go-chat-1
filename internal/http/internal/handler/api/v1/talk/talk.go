@@ -64,10 +64,10 @@ func NewTalkHandler(
 // List 会话列表
 func (c *Talk) List(ctx *gin.Context) {
 	uid := jwtutil.GetUid(ctx)
-
+	items := make([]*dto.TalkListItem, 0)
 	data, err := c.talkListService.List(ctx.Request.Context(), uid)
 	if err != nil {
-		response.BusinessError(ctx, err)
+		response.Success(ctx, items)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (c *Talk) List(ctx *gin.Context) {
 		response.BusinessError(ctx, err)
 		return
 	}
-	items := make([]*dto.TalkListItem, 0)
+
 	//var wg sync.WaitGroup
 	for i := 0; i < len(data); i++ {
 		item := data[i]
