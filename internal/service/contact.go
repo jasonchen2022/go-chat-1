@@ -38,7 +38,8 @@ func (s *ContactService) EditRemark(ctx context.Context, uid int, friendId int, 
 // @params uid      用户ID
 // @params friendId 联系人ID
 func (s *ContactService) Delete(ctx context.Context, uid, friendId int) error {
-	return s.db.Model(&model.Contact{}).Where("user_id = ? and friend_id = ?", uid, friendId).Update("status", 0).Error
+	// return s.db.Model(&model.Contact{}).Where("user_id = ? and friend_id = ?", uid, friendId).Update("status", 0).Error
+	return s.db.Model(&model.Contact{}).Delete("user_id = ? and friend_id = ?", uid, friendId).Error
 }
 
 // List 获取联系人列表
