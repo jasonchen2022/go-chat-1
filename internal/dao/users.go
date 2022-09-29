@@ -97,17 +97,26 @@ func (dao *UsersDao) RandomUser(userId, index int, userName string) ([]*model.Us
 		value, err := strconv.Atoi(userName)
 		if err == nil {
 			if len(userName) > 10 {
-				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("mobile = ?", value).Scan(&users).Error; err != nil {
+				// if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("mobile = ?", value).Scan(&users).Error; err != nil {
+				// 	return nil, err
+				// }
+				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("mobile = ?", value).Scan(&users).Error; err != nil {
 					return nil, err
 				}
 			} else {
-				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("id = ?", value).Scan(&users).Error; err != nil {
+				// if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("id = ?", value).Scan(&users).Error; err != nil {
+				// 	return nil, err
+				// }
+				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("id = ?", value).Scan(&users).Error; err != nil {
 					return nil, err
 				}
 			}
 
 		} else {
-			if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
+			// if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
+			// 	return nil, err
+			// }
+			if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("nickname like ?", "%"+userName+"%").Scan(&users).Error; err != nil {
 				return nil, err
 			}
 		}
