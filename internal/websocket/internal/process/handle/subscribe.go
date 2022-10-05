@@ -161,39 +161,39 @@ func (s *SubscribeConsume) onConsumeTalkKeyboard(body string) {
 
 // onConsumeLogin 用户上线或下线消息
 func (s *SubscribeConsume) onConsumeLogin(body string) {
-	var msg struct {
-		Status int `json:"status"`
-		UserID int `json:"user_id"`
-	}
 
-	if err := json.Unmarshal([]byte(body), &msg); err != nil {
-		logrus.Error("[SubscribeConsume] onConsumeLogin Unmarshal err: ", err.Error())
-		return
-	}
+	// var msg struct {
+	// 	Status int `json:"status"`
+	// 	UserID int `json:"user_id"`
+	// }
 
-	ctx := context.Background()
-	cids := make([]int64, 0)
+	// if err := json.Unmarshal([]byte(body), &msg); err != nil {
+	// 	logrus.Error("[SubscribeConsume] onConsumeLogin Unmarshal err: ", err.Error())
+	// 	return
+	// }
+	// ctx := context.Background()
+	// cids := make([]int64, 0)
 
-	uids := s.contactService.GetContactIds(ctx, msg.UserID)
-	sid := s.conf.ServerId()
-	for _, uid := range uids {
-		ids := s.ws.GetUidFromClientIds(ctx, sid, im.Session.Default.Name(), fmt.Sprintf("%d", uid))
+	// uids := s.contactService.GetContactIds(ctx, msg.UserID)
+	// sid := s.conf.ServerId()
+	// for _, uid := range uids {
+	// 	ids := s.ws.GetUidFromClientIds(ctx, sid, im.Session.Default.Name(), fmt.Sprintf("%d", uid))
 
-		cids = append(cids, ids...)
-	}
+	// 	cids = append(cids, ids...)
+	// }
 
-	if len(cids) == 0 {
-		return
-	}
+	// if len(cids) == 0 {
+	// 	return
+	// }
 
-	c := im.NewSenderContent()
-	c.SetReceive(cids...)
-	c.SetMessage(&im.Message{
-		Event:   entity.EventOnlineStatus,
-		Content: msg,
-	})
+	// c := im.NewSenderContent()
+	// c.SetReceive(cids...)
+	// c.SetMessage(&im.Message{
+	// 	Event:   entity.EventOnlineStatus,
+	// 	Content: msg,
+	// })
 
-	im.Session.Default.Write(c)
+	// im.Session.Default.Write(c)
 }
 
 // onConsumeTalkRevoke 撤销聊天消息
