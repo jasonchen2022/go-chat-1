@@ -132,6 +132,7 @@ func RegisterApiRoute(conf *config.Config, router *gin.Engine, handler *handler.
 			talkMsg.POST("/text", handler.TalkMessage.Text)              // 发送文本消息
 			talkMsg.POST("/code", handler.TalkMessage.Code)              // 发送代码消息
 			talkMsg.POST("/image", handler.TalkMessage.Image)            // 发送图片消息
+			talkMsg.POST("/imagebyurl", handler.TalkMessage.ImageByUrl)  // 发送图片消息
 			talkMsg.POST("/file", handler.TalkMessage.File)              // 发送文件消息
 			talkMsg.POST("/emoticon", handler.TalkMessage.Emoticon)      // 发送表情包消息
 			talkMsg.POST("/forward", handler.TalkMessage.Forward)        // 发送转发消息

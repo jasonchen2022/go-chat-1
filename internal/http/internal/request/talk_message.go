@@ -14,8 +14,9 @@ type CodeMessageRequest struct {
 }
 
 type ImageMessageRequest struct {
-	TalkType   int `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
-	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	ImageUrl   string `form:"image_url" json:"image_url" label:"image_url"`
 }
 
 type FileMessageRequest struct {

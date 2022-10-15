@@ -9,8 +9,10 @@ import (
 	"go-chat/internal/http/internal/response"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/jwtutil"
+	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -121,7 +123,7 @@ func (c *Talk) List(ctx *gin.Context) {
 					value.RemarkName = remarks[item.ReceiverId]
 				}
 				value.UnreadNum = c.unreadTalkCache.Get(ctx.Request.Context(), item.ReceiverId, uid)
-				//value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
+				value.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(value.ReceiverId)))
 			} else {
 				value.Name = item.GroupName
 				value.Avatar = item.GroupAvatar
@@ -131,6 +133,7 @@ func (c *Talk) List(ctx *gin.Context) {
 			if msg, err := c.lastMessage.Get(ctx.Request.Context(), item.TalkType, uid, item.ReceiverId); err == nil {
 				value.MsgText = msg.Content
 				value.UpdatedAt = msg.Datetime
+				value.UpdatedTime = timeutil.ParseDateTime(msg.Datetime).Unix()
 			}
 
 			items = append(items, value)

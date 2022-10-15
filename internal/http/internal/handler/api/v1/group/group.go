@@ -182,13 +182,13 @@ func (c *Group) Invite(ctx *gin.Context) {
 		return
 	}
 
-	key := fmt.Sprintf("group-join:%d", params.GroupId)
-	if !c.redisLock.Lock(ctx, key, 20) {
-		response.BusinessError(ctx, "网络异常，请稍后再试！")
-		return
-	}
+	//key := fmt.Sprintf("group-join:%d", params.GroupId)
+	// if !c.redisLock.Lock(ctx, key, 20) {
+	// 	response.BusinessError(ctx, "网络异常，请稍后再试！")
+	// 	return
+	// }
 
-	defer c.redisLock.UnLock(ctx, key)
+	//defer c.redisLock.UnLock(ctx, key)
 
 	uid := jwtutil.GetUid(ctx)
 	uids := sliceutil.UniqueInt(sliceutil.ParseIds(params.Ids))
@@ -222,13 +222,13 @@ func (c *Group) Join(ctx *gin.Context) {
 		return
 	}
 
-	key := fmt.Sprintf("group-join:%d", params.GroupId)
-	if !c.redisLock.Lock(ctx, key, 20) {
-		response.BusinessError(ctx, "网络异常，请稍后再试！")
-		return
-	}
+	//key := fmt.Sprintf("group-join:%d", params.GroupId)
+	// if !c.redisLock.Lock(ctx, key, 20) {
+	// 	response.BusinessError(ctx, "网络异常，请稍后再试！")
+	// 	return
+	// }
 
-	defer c.redisLock.UnLock(ctx, key)
+	// defer c.redisLock.UnLock(ctx, key)
 
 	uid := jwtutil.GetUid(ctx)
 	ids := []int{uid}

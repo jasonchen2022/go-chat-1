@@ -149,7 +149,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			memberQuery := s.db.Table("group_member")
 			memberQuery.Joins("left join users on group_member.user_id = users.id")
 			memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
-			memberQuery.Where("group_member.group_id = ? and is_quit =0 ", opts.ReceiverId)
+			memberQuery.Where("group_member.group_id = ?", opts.ReceiverId)
 			memberQuery.Where("group_member.user_id in ?", userIds)
 			var memberFields = []string{
 				"group_member.user_id",

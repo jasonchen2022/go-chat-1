@@ -58,6 +58,7 @@ type ImageMessageOpts struct {
 	TalkType   int
 	ReceiverId int
 	File       *multipart.FileHeader
+	ImageUrl   string
 }
 
 type LocationMessageOpts struct {
@@ -223,27 +224,32 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			ReceiverId: opts.ReceiverId,
 		}
 	)
+	filePath := ""
+	ext := ""
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
 		return c
 	}
-	stream, err := filesystem.ReadMultipartStream(opts.File)
-	if err != nil {
-		return err
+	if opts.File != nil {
+		stream, err := filesystem.ReadMultipartStream(opts.File)
+		if err != nil {
+			return err
+		}
+		ext := strutil.FileSuffix(opts.File.Filename)
+		sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
+		val := sn.NextVal()
+		fileName := fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
+
+		if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
+			return err
+		}
+
+		filePath = s.fileSystem.Oss.PublicUrl(fileName)
+	} else {
+		filePath = opts.ImageUrl
+		ext = strutil.FileSuffix(opts.ImageUrl)
 	}
-
-	ext := strutil.FileSuffix(opts.File.Filename)
-	sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
-	val := sn.NextVal()
-	fileName := fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
-
-	if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
-		return err
-	}
-
-	filePath := s.fileSystem.Oss.PublicUrl(fileName)
-
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
 			return err
@@ -766,7 +772,7 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	content := jsonutil.Encode(map[string]interface{}{
 		"event": entity.EventTalk,
 		"data": jsonutil.Encode(map[string]interface{}{
-			"sender_id":   record.UserId,
+			"sender_id":   record,
 			"receiver_id": record.ReceiverId,
 			"talk_type":   record.TalkType,
 			"record_id":   record.Id,

@@ -2,6 +2,8 @@ package cache
 
 import (
 	"context"
+	"fmt"
+	"go-chat/internal/pkg/jsonutil"
 	"strconv"
 	"time"
 
@@ -46,6 +48,8 @@ func (s *SidServer) All(ctx context.Context, status int) []string {
 	result, err := s.rds.HGetAll(ctx, ServerKey).Result()
 
 	slice := make([]string, 0)
+
+	fmt.Printf("获取所有在线服务器%s", jsonutil.Encode(result))
 
 	t := time.Now().Unix()
 	if err == nil {

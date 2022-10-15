@@ -2,11 +2,13 @@ package process
 
 import (
 	"context"
+	"log"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go-chat/config"
 	"go-chat/internal/cache"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Health struct {
@@ -19,6 +21,9 @@ func NewHealth(conf *config.Config, server *cache.SidServer) *Health {
 }
 
 func (s *Health) Setup(ctx context.Context) error {
+
+	log.Println("Health Setup")
+
 	for {
 		select {
 

@@ -228,16 +228,13 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 	}
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&model.GroupMember{}).Where("group_id = ? AND user_id = ?", groupId, uid).Updates(&model.GroupMember{
-			IsQuit: 1,
-		}).Error
-		if err != nil {
+
+		if err := tx.Create(record).Error; err != nil {
 			return err
 		}
 
-		if err = tx.Create(record).Error; err != nil {
-			return err
-		}
+		//删除群成员
+		tx.Delete(&model.GroupMember{}, "group_id = ? AND user_id = ?", groupId, uid)
 
 		//删除当前聊天列表
 		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", groupId, uid)

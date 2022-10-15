@@ -10,7 +10,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 make: *** No rule to make target `all'.  Stop.
 
 
-# Make data base, printed on Wed Oct  5 13:20:27 2022
+# Make data base, printed on Sat Oct 15 16:53:56 2022
 
 # Variables
 
@@ -35,6 +35,7 @@ _ = /usr/bin/make
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
+ 
 VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
@@ -45,15 +46,19 @@ VSCODE_CWD = /
 # environment
 GOPROXY = https://proxy.golang.org,direct
 # environment
-PATH = /opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/VMware Fusion.app/Contents/Public:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin
+PATH = /Users/admin/.nvm/versions/node/v14.20.1/bin:/Users/admin/flutter/bin:/Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/VMware Fusion Tech Preview.app/Contents/Public:/usr/local/go/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin:.
 # environment
 GOPATH = /Users/admin/go
 # environment
+NVM_BIN = /Users/admin/.nvm/versions/node/v14.20.1/bin
+# environment
 ELECTRON_RUN_AS_NODE = 1
+# environment
+JAVA_8_HOME = /Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.w9FwzDdZ5q/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.NS6FXlTCSv/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
@@ -63,7 +68,7 @@ HOMEBREW_CELLAR = /opt/homebrew/Cellar
 # environment
 ORIGINAL_XDG_CURRENT_DESKTOP = undefined
 # environment
-MANPATH = /opt/homebrew/share/man::
+MANPATH = /Users/admin/.nvm/versions/node/v14.20.1/share/man:/opt/homebrew/share/man::
 # environment
 GOMODCACHE = /Users/admin/go/pkg/mod
 # environment
@@ -79,6 +84,8 @@ LOGNAME = admin
 # environment
 APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
+NVM_CD_FLAGS = -q
+# environment
 VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # automatic
 ^D = $(patsubst %/,%,$(dir $^))
@@ -90,6 +97,8 @@ MAKE = $(MAKE_COMMAND)
 MAKECMDGOALS := all
 # environment
 SHLVL = 1
+# environment
+JAVA_HOME = /Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home
 # default
 MAKE_VERSION := 3.81
 # environment
@@ -98,6 +107,8 @@ USER = admin
 .DEFAULT_GOAL := install
 # environment
 HOMEBREW_BOTTLE_DOMAIN = https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/
+# environment
+CLASSPATH = .:/Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home/lib/tools.jar
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # default
@@ -118,6 +129,8 @@ MAKEFLAGS = Rrqp
 MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
+# environment
+NVM_DIR = /Users/admin/.nvm
 # environment
 XPC_SERVICE_NAME = application.com.microsoft.VSCode.32645232.32645238
 # environment
@@ -149,9 +162,9 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 4446
+VSCODE_PID = 3548
 # variable set hash-table stats:
-# Load=68/1024=7%, Rehash=0, Collisions=2/94=2%
+# Load=74/1024=7%, Rehash=0, Collisions=2/100=2%
 
 # Pattern-specific Variable Values
 
@@ -159,7 +172,7 @@ VSCODE_PID = 4446
 
 # Directories
 
-# . (device 16777234, inode 10272424): 23 files, no impossibilities.
+# . (device 16777232, inode 10272424): 23 files, no impossibilities.
 
 # 23 files, no impossibilities in 1 directories.
 
@@ -273,7 +286,6 @@ build: generate lint
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
- 
 #  commands to execute (from `Makefile', line 25):
 	go build -o ./bin/http ./internal/http
 	go build -o ./bin/websocket ./internal/websocket
@@ -288,6 +300,7 @@ build-all: generate lint build-windows build-linux build-mac
 
 build-mac-m1:
 #  Phony target (prerequisite of .PHONY).
+ 
 #  Implicit rule search has not been done.
 #  File does not exist.
 #  File has not been updated.
@@ -379,6 +392,6 @@ install:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Wed Oct  5 13:20:27 2022
+# Finished Make data base on Sat Oct 15 16:53:56 2022
 
  

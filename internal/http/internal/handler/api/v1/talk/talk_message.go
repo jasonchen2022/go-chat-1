@@ -216,6 +216,51 @@ func (c *Message) Image(ctx *gin.Context) {
 	}
 }
 
+// Image 发送图片消息
+func (c *Message) ImageByUrl(ctx *gin.Context) {
+	params := &request.ImageMessageRequest{}
+	if err := ctx.ShouldBind(params); err != nil {
+		response.InvalidParams(ctx, err)
+		return
+	}
+
+	if params.ImageUrl == "" {
+		response.InvalidParams(ctx, "image_url 字段必传！")
+		return
+	}
+
+	if !sliceutil.InStr(strutil.FileSuffix(params.ImageUrl), []string{"png", "jpg", "jpeg", "gif"}) {
+		response.InvalidParams(ctx, "上传文件格式不正确,仅支持 png、jpg、jpeg 和 gif")
+		return
+	}
+
+	uid := jwtutil.GetUid(ctx)
+	if uid == params.ReceiverId {
+		response.InvalidParams(ctx, "不能给自己发送消息")
+		return
+	}
+	if err := c.authority(ctx, &AuthorityOpts{
+		TalkType:   params.TalkType,
+		UserId:     uid,
+		ReceiverId: params.ReceiverId,
+	}); err != nil {
+		response.BusinessError(ctx, err.Error())
+		return
+	}
+
+	if err := c.service.SendImageMessage(ctx.Request.Context(), &service.ImageMessageOpts{
+		UserId:     uid,
+		TalkType:   params.TalkType,
+		ReceiverId: params.ReceiverId,
+		ImageUrl:   params.ImageUrl,
+		File:       nil,
+	}); err != nil {
+		response.BusinessError(ctx, err)
+	} else {
+		response.Success(ctx, nil)
+	}
+}
+
 // File 发送文件消息
 func (c *Message) File(ctx *gin.Context) {
 	params := &request.FileMessageRequest{}
