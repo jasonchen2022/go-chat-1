@@ -1,12 +1,13 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/handler/web"
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/jwt"
 	"go-chat/internal/repository/cache"
+
+	"github.com/gin-gonic/gin"
 )
 
 // RegisterWebRoute 注册 Web 路由
@@ -30,6 +31,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 		{
 			auth.POST("/login", ichat.HandlerFunc(handler.V1.Auth.Login))                // 登录
 			auth.POST("/register", ichat.HandlerFunc(handler.V1.Auth.Register))          // 注册
+			auth.POST("/sync", ichat.HandlerFunc(handler.V1.Auth.Sync))                  // 同步账号
 			auth.POST("/refresh", authorize, ichat.HandlerFunc(handler.V1.Auth.Refresh)) // 刷新 Token
 			auth.POST("/logout", authorize, ichat.HandlerFunc(handler.V1.Auth.Logout))   // 退出登录
 			auth.POST("/forget", ichat.HandlerFunc(handler.V1.Auth.Forget))              // 找回密码
@@ -44,22 +46,26 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			user.POST("/change/password", ichat.HandlerFunc(handler.V1.User.ChangePassword)) // 修改用户密码
 			user.POST("/change/mobile", ichat.HandlerFunc(handler.V1.User.ChangeMobile))     // 修改用户手机号
 			user.POST("/change/email", ichat.HandlerFunc(handler.V1.User.ChangeEmail))       // 修改用户邮箱
+			user.POST("/find/friends", ichat.HandlerFunc(handler.V1.User.RandomUser))        // 发现用户列表
 		}
 
 		contact := v1.Group("/contact").Use(authorize)
 		{
 			contact.GET("/list", ichat.HandlerFunc(handler.V1.Contact.List))               // 联系人列表
+			contact.GET("/listbypage", ichat.HandlerFunc(handler.V1.Contact.ListByPage))   // 联系人列表分页
+			contact.GET("/totalpage", ichat.HandlerFunc(handler.V1.Contact.TotalPage))     // 总页数
 			contact.GET("/search", ichat.HandlerFunc(handler.V1.Contact.Search))           // 搜索联系人
 			contact.GET("/detail", ichat.HandlerFunc(handler.V1.Contact.Detail))           // 搜索联系人
 			contact.POST("/delete", ichat.HandlerFunc(handler.V1.Contact.Delete))          // 删除联系人
 			contact.POST("/edit-remark", ichat.HandlerFunc(handler.V1.Contact.EditRemark)) // 编辑联系人备注
 
 			// 联系人申请相关
-			contact.GET("/apply/records", ichat.HandlerFunc(handler.V1.ContactsApply.List))              // 联系人申请列表
-			contact.POST("/apply/create", ichat.HandlerFunc(handler.V1.ContactsApply.Create))            // 添加联系人申请
-			contact.POST("/apply/accept", ichat.HandlerFunc(handler.V1.ContactsApply.Accept))            // 同意人申请列表
-			contact.POST("/apply/decline", ichat.HandlerFunc(handler.V1.ContactsApply.Decline))          // 拒绝人申请列表
-			contact.GET("/apply/unread-num", ichat.HandlerFunc(handler.V1.ContactsApply.ApplyUnreadNum)) // 联系人申请未读数
+			contact.GET("/apply/records", ichat.HandlerFunc(handler.V1.ContactsApply.List))                  // 联系人申请列表
+			contact.POST("/apply/create", ichat.HandlerFunc(handler.V1.ContactsApply.Create))                // 添加联系人申请
+			contact.POST("/apply/accept", ichat.HandlerFunc(handler.V1.ContactsApply.Accept))                // 同意人申请列表
+			contact.POST("/apply/decline", ichat.HandlerFunc(handler.V1.ContactsApply.Decline))              // 拒绝人申请列表
+			contact.GET("/apply/unread-num", ichat.HandlerFunc(handler.V1.ContactsApply.ApplyUnreadNum))     // 联系人申请未读数
+			contact.POST("/apply/online/service", ichat.HandlerFunc(handler.V1.ContactsApply.OnlineService)) // 在线客服
 		}
 
 		// 聊天群相关分组
@@ -71,6 +77,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			userGroup.POST("/create", ichat.HandlerFunc(handler.V1.Group.Create))            // 创建群组
 			userGroup.POST("/dismiss", ichat.HandlerFunc(handler.V1.Group.Dismiss))          // 解散群组
 			userGroup.POST("/invite", ichat.HandlerFunc(handler.V1.Group.Invite))            // 邀请加入群组
+			userGroup.POST("/join", ichat.HandlerFunc(handler.V1.Group.Join))                // 主动加入群组
 			userGroup.POST("/secede", ichat.HandlerFunc(handler.V1.Group.SignOut))           // 退出群组
 			userGroup.POST("/setting", ichat.HandlerFunc(handler.V1.Group.Setting))          // 设置群组信息
 			userGroup.POST("/handover", ichat.HandlerFunc(handler.V1.Group.Handover))        // 群主转让
@@ -114,6 +121,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			talkMsg.POST("/text", ichat.HandlerFunc(handler.V1.TalkMessage.Text))              // 发送文本消息
 			talkMsg.POST("/code", ichat.HandlerFunc(handler.V1.TalkMessage.Code))              // 发送代码消息
 			talkMsg.POST("/image", ichat.HandlerFunc(handler.V1.TalkMessage.Image))            // 发送图片消息
+			talkMsg.POST("/imagebyurl", ichat.HandlerFunc(handler.V1.TalkMessage.ImageByUrl))  // 发送图片消息
 			talkMsg.POST("/file", ichat.HandlerFunc(handler.V1.TalkMessage.File))              // 发送文件消息
 			talkMsg.POST("/emoticon", ichat.HandlerFunc(handler.V1.TalkMessage.Emoticon))      // 发送表情包消息
 			talkMsg.POST("/forward", ichat.HandlerFunc(handler.V1.TalkMessage.Forward))        // 发送转发消息
@@ -139,6 +147,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 
 		upload := v1.Group("/upload").Use(authorize)
 		{
+			upload.POST("/file", ichat.HandlerFunc(handler.V1.Upload.File))
 			upload.POST("/avatar", ichat.HandlerFunc(handler.V1.Upload.Avatar))
 			upload.POST("/multipart/initiate", ichat.HandlerFunc(handler.V1.Upload.InitiateMultipart))
 			upload.POST("/multipart", ichat.HandlerFunc(handler.V1.Upload.MultipartUpload))

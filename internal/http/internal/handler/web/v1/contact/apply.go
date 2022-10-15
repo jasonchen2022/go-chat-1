@@ -7,6 +7,8 @@ import (
 	"go-chat/internal/pkg/timeutil"
 
 	"go-chat/internal/service"
+
+	"gorm.io/gorm"
 )
 
 type Apply struct {
@@ -123,4 +125,43 @@ func (c *Apply) List(ctx *ichat.Context) error {
 	c.service.ClearApplyUnreadNum(ctx.Context, ctx.UserId())
 
 	return ctx.Paginate(items, 1, 1000, len(items))
+}
+
+//在线客服--创建好友
+func (c *Apply) OnlineService(ctx *ichat.Context) error {
+	params := &web.ContactOnlineServiceRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+
+	}
+
+	//判断是否已经是好友
+	uid := ctx.UserId()
+	if c.contactService.Dao().IsFriend(ctx.Context, uid, params.ReceiverId, false) {
+		return ctx.Success(nil)
+
+	}
+	err := c.service.Db().Transaction(func(tx *gorm.DB) error {
+		//创建双向好友
+		err1 := c.contactService.Create(ctx.Context, &service.ContactApplyCreateOpts{
+			UserId:   uid,
+			FriendId: params.ReceiverId,
+		})
+		if err1 != nil {
+			return err1
+		}
+		//创建双向好友
+		err2 := c.contactService.Create(ctx.Context, &service.ContactApplyCreateOpts{
+			UserId:   params.ReceiverId,
+			FriendId: uid,
+		})
+		if err2 != nil {
+			return err2
+		}
+		return nil
+	})
+	if err != nil {
+		return ctx.BusinessError(err)
+	}
+	return ctx.Success(nil)
 }

@@ -2,16 +2,15 @@ package talk
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/ichat"
-	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 )
 
@@ -62,15 +61,16 @@ func (c *Talk) List(ctx *ichat.Context) error {
 	items := make([]*web.TalkListItem, 0)
 	for _, item := range data {
 		value := &web.TalkListItem{
-			Id:         int32(item.Id),
-			TalkType:   int32(item.TalkType),
-			ReceiverId: int32(item.ReceiverId),
-			IsTop:      int32(item.IsTop),
-			IsDisturb:  int32(item.IsDisturb),
-			IsRobot:    int32(item.IsRobot),
-			Avatar:     item.UserAvatar,
-			MsgText:    "...",
-			UpdatedAt:  timeutil.FormatDatetime(item.UpdatedAt),
+			Id:          int32(item.Id),
+			TalkType:    int32(item.TalkType),
+			ReceiverId:  int32(item.ReceiverId),
+			IsTop:       int32(item.IsTop),
+			IsDisturb:   int32(item.IsDisturb),
+			IsRobot:     int32(item.IsRobot),
+			Avatar:      item.UserAvatar,
+			MsgText:     "",
+			UpdatedTime: item.UpdatedAt.Unix(),
+			UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
 		}
 
 		if num, ok := unReads[fmt.Sprintf("%d_%d", item.TalkType, item.ReceiverId)]; ok {
@@ -80,8 +80,11 @@ func (c *Talk) List(ctx *ichat.Context) error {
 		if item.TalkType == 1 {
 			value.Name = item.Nickname
 			value.Avatar = item.UserAvatar
-			value.RemarkName = remarks[item.ReceiverId]
-			value.IsOnline = int32(strutil.BoolToInt(c.wsClient.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(int(value.ReceiverId)))))
+			value.Avatar = item.UserAvatar
+			if len(remarks) > 0 {
+				value.RemarkName = remarks[item.ReceiverId]
+			}
+			//value.IsOnline = int32(strutil.BoolToInt(c.wsClient.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(int(value.ReceiverId)))))
 		} else {
 			value.Name = item.GroupName
 			value.Avatar = item.GroupAvatar
@@ -91,14 +94,13 @@ func (c *Talk) List(ctx *ichat.Context) error {
 		if msg, err := c.lastMessage.Get(ctx.RequestCtx(), item.TalkType, uid, item.ReceiverId); err == nil {
 			value.MsgText = msg.Content
 			value.UpdatedAt = msg.Datetime
+			value.UpdatedTime = timeutil.ParseDateTime(msg.Datetime).Unix()
 		}
 
 		items = append(items, value)
 	}
 
-	return ctx.Success(&web.GetTalkListResponse{
-		Items: items,
-	})
+	return ctx.Success(items)
 }
 
 // Create 创建会话列表
@@ -137,7 +139,7 @@ func (c *Talk) Create(ctx *ichat.Context) error {
 		return ctx.BusinessError("暂无权限！")
 	}
 
-	result, err := c.talkListService.Create(ctx.RequestCtx(), &service.TalkSessionCreateOpt{
+	result, err := c.talkListService.Create(ctx.RequestCtx(), &model.TalkSessionCreateOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,

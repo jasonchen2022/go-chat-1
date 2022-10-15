@@ -8,6 +8,7 @@ import (
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service/organize"
+
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -37,14 +38,25 @@ type AuthorityOpts struct {
 	ReceiverId int // 接收者ID
 }
 
+//判断当前发送者是否管理员
+func (dao *Message) IsLeader(userId int) bool {
+	var member_type int
+	dao.service.Db().Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type)
+	return member_type > 0
+}
+
 // 权限验证
 func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 
 	if opt.TalkType == entity.ChatPrivateMode {
 		// 这里需要判断双方是否都是企业成员，如果是则无需添加好友即可聊天
-		if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
-			return errors.New("系统繁忙，请稍后再试！！！")
-		} else if isOk {
+		// if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
+		// 	return errors.New("系统繁忙，请稍后再试！！！")
+		// } else if isOk {
+		// 	return nil
+		// }
+
+		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) {
 			return nil
 		}
 
@@ -176,6 +188,45 @@ func (c *Message) Image(ctx *ichat.Context) error {
 		return ctx.BusinessError(err.Error())
 	}
 
+	return ctx.Success(nil)
+}
+
+// Image 发送图片消息
+func (c *Message) ImageByUrl(ctx *ichat.Context) error {
+	params := &web.ImageMessageRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+
+	if params.ImageUrl == "" {
+		return ctx.InvalidParams("image_url 字段必传！")
+	}
+
+	if !sliceutil.InStr(strutil.FileSuffix(params.ImageUrl), []string{"png", "jpg", "jpeg", "gif"}) {
+		return ctx.InvalidParams("上传文件格式不正确,仅支持 png、jpg、jpeg 和 gif")
+	}
+
+	uid := ctx.UserId()
+	if uid == params.ReceiverId {
+		return ctx.InvalidParams("不能给自己发送消息")
+	}
+	if err := c.authority(ctx, &AuthorityOpts{
+		TalkType:   params.TalkType,
+		UserId:     uid,
+		ReceiverId: params.ReceiverId,
+	}); err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+
+	if err := c.service.SendImageMessage(ctx.RequestCtx(), &service.ImageMessageOpt{
+		UserId:     uid,
+		TalkType:   params.TalkType,
+		ReceiverId: params.ReceiverId,
+		ImageUrl:   params.ImageUrl,
+		File:       nil,
+	}); err != nil {
+		return ctx.BusinessError(err.Error())
+	}
 	return ctx.Success(nil)
 }
 

@@ -158,3 +158,21 @@ func (u *User) ChangeEmail(ctx *ichat.Context) error {
 
 	return nil
 }
+
+/*
+*发现好友  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (u *User) RandomUser(ctx *ichat.Context) error {
+	params := &web.RandUserRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+
+	users, err := u.service.RandomUser(ctx.UserId(), params.Index, params.UserName)
+	if err != nil {
+		return ctx.BusinessError("取发现用户列表出错")
+	}
+	return ctx.Success(users, "成功")
+}

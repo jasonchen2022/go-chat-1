@@ -6,10 +6,13 @@ import (
 	"os"
 	"time"
 
+	"go-chat/internal/repository/model"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
+	"gorm.io/plugin/dbresolver"
 
 	"go-chat/config"
 )
@@ -43,6 +46,14 @@ func NewMySQLClient(conf *config.Config) *gorm.DB {
 		SkipInitializeWithVersion: false,               // 根据当前 MySQL 版本自动配置
 	}), gormConfig)
 
+	dsn_ff := conf.MySQLFF.GetDsn()
+	//注意：指定实体查询另外一个库
+	err1 := db.Use(dbresolver.Register(dbresolver.Config{
+		Replicas: []gorm.Dialector{mysql.Open(dsn_ff)},
+	}, &model.Member{}, &model.DictData{}, &model.Fans{}))
+	if err1 != nil {
+		panic(fmt.Errorf("mysql connect error :%v", err1))
+	}
 	if err != nil {
 		panic(fmt.Errorf("mysql connect error :%v", err))
 	}

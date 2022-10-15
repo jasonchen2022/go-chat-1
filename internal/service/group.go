@@ -9,6 +9,7 @@ import (
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -32,16 +33,8 @@ func (s *GroupService) Dao() *dao.GroupDao {
 	return s.dao
 }
 
-type CreateGroupOpt struct {
-	UserId    int    // 操作人ID
-	Name      string // 群名称
-	Avatar    string // 群头像
-	Profile   string // 群简介
-	MemberIds []int  // 联系人ID
-}
-
 // Create 创建群聊
-func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpt) (int, error) {
+func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) (int, error) {
 	var (
 		err      error
 		members  []*model.GroupMember
@@ -56,6 +49,7 @@ func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpt) (int, e
 		Name:      opts.Name,
 		Profile:   opts.Profile,
 		Avatar:    opts.Avatar,
+		Type:      opts.Type,
 		MaxNum:    model.GroupMemberMaxNum,
 	}
 
@@ -126,21 +120,30 @@ func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpt) (int, e
 	return group.Id, err
 }
 
-type UpdateGroupOpt struct {
-	GroupId int    // 群ID
-	Name    string // 群名称
-	Avatar  string // 群头像
-	Profile string // 群简介
-}
-
 // Update 更新群信息
-func (s *GroupService) Update(ctx context.Context, opts *UpdateGroupOpt) error {
+func (s *GroupService) Update(ctx context.Context, opts *model.UpdateGroupOpt) error {
 	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
 		"group_name": opts.Name,
 		"avatar":     opts.Avatar,
 		"profile":    opts.Profile,
 	})
 
+	return err
+}
+
+// Update 更新群名称
+func (s *GroupService) Rename(ctx context.Context, opts *model.UpdateGroupOpts) error {
+	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
+		"group_name": opts.Name,
+	})
+	return err
+}
+
+//更新群头像
+func (s *GroupService) Avatar(ctx context.Context, opts *model.UpdateGroupOpts) error {
+	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
+		"avatar": opts.Avatar,
+	})
 	return err
 }
 
@@ -188,16 +191,16 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 	}
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
-		err := tx.Model(&model.GroupMember{}).Where("group_id = ? AND user_id = ?", groupId, uid).Updates(&model.GroupMember{
-			IsQuit: 1,
-		}).Error
-		if err != nil {
+
+		if err := tx.Create(record).Error; err != nil {
 			return err
 		}
 
-		if err = tx.Create(record).Error; err != nil {
-			return err
-		}
+		//删除群成员
+		tx.Delete(&model.GroupMember{}, "group_id = ? AND user_id = ?", groupId, uid)
+
+		//删除当前聊天列表
+		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", groupId, uid)
 
 		if err := tx.Create(&model.TalkRecordsInvite{
 			RecordId:      record.Id,
@@ -246,7 +249,7 @@ type InviteGroupMembersOpt struct {
 }
 
 // InviteMembers 邀请加入群聊
-func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembersOpt) error {
+func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGroupMembersOpt) error {
 	var (
 		err            error
 		addMembers     []*model.GroupMember
@@ -286,7 +289,8 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembe
 	}
 
 	if len(addMembers) == 0 {
-		return errors.New("邀请的好友，都已成为群成员")
+		//return errors.New("邀请的好友，都已成为群成员")
+		return nil
 	}
 
 	record := &model.TalkRecords{
@@ -398,6 +402,9 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 		if err = tx.Create(record).Error; err != nil {
 			return err
 		}
+
+		//删除当前聊天列表
+		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", opts.GroupId, opts.UserId)
 
 		if err := tx.Create(&model.TalkRecordsInvite{
 			RecordId:      record.Id,

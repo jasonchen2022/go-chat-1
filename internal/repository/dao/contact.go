@@ -3,9 +3,13 @@ package dao
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"time"
 
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
+
+	"github.com/sirupsen/logrus"
 )
 
 type IContactDao interface {
@@ -93,4 +97,26 @@ func (dao *ContactDao) LoadContactCache(ctx context.Context, uid int) error {
 	_ = dao.cache.MSet(ctx, uid, items)
 
 	return nil
+}
+
+//判断当前发送者是否管理员
+func (dao *ContactDao) IsLeader(ctx context.Context, userId int) bool {
+	member_type := dao.GetMemberType(ctx, userId)
+	return member_type > 0
+
+}
+
+func (dao *ContactDao) GetMemberType(ctx context.Context, userId int) int {
+	var member_type int
+	key := fmt.Sprintf("member_type_%s", strconv.Itoa(userId))
+	result := dao.rds.Get(ctx, key).Val()
+	if result == "" {
+		dao.db.Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type)
+		dao.rds.Set(ctx, key, strconv.Itoa(member_type), time.Duration(60*5)*time.Second)
+	} else {
+		member_type, _ = strconv.Atoi(result)
+	}
+	logrus.Info("member_type：", strconv.Itoa(member_type))
+	return member_type
+
 }

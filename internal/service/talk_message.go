@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,10 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
+	"github.com/GUAIK-ORG/go-snowflake/snowflake"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"go-chat/config"
@@ -24,24 +25,25 @@ import (
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
-	"go-chat/internal/pkg/utils"
 )
 
 type TalkMessageService struct {
 	*BaseService
-	config             *config.Config
-	unreadTalkCache    *cache.UnreadStorage
-	lastMessage        *cache.MessageStorage
-	talkRecordsVoteDao *dao.TalkRecordsVoteDao
-	groupMemberDao     *dao.GroupMemberDao
-	sidServer          *cache.SidServer
-	client             *cache.WsClientSession
-	fileSystem         *filesystem.Filesystem
-	splitUploadDao     *dao.SplitUploadDao
+	config                *config.Config
+	unreadTalkCache       *cache.UnreadStorage
+	lastMessage           *cache.MessageStorage
+	talkRecordsVoteDao    *dao.TalkRecordsVoteDao
+	groupMemberDao        *dao.GroupMemberDao
+	sidServer             *cache.SidServer
+	client                *cache.WsClientSession
+	fileSystem            *filesystem.Filesystem
+	splitUploadDao        *dao.SplitUploadDao
+	sensitiveMatchService *SensitiveMatchService
+	contactDao            *dao.ContactDao
 }
 
-func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadStorage, lastMessage *cache.MessageStorage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao) *TalkMessageService {
-	return &TalkMessageService{BaseService: baseService, config: config, unreadTalkCache: unreadTalkCache, lastMessage: lastMessage, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, sidServer: sidServer, client: client, fileSystem: fileSystem, splitUploadDao: splitUploadDao}
+func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadStorage, lastMessage *cache.MessageStorage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao, sensitiveMatchService *SensitiveMatchService, contactDao *dao.ContactDao) *TalkMessageService {
+	return &TalkMessageService{BaseService: baseService, config: config, unreadTalkCache: unreadTalkCache, lastMessage: lastMessage, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, sidServer: sidServer, client: client, fileSystem: fileSystem, splitUploadDao: splitUploadDao, sensitiveMatchService: sensitiveMatchService, contactDao: contactDao}
 }
 
 type SysTextMessageOpt struct {
@@ -87,6 +89,24 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 		UserId:     opts.UserId,
 		ReceiverId: opts.ReceiverId,
 		Content:    opts.Text,
+	}
+	//校验权限
+	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
+	if c != nil {
+		return c
+	}
+	if record.Content != "" {
+		//检测敏感词
+		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(record.Content, '*')
+			if content != "" {
+				record.Content = content
+			}
+
+		}
 	}
 
 	if err := s.db.Create(record).Error; err != nil {
@@ -151,6 +171,7 @@ type ImageMessageOpt struct {
 	TalkType   int
 	ReceiverId int
 	File       *multipart.FileHeader
+	ImageUrl   string
 }
 
 // SendImageMessage 发送图片消息
@@ -164,22 +185,32 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			ReceiverId: opts.ReceiverId,
 		}
 	)
-
-	stream, err := filesystem.ReadMultipartStream(opts.File)
-	if err != nil {
-		return err
+	filePath := ""
+	ext := ""
+	//校验权限
+	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
+	if c != nil {
+		return c
 	}
+	if opts.File != nil {
+		stream, err := filesystem.ReadMultipartStream(opts.File)
+		if err != nil {
+			return err
+		}
+		ext := strutil.FileSuffix(opts.File.Filename)
+		sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
+		val := sn.NextVal()
+		fileName := fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
-	ext := strutil.FileSuffix(opts.File.Filename)
+		if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
+			return err
+		}
 
-	meta := utils.LoadImage(bytes.NewReader(stream))
-
-	filePath := fmt.Sprintf("public/media/image/talk/%s/%s", timeutil.DateNumber(), strutil.GenImageName(ext, meta.Width, meta.Height))
-
-	if err := s.fileSystem.Default.Write(stream, filePath); err != nil {
-		return err
+		filePath = s.fileSystem.Oss.PublicUrl(fileName)
+	} else {
+		filePath = opts.ImageUrl
+		ext = strutil.FileSuffix(opts.ImageUrl)
 	}
-
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
 			return err
@@ -195,7 +226,7 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			Suffix:       ext,
 			Size:         int(opts.File.Size),
 			Path:         filePath,
-			Url:          s.fileSystem.Default.PublicUrl(filePath),
+			Url:          filePath,
 		}).Error; err != nil {
 			return err
 		}
@@ -231,6 +262,12 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 			ReceiverId: opts.ReceiverId,
 		}
 	)
+
+	//校验权限
+	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
+	if c != nil {
+		return c
+	}
 
 	file, err := s.splitUploadDao.GetFile(opts.UserId, opts.UploadId)
 	if err != nil {
@@ -471,14 +508,22 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 	if record.IsRevoke == 1 {
 		return nil
 	}
-
-	if record.UserId != uid {
-		return errors.New("无权撤回回消息")
+	//私聊只能撤回自己发的消息
+	if record.TalkType == 1 {
+		if record.UserId != uid {
+			return errors.New("无权撤回消息")
+		}
 	}
-
-	if time.Now().Unix() > record.CreatedAt.Add(3*time.Minute).Unix() {
-		return errors.New("超出有效撤回时间范围，无法进行撤销！")
+	//如果是群聊，管理员可以撤回所有人发的消息
+	if record.TalkType == 2 {
+		if !(s.groupMemberDao.IsMember(record.ReceiverId, uid, true)) {
+			return errors.New("无权撤回群聊消息")
+		}
 	}
+	///无时间限制
+	// if time.Now().Unix() > record.CreatedAt.Add(3*time.Minute).Unix() {
+	// 	return errors.New("超出有效撤回时间范围，无法进行撤销！")
+	// }
 
 	if err = s.db.Model(&model.TalkRecords{Id: recordId}).Update("is_revoke", 1).Error; err != nil {
 		return err
@@ -638,6 +683,45 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	}
 
 	return err
+}
+
+func (s *TalkMessageService) SendDefaultMessage(ctx context.Context, receiverId int) error {
+	var (
+		err    error
+		record = &model.TalkRecords{
+			TalkType:   entity.ChatPrivateMode,
+			MsgType:    entity.MsgTypeText,
+			UserId:     7715,
+			ReceiverId: receiverId,
+			IsRead:     0,
+			Content:    s.config.App.Welcome,
+		}
+	)
+	if err = s.db.Create(record).Error; err == nil {
+		return err
+	}
+	return nil
+}
+
+func (s *TalkMessageService) checkUserAuth(ctx context.Context, userId int, talkType int, receiverId int) error {
+	//1.检测发送消息用户账号是否被禁止发言
+	user := &model.QueryUserTypeItem{}
+	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
+		return err
+	}
+	if user.IsMute == 1 {
+		return errors.New("你已被禁言，请文明聊天！")
+	}
+	//检测游客只能在聊天室发言
+	if user.Type == -1 && talkType == 2 {
+		var group_type int
+		if err := s.db.Table("`group`").Where("id = ?", receiverId).Select([]string{"type"}).Limit(1).Scan(&group_type).Error; err == nil {
+			if group_type != 3 {
+				return errors.New("请用手机登录，即可在本群发言")
+			}
+		}
+	}
+	return nil
 }
 
 // 发送消息后置处理

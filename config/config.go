@@ -7,6 +7,7 @@ import (
 
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/strutil"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,11 +17,13 @@ type Config struct {
 	App        *App        `json:"app" yaml:"app"`
 	Redis      *Redis      `json:"redis" yaml:"redis"`
 	MySQL      *MySQL      `json:"mysql" yaml:"mysql"`
+	MySQLFF    *MySQL      `json:"mysqlFF" yaml:"mysql_ff"`
 	Jwt        *Jwt        `json:"jwt" yaml:"jwt"`
 	Cors       *Cors       `json:"cors" yaml:"cors"`
 	Log        *Log        `json:"log" yaml:"log"`
 	Filesystem *Filesystem `json:"filesystem" yaml:"filesystem"`
 	Email      *Email      `json:"email" yaml:"email"`
+	Env        *Env        `json:"env" yaml:"env"`
 }
 
 func ReadConfig(filename string) *Config {
@@ -56,4 +59,11 @@ func (c *Config) SetPort(port int) {
 
 func (c *Config) GetLogPath() string {
 	return c.Log.Path
+}
+
+func (c *Config) GetEnv() string {
+	if c.Env.Mode == "" {
+		return "development"
+	}
+	return c.Env.Mode
 }

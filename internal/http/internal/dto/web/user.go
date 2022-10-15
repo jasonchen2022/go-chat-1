@@ -37,3 +37,9 @@ type ChangeUserEmailRequest struct {
 	Password string `form:"password" json:"password" binding:"required" label:"password"`
 	Code     string `form:"code" json:"code" binding:"required,len=6,numeric" label:"code"`
 }
+
+//发现好友实体
+type RandUserRequest struct {
+	UserName string `form:"user_name" json:"user_name" binding:"" label:"user_name"`
+	Index    int    `form:"index" json:"index" binding:"required,min=6,max=20" label:"index"`
+}

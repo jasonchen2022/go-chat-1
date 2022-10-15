@@ -54,6 +54,7 @@ type Filesystem struct {
 	Default IAdapter
 	Local   *LocalFilesystem
 	Cos     *CosFilesystem
+	Oss     *OssFilesystem
 }
 
 func NewFilesystem(conf *config.Config) *Filesystem {
@@ -63,6 +64,7 @@ func NewFilesystem(conf *config.Config) *Filesystem {
 
 	s.Local = NewLocalFilesystem(conf)
 	s.Cos = NewCosFilesystem(conf)
+	s.Oss = NewOssFilesystem(conf)
 
 	switch s.driver {
 	case "cos":

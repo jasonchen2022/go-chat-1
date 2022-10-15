@@ -2,6 +2,8 @@ package v1
 
 import (
 	"fmt"
+	"path"
+	"strconv"
 	"time"
 
 	"go-chat/config"
@@ -9,8 +11,9 @@ import (
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/ichat"
-	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/service"
+
+	"github.com/GUAIK-ORG/go-snowflake/snowflake"
 )
 
 type Upload struct {
@@ -23,23 +26,50 @@ func NewUpload(config *config.Config, filesystem *filesystem.Filesystem, service
 	return &Upload{config: config, filesystem: filesystem, service: service}
 }
 
-// Avatar 头像上传上传
+// 头像文件上传
 func (u *Upload) Avatar(ctx *ichat.Context) error {
+
+	file, err := ctx.Context.FormFile("image")
+	if err != nil {
+		return ctx.InvalidParams("参数[image]为必填")
+
+	}
+
+	ext := path.Ext(file.Filename)
+	fs, _ := filesystem.ReadMultipartStream(file)
+	s, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := s.NextVal()
+	fileName := fmt.Sprintf("chat/avatar/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
+	if err := u.filesystem.Oss.UploadByte(fileName, fs); err != nil {
+		return ctx.BusinessError(err.Error())
+
+	}
+	return ctx.Success(entity.H{
+		"image": u.filesystem.Oss.PublicUrl(fileName),
+	})
+}
+
+// 其他文件上传
+func (u *Upload) File(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("file")
 	if err != nil {
 		return ctx.InvalidParams("文件上传失败！")
+
 	}
+	ext := path.Ext(file.Filename)
+	fs, _ := filesystem.ReadMultipartStream(file)
+	s, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := s.NextVal()
+	fileName := fmt.Sprintf("chat/file/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
-	stream, _ := filesystem.ReadMultipartStream(file)
-	object := fmt.Sprintf("public/media/image/avatar/%s/%s", time.Now().Format("20060102"), strutil.GenImageName("png", 200, 200))
+	if err := u.filesystem.Oss.UploadByte(fileName, fs); err != nil {
+		return ctx.BusinessError(err.Error())
 
-	if err := u.filesystem.Default.Write(stream, object); err != nil {
-		return ctx.BusinessError("文件上传失败")
 	}
 
 	return ctx.Success(entity.H{
-		"avatar": u.filesystem.Default.PublicUrl(object),
+		"file": u.filesystem.Oss.PublicUrl(fileName),
 	})
 }
 

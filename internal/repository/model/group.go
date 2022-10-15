@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	GroupMemberMaxNum = 200 // 最大成员数量
+	GroupMemberMaxNum = 2000 // 最大成员数量
 )
 
 type Group struct {
@@ -34,4 +34,41 @@ type GroupItem struct {
 	Profile   string `json:"profile"`
 	Leader    int    `json:"leader"`
 	IsDisturb int    `json:"is_disturb"`
+}
+
+type CreateGroupOpts struct {
+	UserId    int // 操作人ID
+	Type      int
+	Name      string // 群名称
+	Avatar    string // 群头像
+	Profile   string // 群简介
+	MemberIds []int  // 联系人ID
+}
+
+type CreateGroupOpt struct {
+	UserId    int    // 操作人ID
+	Name      string // 群名称
+	Avatar    string // 群头像
+	Profile   string // 群简介
+	MemberIds []int  // 联系人ID
+}
+
+type UpdateGroupOpt struct {
+	GroupId int    // 群ID
+	Name    string // 群名称
+	Avatar  string // 群头像
+	Profile string // 群简介
+}
+
+type InviteGroupMembersOpt struct {
+	UserId    int   // 操作人ID
+	GroupId   int   // 群ID
+	MemberIds []int // 群成员ID
+}
+
+type UpdateGroupOpts struct {
+	GroupId int    // 群ID
+	Name    string // 群名称
+	Avatar  string // 群头像
+	Profile string // 群简介
 }

@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson"
 	"go-chat/config"
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/ichat"
@@ -18,6 +15,10 @@ import (
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 	"go-chat/internal/websocket/internal/dto"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
+	"github.com/tidwall/gjson"
 )
 
 type DefaultWebSocket struct {
@@ -82,14 +83,14 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 		})
 	}
 
-	// 推送上线消息
-	c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
-		"event": entity.EventOnlineStatus,
-		"data": jsonutil.Encode(entity.MapStrAny{
-			"user_id": client.ClientUid(),
-			"status":  1,
-		}),
-	}))
+	// // 推送上线消息
+	// c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
+	// 	"event": entity.EventOnlineStatus,
+	// 	"data": jsonutil.Encode(entity.MapStrAny{
+	// 		"user_id": client.ClientUid(),
+	// 		"status":  1,
+	// 	}),
+	// }))
 }
 
 // 消息接收回调事件
@@ -153,12 +154,12 @@ func (c *DefaultWebSocket) close(client im.IClient, code int, text string) {
 		})
 	}
 
-	// 推送下线消息
-	c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
-		"event": entity.EventOnlineStatus,
-		"data": jsonutil.Encode(entity.MapStrAny{
-			"user_id": client.ClientUid(),
-			"status":  0,
-		}),
-	}))
+	// // 推送下线消息
+	// c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
+	// 	"event": entity.EventOnlineStatus,
+	// 	"data": jsonutil.Encode(entity.MapStrAny{
+	// 		"user_id": client.ClientUid(),
+	// 		"status":  0,
+	// 	}),
+	// }))
 }

@@ -6,6 +6,7 @@ import (
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 )
 
@@ -59,9 +60,9 @@ func (s *UserService) Login(mobile string, password string) (*model.Users, error
 		return nil, err
 	}
 
-	if !encrypt.VerifyPassword(user.Password, password) {
-		return nil, errors.New("登录密码填写错误! ")
-	}
+	// if !encrypt.VerifyPassword(user.Password, password) {
+	// 	return nil, errors.New("登录密码填写错误! ")
+	// }
 
 	return user, nil
 }
@@ -115,4 +116,17 @@ func (s *UserService) UpdatePassword(uid int, oldPassword string, password strin
 	}
 
 	return nil
+}
+
+/*
+*发现好友  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (s *UserService) RandomUser(userId, index int, userName string) ([]*model.UserTemp, error) {
+	users, err := s.dao.RandomUser(userId, index, userName)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

@@ -2,7 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/repository/cache"
@@ -34,13 +39,42 @@ func (s *SmsService) SendSmsCode(ctx context.Context, channel string, mobile str
 
 	code := strutil.GenValidateCode(6)
 
-	// 添加发送记录
-	if err := s.smsCodeCache.Set(ctx, channel, mobile, code, 60*15); err != nil {
-		return "", err
-	}
-
 	// ... 请求第三方短信接口
-	fmt.Println("正在发送短信验证码：", code)
+	// fmt.Println("正在发送短信验证码：", code)
+	// responseCode := map[string]string{
+	// 	"0":  "短信发送成功",
+	// 	"-1": "参数不全",
+	// 	"-2": "服务器空间不支持,请确认支持curl或者fsocket，联系您的空间商解决或者更换空间！",
+	// 	"30": "密码错误",
+	// 	"40": "账号不存在",
+	// 	"41": "余额不足",
+	// 	"42": "帐户已过期",
+	// 	"43": "IP地址限制",
+	// 	"50": "内容含有敏感词",
+	// }
 
-	return code, nil
+	smsapi := "http://api.smsbao.com/" //短信平台帐号
+	account := "zhiboakak"             //短信平台密码
+	password := md5.Sum([]byte("zhibo999"))
+	smscontent := "【11zb】您的本次验证码为:" + string(code) + ",该验证码5分钟有效"
+	ss := fmt.Sprintf("%x", password)
+	sendurl := smsapi + "sms?u=" + account + "&p=" + ss + "&m=" + mobile + "&c=" + url.QueryEscape(smscontent)
+	res, err := http.Get(sendurl)
+
+	if err != nil {
+		defer res.Body.Close()
+		return "", err
+	} else {
+		defer res.Body.Close()
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	if string(body) == "0" {
+		// 添加发送记录
+		if err := s.smsCodeCache.Set(ctx, channel, mobile, code, 60*5); err != nil {
+			return "", err
+		}
+		return code, nil
+	} else {
+		return "", errors.New("发送短信错误")
+	}
 }

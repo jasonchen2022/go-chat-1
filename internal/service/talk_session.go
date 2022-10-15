@@ -11,6 +11,7 @@ import (
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 )
 
@@ -53,15 +54,8 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 	return items, nil
 }
 
-type TalkSessionCreateOpt struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	IsBoot     bool
-}
-
 // Create 创建会话列表
-func (s *TalkSessionService) Create(ctx context.Context, opts *TalkSessionCreateOpt) (*model.TalkSession, error) {
+func (s *TalkSessionService) Create(ctx context.Context, opts *model.TalkSessionCreateOpt) (*model.TalkSession, error) {
 	var (
 		err    error
 		result *model.TalkSession
@@ -141,6 +135,15 @@ type TalkSessionDisturbOpt struct {
 	TalkType   int
 	ReceiverId int
 	IsDisturb  int
+}
+
+// Top 会话是否置顶
+func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, uid int) (*model.TalkSession, error) {
+	talkSession := &model.TalkSession{}
+	if err := s.db.Model(&model.TalkSession{}).Where("id = ? and user_id = ?", groupId, uid).Limit(1).Scan(talkSession).Error; err != nil {
+		return talkSession, err
+	}
+	return talkSession, nil
 }
 
 // Disturb 会话免打扰

@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"go-chat/internal/entity"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type RoomStorage struct {
@@ -38,7 +39,7 @@ func (r *RoomStorage) Add(ctx context.Context, opts *RoomOption) error {
 
 	err := r.rds.SAdd(ctx, key, opts.Cid).Err()
 	if err == nil {
-		r.rds.Expire(ctx, key, time.Hour*24*7)
+		r.rds.Expire(ctx, key, time.Second*60*2) //2分钟缓存
 	}
 
 	return err

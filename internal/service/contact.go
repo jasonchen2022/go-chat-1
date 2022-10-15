@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"math"
 
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
+	"gorm.io/gorm"
 )
 
 type ContactService struct {
@@ -18,6 +21,52 @@ func NewContactService(baseService *BaseService, dao *dao.ContactDao) *ContactSe
 
 func (s *ContactService) Dao() dao.IContactDao {
 	return s.dao
+}
+
+//建立好友关系
+func (s *ContactService) Create(ctx context.Context, opts *ContactApplyCreateOpts) error {
+	apply := &model.Contact{
+		UserId:   opts.UserId,
+		FriendId: opts.FriendId,
+		Remark:   opts.Remarks,
+		Status:   1,
+	}
+
+	if err := s.db.Create(apply).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+//添加11直播官方为双向好友
+func (s *ContactService) AddCustomerFriend(ctx context.Context, uid int) error {
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if !(s.Dao().IsFriend(ctx, uid, 7715, false)) {
+			apply := &model.Contact{
+				UserId:   uid,
+				FriendId: 7715,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply).Error; err != nil {
+				return err
+			}
+
+			apply_friend := &model.Contact{
+				UserId:   7715,
+				FriendId: uid,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply_friend).Error; err != nil {
+				return err
+			}
+
+		}
+		return nil
+	})
+	return err
 }
 
 // EditRemark 编辑联系人备注
@@ -71,4 +120,56 @@ func (s *ContactService) GetContactIds(ctx context.Context, uid int) []int64 {
 	s.db.Model(&model.Contact{}).Where("user_id = ? and status = ?", uid, 1).Pluck("friend_id", &ids)
 
 	return ids
+}
+
+func (s *ContactService) ListByPage(ctx context.Context, uid int, page int, keyword string) ([]*model.ContactListItem, error) {
+
+	pageIndex := (page - 1) * 20
+	tx := s.db.Model(&model.Contact{})
+	tx.Select([]string{
+		"users.id",
+		"users.nickname",
+		"users.avatar",
+		"users.motto",
+		"users.gender",
+		"contact.remark",
+	})
+
+	tx.Joins("inner join `users` ON `users`.id = contact.friend_id")
+	tx.Where("`contact`.user_id = ? ", uid)
+	if keyword != "" {
+		tx.Where("`users`.username LIKE ? ", "%"+keyword+"%")
+	}
+	tx.Where("contact.status = ? LIMIT ?,20;", 1, pageIndex)
+
+	items := make([]*model.ContactListItem, 0)
+	if err := tx.Scan(&items).Error; err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (s *ContactService) TotalPage(ctx context.Context, uid int) (int, error) {
+
+	tx := s.db.Model(&model.Contact{})
+	tx.Select([]string{
+		"users.id",
+		"users.nickname",
+		"users.avatar",
+		"users.motto",
+		"users.gender",
+		"contact.remark",
+	})
+
+	tx.Joins("inner join `users` ON `users`.id = contact.friend_id")
+	tx.Where("`contact`.user_id = ? and contact.status = ? ", uid, 1)
+
+	items := make([]*model.ContactListItem, 0)
+	if err := tx.Scan(&items).Error; err != nil {
+		return 0, err
+	}
+	//    page:=math.Ceil(len(items)/50)
+	page := int(math.Ceil(float64(len(items)) / float64(20)))
+	return page, nil
 }

@@ -8,6 +8,7 @@ import (
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/service/organize"
+
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -41,6 +42,31 @@ func (c *Contact) List(ctx *ichat.Context) error {
 		item.IsOnline = strutil.BoolToInt(c.wsClient.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(item.Id)))
 	}
 
+	return ctx.Success(items)
+}
+
+func (c *Contact) ListByPage(ctx *ichat.Context) error {
+
+	params := &web.ContactQueryRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+
+	}
+	items, err := c.service.ListByPage(ctx.Context, ctx.UserId(), params.PageIndex, params.Keyword)
+	// fmt.Println("PageIndexPageIndex==", params.PageIndex)
+	if err != nil {
+		return ctx.BusinessError(err)
+
+	}
+	return ctx.Success(items)
+}
+
+func (c *Contact) TotalPage(ctx *ichat.Context) error {
+	items, err := c.service.TotalPage(ctx.Context, ctx.UserId())
+
+	if err != nil {
+		return ctx.BusinessError(err)
+	}
 	return ctx.Success(items)
 }
 

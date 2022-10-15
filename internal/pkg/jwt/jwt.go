@@ -26,13 +26,13 @@ func GenerateToken(guard string, secret string, ops *Options) string {
 	claims := AuthClaims{
 		Guard: guard,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Audience:  ops.Audience,
+			Audience:  []string{"every"},
 			ExpiresAt: ops.ExpiresAt,
 			ID:        ops.ID,
 			IssuedAt:  ops.IssuedAt,
-			Issuer:    ops.Issuer,
+			Issuer:    "jwt_yh",
 			NotBefore: ops.NotBefore,
-			Subject:   ops.Subject,
+			Subject:   "YH",
 		},
 	}
 

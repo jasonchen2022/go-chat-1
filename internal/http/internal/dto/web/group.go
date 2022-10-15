@@ -11,6 +11,12 @@ type GroupCreateRequest struct {
 	Profile    string `form:"profile" json:"profile" binding:"max=255" label:"profile"`
 }
 
+type GroupCreateChatRequest struct {
+	Name     string `form:"name" json:"name" binding:"required" label:"name"`
+	AnchorId int    `form:"anchor_id" json:"anchor_id" binding:"required" label:"anchor_id"`
+	Profile  string `form:"profile" json:"profile" label:"notice"`
+}
+
 type GroupDismissRequest struct {
 	GroupCommonRequest
 }
@@ -83,4 +89,9 @@ type GroupNoSpeakRequest struct {
 	Mode    int `form:"mode" json:"mode" binding:"required,oneof=1 2"`
 	GroupId int `form:"group_id" json:"group_id" binding:"min=1"`
 	UserId  int `form:"user_id" json:"user_id" binding:"min=1"`
+}
+
+type GroupAvatarRequest struct {
+	GroupCommonRequest
+	Avatar string `form:"avatar" json:"avatar" binding:""`
 }

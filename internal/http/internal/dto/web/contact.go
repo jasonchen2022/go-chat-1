@@ -31,3 +31,12 @@ type ContactApplyDeclineRequest struct {
 	Remarks string `form:"remark" json:"remark" binding:"required" label:"remark"`
 	ApplyId int    `form:"apply_id" json:"apply_id" binding:"required" label:"apply_id"`
 }
+
+type ContactQueryRequest struct {
+	PageIndex int    `form:"page" json:"page" binding:"required" label:"page"`
+	Keyword   string `form:"keyword" json:"pkeywordage" label:"keyword"`
+}
+
+type ContactOnlineServiceRequest struct {
+	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required" label:"receiver_id"`
+}

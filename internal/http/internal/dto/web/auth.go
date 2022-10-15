@@ -28,6 +28,10 @@ type (
 	RegisterResponse struct{}
 )
 
+type SyncRequest struct {
+	UserId int `form:"UserId" json:"UserId" binding:"required" label:"登录账号ID"`
+}
+
 // 账号找回接口验证
 type (
 	ForgetRequest struct {

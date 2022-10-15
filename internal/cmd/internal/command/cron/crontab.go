@@ -9,9 +9,10 @@ import (
 	"reflect"
 	"syscall"
 
+	crontab "go-chat/internal/cmd/internal/handle/cron"
+
 	"github.com/robfig/cron/v3"
 	"github.com/urfave/cli/v2"
-	crontab "go-chat/internal/cmd/internal/handle/cron"
 )
 
 type Command *cli.Command
@@ -26,10 +27,11 @@ type ICrontab interface {
 
 // Subcommands 注册的任务请务必实现 ICrontab 接口
 type Subcommands struct {
-	ClearWsCache      *crontab.ClearWsCache
-	ClearArticle      *crontab.ClearArticle
-	ClearTmpFile      *crontab.ClearTmpFile
-	ClearExpireServer *crontab.ClearExpireServer
+	// ClearArticle      *crontab.ClearArticle
+	// ClearTmpFile      *crontab.ClearTmpFile
+	// ClearExpireServer *crontab.ClearExpireServer
+	ClearWsCache *crontab.ClearWsCache
+	ClearGroup   *crontab.ClearGroup
 }
 
 func NewCrontabCommand(handles *Subcommands) Command {

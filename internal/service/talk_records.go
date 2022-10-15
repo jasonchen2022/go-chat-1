@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"go-chat/internal/entity"
@@ -12,40 +13,53 @@ import (
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
+	"github.com/wxnacy/wgo/arrays"
 )
 
 type TalkRecordsItem struct {
-	Id         int         `json:"id"`
-	TalkType   int         `json:"talk_type"`
-	MsgType    int         `json:"msg_type"`
-	UserId     int         `json:"user_id"`
-	ReceiverId int         `json:"receiver_id"`
-	Nickname   string      `json:"nickname"`
-	Avatar     string      `json:"avatar"`
-	IsRevoke   int         `json:"is_revoke"`
-	IsMark     int         `json:"is_mark"`
-	IsRead     int         `json:"is_read"`
-	Content    string      `json:"content,omitempty"`
-	File       interface{} `json:"file,omitempty"`
-	CodeBlock  interface{} `json:"code_block,omitempty"`
-	Forward    interface{} `json:"forward,omitempty"`
-	Invite     interface{} `json:"invite,omitempty"`
-	Vote       interface{} `json:"vote,omitempty"`
-	Login      interface{} `json:"login,omitempty"`
-	Location   interface{} `json:"location,omitempty"`
-	CreatedAt  string      `json:"created_at"`
+	Id               int         `json:"id"`
+	TalkType         int         `json:"talk_type"`
+	MsgType          int         `json:"msg_type"`
+	UserId           int         `json:"user_id"`
+	ReceiverId       int         `json:"receiver_id"`
+	Nickname         string      `json:"nickname"`
+	Avatar           string      `json:"avatar"`
+	IsRevoke         int         `json:"is_revoke"`
+	IsMark           int         `json:"is_mark"`
+	IsRead           int         `json:"is_read"`
+	IsLeader         int         `json:"is_leader"`
+	FanLevel         int         `json:"fan_level"`
+	FanLabel         string      `json:"fan_label"`
+	MemberLevel      int         `json:"member_level"`
+	MemberLevelTitle string      `json:"member_level_title"`
+	MemberType       int         `json:"member_type"`
+	IsMute           int         `json:"is_mute"`
+	Content          string      `json:"content,omitempty"`
+	File             interface{} `json:"file,omitempty"`
+	CodeBlock        interface{} `json:"code_block,omitempty"`
+	Forward          interface{} `json:"forward,omitempty"`
+	Invite           interface{} `json:"invite,omitempty"`
+	Vote             interface{} `json:"vote,omitempty"`
+	Login            interface{} `json:"login,omitempty"`
+	Location         interface{} `json:"location,omitempty"`
+	CreatedAt        string      `json:"created_at"`
+	GroupName        string      `json:"group_name"`
+	GroupAvatar      string      `json:"group_avatar"`
+	GroupType        int         `json:"group_type"`
 }
 
 type TalkRecordsService struct {
 	*BaseService
-	talkVoteCache      *cache.TalkVote
-	talkRecordsVoteDao *dao.TalkRecordsVoteDao
-	groupMemberDao     *dao.GroupMemberDao
-	dao                *dao.TalkRecordsDao
+	talkVoteCache         *cache.TalkVote
+	talkRecordsVoteDao    *dao.TalkRecordsVoteDao
+	groupMemberDao        *dao.GroupMemberDao
+	dao                   *dao.TalkRecordsDao
+	sensitiveMatchService *SensitiveMatchService
 }
 
-func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao) *TalkRecordsService {
-	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao}
+func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService) *TalkRecordsService {
+	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService}
 }
 
 func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
@@ -53,17 +67,19 @@ func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
 }
 
 type QueryTalkRecordsOpt struct {
-	TalkType   int   // 对话类型
-	UserId     int   // 获取消息的用户
-	ReceiverId int   // 接收者ID
-	MsgType    []int // 消息类型
-	RecordId   int   // 上次查询的最小消息ID
-	Limit      int   // 数据行数
+	TalkType   int    // 对话类型
+	UserId     int    // 获取消息的用户
+	ReceiverId int    // 接收者ID
+	MsgType    []int  // 消息类型
+	RecordId   int    // 上次查询的最小消息ID
+	Limit      int    // 数据行数
+	Keyword    string //搜搜关键字
 }
 
 // GetTalkRecords 获取对话消息
 func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalkRecordsOpt) ([]*TalkRecordsItem, error) {
 	var (
+		err    error
 		items  = make([]*model.QueryTalkRecordsItem, 0)
 		fields = []string{
 			"talk_records.id",
@@ -77,15 +93,25 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"users.member_level",
+			"users.member_level_title",
+			"users.type as member_type",
+			"users.is_mute",
+			"0 as is_leader",
 		}
 	)
 
 	query := s.db.Table("talk_records")
 	query.Joins("left join users on talk_records.user_id = users.id")
-	query.Joins("left join talk_records_delete on talk_records.id = talk_records_delete.record_id and talk_records_delete.user_id = ?", opts.UserId)
 
 	if opts.RecordId > 0 {
 		query.Where("talk_records.id < ?", opts.RecordId)
+	}
+
+	if opts.Keyword != "" {
+		query.Where("talk_records.content like ?", fmt.Sprintf("%%%s%%", opts.Keyword))
 	}
 
 	if opts.TalkType == entity.ChatPrivateMode {
@@ -102,15 +128,64 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 	}
 
 	query.Where("talk_records.talk_type = ?", opts.TalkType)
-	query.Where("ifnull(talk_records_delete.id,0) = 0")
+	query.Where("NOT EXISTS (SELECT 1 FROM `talk_records_delete` WHERE talk_records_delete.record_id = talk_records.id AND talk_records_delete.user_id = ? LIMIT 1)", opts.UserId)
 	query.Select(fields).Order("talk_records.id desc").Limit(opts.Limit)
 
-	if err := query.Scan(&items).Error; err != nil {
+	if err = query.Scan(&items).Error; err != nil {
 		return nil, err
 	}
 
 	if len(items) == 0 {
-		return make([]*TalkRecordsItem, 0), nil
+		return make([]*TalkRecordsItem, 0), err
+	} else {
+		//如果群聊则查询当前聊天记录内用户信息
+		if opts.TalkType == entity.ChatGroupMode {
+			var userIds []int64
+			for _, item := range items {
+				if arrays.ContainsInt(userIds, int64(item.UserId)) < 0 {
+					userIds = append(userIds, int64(item.UserId))
+				}
+
+			}
+			memberQuery := s.db.Table("group_member")
+			memberQuery.Joins("left join users on group_member.user_id = users.id")
+			memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
+			memberQuery.Where("group_member.group_id = ?", opts.ReceiverId)
+			memberQuery.Where("group_member.user_id in ?", userIds)
+			var memberFields = []string{
+				"group_member.user_id",
+				"users.type as member_type",
+				"users.is_mute",
+				"users.member_level",
+				"users.member_level_title",
+				"group_member.leader as is_leader",
+				"`group`.group_name",
+				"`group`.avatar as group_avatar",
+				"`group`.type as group_type",
+			}
+			var memberItems = make([]*model.QueryGroupMemberItem, 0)
+
+			//更新用户信息
+			if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
+				if len(memberItems) > 0 {
+					for _, item := range memberItems {
+						for _, record := range items {
+							if item.UserId == record.UserId {
+								record.IsLeader = item.IsLeader
+								record.MemberType = item.MemberType
+								record.MemberLevel = item.MemberLevel
+								record.MemberLevelTitle = item.MemberLevelTitle
+								record.IsMute = item.IsMute
+								record.GroupName = item.GroupName
+								record.GroupAvatar = item.GroupAvatar
+								record.GroupType = item.GroupType
+							}
+						}
+					}
+				}
+			}
+
+		}
 	}
 
 	return s.HandleTalkRecords(ctx, items)
@@ -124,7 +199,7 @@ func (s *TalkRecordsService) SearchTalkRecords() {
 func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) (*TalkRecordsItem, error) {
 	var (
 		err    error
-		item   *model.QueryTalkRecordsItem
+		record *model.QueryTalkRecordsItem
 		fields = []string{
 			"talk_records.id",
 			"talk_records.talk_type",
@@ -136,6 +211,13 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
+			"1 as fan_level",
+			"null as fan_label",
+			"users.member_level",
+			"users.member_level_title",
+			"users.type as member_type",
+			"users.is_mute",
+			"0 as is_leader",
 		}
 	)
 
@@ -143,11 +225,51 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 	query.Joins("left join users on talk_records.user_id = users.id")
 	query.Where("talk_records.id = ?", recordId)
 
-	if err = query.Select(fields).Take(&item).Error; err != nil {
+	if err = query.Select(fields).Take(&record).Error; err != nil {
 		return nil, err
 	}
 
-	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{item})
+	//如果群聊则查询当前聊天记录内用户信息
+	if record.TalkType == entity.ChatGroupMode {
+		var memberItems = make([]*model.QueryGroupMemberItem, 0)
+
+		memberQuery := s.db.Table("group_member")
+		memberQuery.Joins("left join users on group_member.user_id = users.id")
+		memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
+		memberQuery.Where("group_member.group_id = ? ", record.ReceiverId)
+		memberQuery.Where("group_member.user_id = ? ", record.UserId)
+		var memberFields = []string{
+			"group_member.user_id",
+			"users.type as member_type",
+			"users.is_mute",
+			"users.member_level",
+			"users.member_level_title",
+			"group_member.leader as is_leader",
+			"`group`.group_name",
+			"`group`.avatar as group_avatar",
+			"`group`.type as group_type",
+		}
+
+		if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
+			if len(memberItems) > 0 {
+				for _, item := range memberItems {
+					if item.UserId == record.UserId {
+						record.IsLeader = item.IsLeader
+						record.MemberType = item.MemberType
+						record.MemberLevel = item.MemberLevel
+						record.MemberLevelTitle = item.MemberLevelTitle
+						record.IsMute = item.IsMute
+						record.GroupName = item.GroupName
+						record.GroupAvatar = item.GroupAvatar
+						record.GroupType = item.GroupType
+					}
+				}
+			}
+		}
+
+	}
+
+	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{record})
 	if err != nil {
 		return nil, err
 	}
@@ -209,14 +331,14 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 
 func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*model.QueryTalkRecordsItem) ([]*TalkRecordsItem, error) {
 	var (
-		files     []int
-		codes     []int
-		forwards  []int
-		invites   []int
-		votes     []int
-		logins    []int
-		locations []int
-
+		files         []int
+		codes         []int
+		forwards      []int
+		invites       []int
+		votes         []int
+		logins        []int
+		locations     []int
+		notices       []string
 		fileItems     []*model.TalkRecordsFile
 		codeItems     []*model.TalkRecordsCode
 		forwardItems  []*model.TalkRecordsForward
@@ -244,6 +366,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			invites = append(invites, item.Id)
 		case entity.MsgTypeLocation:
 			locations = append(locations, item.Id)
+		}
+		//已撤回的消息不能显示
+		if item.IsRevoke == 1 {
+			item.Content = ""
 		}
 	}
 
@@ -288,11 +414,46 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 	}
 
 	hashInvites := make(map[int]*model.TalkRecordsInvite)
+	var noticeResult []*model.QueryUserItem
+	var operateUserResult []*model.QueryUserItem
 	if len(invites) > 0 {
 		s.db.Model(&model.TalkRecordsInvite{}).Where("record_id in ?", invites).Scan(&inviteItems)
 		for i := range inviteItems {
 			hashInvites[inviteItems[i].RecordId] = inviteItems[i]
+			if inviteItems[i].Type == 1 || inviteItems[i].Type == 3 {
+				notices = append(notices, inviteItems[i].UserIds)
+			}
+
 		}
+		//邀请通知用户
+		if len(notices) > 0 {
+			var inviteUserIds []int
+			for _, item := range notices {
+				tempUserIds := sliceutil.ParseIds(item)
+				for i := 0; i < len(tempUserIds); i++ {
+					inviteUserIds = append(inviteUserIds, tempUserIds[i])
+				}
+			}
+			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
+		}
+		//邀请操作人管理员ID
+		if len(hashInvites) > 0 {
+			var operateUserIds []int
+			for _, item := range hashInvites {
+				var isExit bool = false
+				for i := 0; i < len(operateUserIds); i++ {
+					if item.OperateUserId == operateUserIds[i] {
+						isExit = true
+					}
+				}
+				if !isExit {
+					operateUserIds = append(operateUserIds, item.OperateUserId)
+				}
+
+			}
+			s.db.Table("users").Select("id", "nickname").Where("id in ?", operateUserIds).Scan(&operateUserResult)
+		}
+
 	}
 
 	hashLocations := make(map[int]*model.TalkRecordsLocation)
@@ -302,25 +463,40 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			hashLocations[locationItems[i].RecordId] = locationItems[i]
 		}
 	}
+	senService := s.sensitiveMatchService.GetService()
 
 	newItems := make([]*TalkRecordsItem, 0, len(items))
-
 	for _, item := range items {
 		data := &TalkRecordsItem{
-			Id:         item.Id,
-			TalkType:   item.TalkType,
-			MsgType:    item.MsgType,
-			UserId:     item.UserId,
-			ReceiverId: item.ReceiverId,
-			Nickname:   item.Nickname,
-			Avatar:     item.Avatar,
-			IsRevoke:   item.IsRevoke,
-			IsMark:     item.IsMark,
-			IsRead:     item.IsRead,
-			Content:    item.Content,
-			CreatedAt:  timeutil.FormatDatetime(item.CreatedAt),
+			Id:               item.Id,
+			TalkType:         item.TalkType,
+			MsgType:          item.MsgType,
+			UserId:           item.UserId,
+			FanLevel:         item.FanLevel,
+			FanLabel:         item.FanLabel,
+			MemberType:       item.MemberType,
+			MemberLevel:      item.MemberLevel,
+			MemberLevelTitle: item.MemberLevelTitle,
+			ReceiverId:       item.ReceiverId,
+			Nickname:         item.Nickname,
+			Avatar:           item.Avatar,
+			IsRevoke:         item.IsRevoke,
+			IsMark:           item.IsMark,
+			IsRead:           item.IsRead,
+			IsLeader:         item.IsLeader,
+			IsMute:           item.IsMute,
+			Content:          item.Content,
+			CreatedAt:        timeutil.FormatDatetime(item.CreatedAt),
+			GroupName:        item.GroupName,
+			GroupAvatar:      item.GroupAvatar,
+			GroupType:        item.GroupType,
 		}
-
+		if data.MemberType <= 0 {
+			_, content := senService.Match(data.Content, '*')
+			if content != "" {
+				data.Content = content
+			}
+		}
 		switch item.MsgType {
 		case entity.MsgTypeFile:
 			if value, ok := hashFiles[item.Id]; ok {
@@ -414,10 +590,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					"id":       value.OperateUserId,
 					"nickname": "",
 				}
-
-				var user *model.Users
-				if err := s.db.First(&user, value.OperateUserId).Error; err == nil {
-					operateUser["nickname"] = user.Nickname
+				for _, user := range operateUserResult {
+					if value.OperateUserId == user.Id {
+						operateUser["nickname"] = user.Nickname
+					}
 				}
 
 				m := map[string]interface{}{
@@ -427,9 +603,22 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 				}
 
 				if value.Type == 1 || value.Type == 3 {
-					var results []map[string]interface{}
-					s.db.Model(&model.Users{}).Select("id", "nickname").Where("id in ?", sliceutil.ParseIds(value.UserIds)).Scan(&results)
+					var results []*model.QueryUserItem
+					for _, userId := range sliceutil.ParseIds(value.UserIds) {
+						for _, user := range noticeResult {
+							if userId == user.Id {
+								results = append(results, user)
+							}
+						}
+					}
 					m["users"] = results
+					//如果是入群通知则再查一次用户数据
+					if len(results) > 0 {
+						data.MemberLevel = results[0].MemberLevel
+						data.MemberLevelTitle = results[0].MemberLevelTitle
+						data.MemberType = results[0].MemberType
+					}
+
 				} else {
 					m["users"] = operateUser
 				}
