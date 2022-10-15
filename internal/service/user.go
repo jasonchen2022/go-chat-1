@@ -2,26 +2,13 @@ package service
 
 import (
 	"errors"
-	"go-chat/internal/dao"
-	"go-chat/internal/model"
+
 	"go-chat/internal/pkg/encrypt"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
 )
-
-type UserRegisterOpts struct {
-	Nickname string
-	Mobile   string
-	Password string
-	Platform string
-}
-
-// UserForgetOpts ForgetRequest 账号找回接口验证
-type UserForgetOpts struct {
-	Mobile   string
-	Password string
-	SmsCode  string
-}
 
 type UserService struct {
 	dao *dao.UsersDao
@@ -35,8 +22,15 @@ func (s *UserService) Dao() *dao.UsersDao {
 	return s.dao
 }
 
+type UserRegisterOpt struct {
+	Nickname string
+	Mobile   string
+	Password string
+	Platform string
+}
+
 // Register 注册用户
-func (s *UserService) Register(opts *UserRegisterOpts) (*model.Users, error) {
+func (s *UserService) Register(opts *UserRegisterOpt) (*model.Users, error) {
 	if s.dao.IsMobileExist(opts.Mobile) {
 		return nil, errors.New("账号已存在! ")
 	}
@@ -57,7 +51,6 @@ func (s *UserService) Register(opts *UserRegisterOpts) (*model.Users, error) {
 
 // Login 登录处理
 func (s *UserService) Login(mobile string, password string) (*model.Users, error) {
-
 	user, err := s.dao.FindByMobile(mobile)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -74,8 +67,15 @@ func (s *UserService) Login(mobile string, password string) (*model.Users, error
 	return user, nil
 }
 
+// UserForgetOpt ForgetRequest 账号找回接口验证
+type UserForgetOpt struct {
+	Mobile   string
+	Password string
+	SmsCode  string
+}
+
 // Forget 账号找回
-func (s *UserService) Forget(opts *UserForgetOpts) (bool, error) {
+func (s *UserService) Forget(opts *UserForgetOpt) (bool, error) {
 
 	user, err := s.dao.FindByMobile(opts.Mobile)
 	if err != nil || user.Id == 0 {
@@ -129,16 +129,4 @@ func (s *UserService) RandomUser(userId, index int, userName string) ([]*model.U
 		return nil, err
 	}
 	return users, nil
-}
-
-/*
-*是否管理员  （除登录用户外）
-*userId:登录用户id
- */
-func (s *UserService) IsManager(userId int) bool {
-	user := &model.QueryUserTypeItem{}
-	if err := s.dao.Db().Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
-		return false
-	}
-	return user.Type > 0
 }

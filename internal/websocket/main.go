@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -55,7 +54,7 @@ func main() {
 			gin.SetMode(gin.ReleaseMode)
 		}
 
-		providers := Initialize(ctx, conf)
+		app := Initialize(ctx, conf)
 
 		c := make(chan os.Signal, 1)
 
@@ -63,27 +62,30 @@ func main() {
 
 		// 延时启动守护协程
 		time.AfterFunc(3*time.Second, func() {
-			providers.Coroutine.Start(eg, groupCtx)
+			app.Coroutine.Start(eg, groupCtx)
 		})
 
 		log.Printf("Websocket Server ID   :%s", conf.ServerId())
 		log.Printf("Websocket Listen Port :%d", conf.App.Port)
 		log.Printf("Websocket Server Pid  :%d", os.Getpid())
 
-		return start(c, eg, groupCtx, cancel, providers.WsServer)
+		return start(c, eg, groupCtx, cancel, app.Server)
 	}
 
 	_ = cmd.Run(os.Args)
 }
 
 func start(c chan os.Signal, eg *errgroup.Group, ctx context.Context, cancel context.CancelFunc, server *http.Server) error {
+
 	// 启动 http 服务
 	eg.Go(func() error {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Websocket Listen Err: %s", err)
 		}
 
-		return nil
+		return err
 	})
 
 	eg.Go(func() error {
@@ -112,7 +114,6 @@ func start(c chan os.Signal, eg *errgroup.Group, ctx context.Context, cancel con
 		return err
 	}
 
-	fmt.Println()
 	log.Fatal("Websocket Shutdown")
 
 	return nil

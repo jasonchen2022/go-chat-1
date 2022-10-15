@@ -7,12 +7,14 @@ import (
 	"context"
 
 	"go-chat/config"
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
-	note2 "go-chat/internal/dao/note"
-	organize2 "go-chat/internal/dao/organize"
-	"go-chat/internal/pkg/client"
+	"go-chat/internal/http/internal/handler/admin"
+	"go-chat/internal/http/internal/handler/open"
+	"go-chat/internal/http/internal/handler/web"
 	"go-chat/internal/provider"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
+	note3 "go-chat/internal/repository/dao/note"
+	organize3 "go-chat/internal/repository/dao/organize"
 	"go-chat/internal/service/note"
 	"go-chat/internal/service/organize"
 
@@ -27,15 +29,16 @@ var providerSet = wire.NewSet(
 	provider.NewMySQLClient,
 	provider.NewRedisClient,
 	provider.NewHttpClient,
+	provider.NewEmailClient,
 	provider.NewHttpServer,
 	provider.NewFilesystem,
-	client.NewHttpClient,
+	provider.NewRequestClient,
 
 	// 注册路由
 	router.NewRouter,
-	wire.Struct(new(handler.ApiHandler), "*"),
-	wire.Struct(new(handler.AdminHandler), "*"),
-	wire.Struct(new(handler.OpenHandler), "*"),
+	wire.Struct(new(web.Handler), "*"),
+	wire.Struct(new(admin.Handler), "*"),
+	wire.Struct(new(open.Handler), "*"),
 	wire.Struct(new(handler.Handler), "*"),
 
 	// AppProvider
@@ -43,16 +46,17 @@ var providerSet = wire.NewSet(
 )
 
 var cacheProviderSet = wire.NewSet(
-	cache.NewSession,
+	cache.NewSessionStorage,
 	cache.NewSid,
-	cache.NewUnreadTalkCache,
+	cache.NewUnreadStorage,
 	cache.NewRedisLock,
 	cache.NewWsClientSession,
-	cache.NewLastMessage,
+	cache.NewMessageStorage,
 	cache.NewTalkVote,
-	cache.NewRoom,
+	cache.NewRoomStorage,
 	cache.NewRelation,
 	cache.NewSmsCodeCache,
+	cache.NewContactRemark,
 )
 
 var daoProviderSet = wire.NewSet(
@@ -69,11 +73,12 @@ var daoProviderSet = wire.NewSet(
 	dao.NewEmoticonDao,
 	dao.NewTalkRecordsVoteDao,
 	dao.NewFileSplitUploadDao,
-	note2.NewArticleClassDao,
-	note2.NewArticleAnnexDao,
-	organize2.NewDepartmentDao,
-	organize2.NewOrganizeDao,
-	organize2.NewPositionDao,
+	note3.NewArticleClassDao,
+	note3.NewArticleAnnexDao,
+	organize3.NewDepartmentDao,
+	organize3.NewOrganizeDao,
+	organize3.NewPositionDao,
+	dao.NewRobotDao,
 )
 
 var serviceProviderSet = wire.NewSet(
@@ -105,6 +110,7 @@ var serviceProviderSet = wire.NewSet(
 	organize.NewOrganizeDeptService,
 	organize.NewOrganizeService,
 	organize.NewPositionService,
+	service.NewTemplateService,
 )
 
 func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
@@ -114,7 +120,9 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 			cacheProviderSet,   // 注入 Cache 依赖
 			daoProviderSet,     // 注入 Dao 依赖
 			serviceProviderSet, // 注入 Service 依赖
-			handler.ProviderSet,
+			web.ProviderSet,    // 注入 Web Handler 依赖
+			admin.ProviderSet,  // 注入 Admin Handler 依赖
+			open.ProviderSet,   // 注入 Open Handler 依赖
 		),
 	)
 }

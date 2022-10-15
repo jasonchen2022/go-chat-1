@@ -10,13 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"go-chat/config"
-	"go-chat/internal/pkg/logger"
-	_ "go-chat/internal/pkg/validation"
-
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
 	_ "github.com/urfave/cli/v2"
+	"go-chat/config"
+	"go-chat/internal/pkg/logger"
+	_ "go-chat/internal/pkg/validation"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -52,13 +51,13 @@ func main() {
 		if !conf.Debug() {
 			gin.SetMode(gin.ReleaseMode)
 		}
+
 		app := Initialize(ctx, conf)
 
 		eg, groupCtx := errgroup.WithContext(ctx)
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT)
 
-		log.Printf("HTTP Listen Port :%d", conf.App.Port)
 		log.Printf("HTTP Listen Port :%d", conf.App.Port)
 		log.Printf("HTTP Server Pid  :%d", os.Getpid())
 
@@ -71,19 +70,23 @@ func main() {
 func run(c chan os.Signal, eg *errgroup.Group, ctx context.Context, cancel context.CancelFunc, server *http.Server) error {
 	// 启动 http 服务
 	eg.Go(func() error {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP Server Listen Err: %s", err)
 		}
 
-		return nil
+		return err
 	})
 
 	eg.Go(func() error {
 		defer func() {
 			cancel()
+
 			// 等待中断信号以优雅地关闭服务器（设置 5 秒的超时时间）
 			timeCtx, timeCancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer timeCancel()
+
 			if err := server.Shutdown(timeCtx); err != nil {
 				log.Fatalf("HTTP Server Shutdown Err: %s", err)
 			}

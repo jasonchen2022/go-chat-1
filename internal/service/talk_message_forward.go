@@ -5,24 +5,14 @@ import (
 	"errors"
 	"strings"
 
+	"go-chat/internal/repository/model"
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/strutil"
 )
-
-type TalkForwardOpts struct {
-	UserId     int
-	ReceiverId int
-	TalkType   int
-	RecordsIds []int
-	UserIds    []int
-	GroupIds   []int
-	Mode       int
-}
 
 type receive struct {
 	ReceiverId int
@@ -49,8 +39,18 @@ func NewTalkMessageForwardService(base *BaseService) *TalkMessageForwardService 
 	return &TalkMessageForwardService{base}
 }
 
+type TalkForwardOpt struct {
+	UserId     int
+	ReceiverId int
+	TalkType   int
+	RecordsIds []int
+	UserIds    []int
+	GroupIds   []int
+	Mode       int
+}
+
 // 验证消息转发
-func (t *TalkMessageForwardService) verify(forward *TalkForwardOpts) error {
+func (t *TalkMessageForwardService) verify(forward *TalkForwardOpt) error {
 
 	query := t.db.Model(&model.TalkRecords{})
 
@@ -79,7 +79,7 @@ func (t *TalkMessageForwardService) verify(forward *TalkForwardOpts) error {
 }
 
 // 聚合转发数据
-func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *TalkForwardOpts) (string, error) {
+func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *TalkForwardOpt) (string, error) {
 
 	rows := make([]*forwardItem, 0)
 
@@ -122,7 +122,7 @@ func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *Ta
 }
 
 // SendForwardMessage 推送转发消息
-func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forward *TalkForwardOpts) error {
+func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forward *TalkForwardOpt) error {
 	var (
 		err   error
 		items []*talkRecord
@@ -158,7 +158,7 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 }
 
 // MultiMergeForward 转发消息（多条合并转发）
-func (t *TalkMessageForwardService) MultiMergeForward(ctx context.Context, forward *TalkForwardOpts) ([]*talkRecord, error) {
+func (t *TalkMessageForwardService) MultiMergeForward(ctx context.Context, forward *TalkForwardOpt) ([]*talkRecord, error) {
 	var (
 		receives = make([]*receive, 0)
 		arr      = make([]*talkRecord, 0)
@@ -225,7 +225,7 @@ func (t *TalkMessageForwardService) MultiMergeForward(ctx context.Context, forwa
 }
 
 // MultiSplitForward 转发消息（多条拆分转发）
-func (t *TalkMessageForwardService) MultiSplitForward(ctx context.Context, forward *TalkForwardOpts) ([]*talkRecord, error) {
+func (t *TalkMessageForwardService) MultiSplitForward(ctx context.Context, forward *TalkForwardOpt) ([]*talkRecord, error) {
 	var (
 		receives  = make([]*receive, 0)
 		arr       = make([]*talkRecord, 0)

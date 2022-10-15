@@ -4,8 +4,8 @@ import (
 	"context"
 	"math"
 
-	"go-chat/internal/dao"
-	"go-chat/internal/model"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
 )
@@ -23,10 +23,57 @@ func (s *ContactService) Dao() dao.IContactDao {
 	return s.dao
 }
 
+//建立好友关系
+func (s *ContactService) Create(ctx context.Context, opts *ContactApplyCreateOpts) error {
+	apply := &model.Contact{
+		UserId:   opts.UserId,
+		FriendId: opts.FriendId,
+		Remark:   opts.Remarks,
+		Status:   1,
+	}
+
+	if err := s.db.Create(apply).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+//添加11直播官方为双向好友
+func (s *ContactService) AddCustomerFriend(ctx context.Context, uid int) error {
+
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		if !(s.Dao().IsFriend(ctx, uid, 7715, false)) {
+			apply := &model.Contact{
+				UserId:   uid,
+				FriendId: 7715,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply).Error; err != nil {
+				return err
+			}
+
+			apply_friend := &model.Contact{
+				UserId:   7715,
+				FriendId: uid,
+				Status:   1,
+			}
+
+			if err := s.db.Create(apply_friend).Error; err != nil {
+				return err
+			}
+
+		}
+		return nil
+	})
+	return err
+}
+
 // EditRemark 编辑联系人备注
 // @params uid      用户ID
 // @params friendId 联系人ID
 func (s *ContactService) EditRemark(ctx context.Context, uid int, friendId int, remark string) error {
+
 	err := s.db.Model(&model.Contact{}).Where("user_id = ? and friend_id = ?", uid, friendId).Update("remark", remark).Error
 
 	_ = s.dao.SetFriendRemark(ctx, uid, friendId, remark)
@@ -38,9 +85,7 @@ func (s *ContactService) EditRemark(ctx context.Context, uid int, friendId int, 
 // @params uid      用户ID
 // @params friendId 联系人ID
 func (s *ContactService) Delete(ctx context.Context, uid, friendId int) error {
-	// return s.db.Model(&model.Contact{}).Where("user_id = ? and friend_id = ?", uid, friendId).Update("status", 0).Error
-	// s.db.Model(&model.Contact{}).Delete("friend_id = ? and user_id = ?", uid, friendId)
-	return s.db.Delete(&model.Contact{}, "(user_id = ? and friend_id = ?) OR (user_id = ? and friend_id = ?)", uid, friendId, friendId, uid).Error
+	return s.db.Model(&model.Contact{}).Where("user_id = ? and friend_id = ?", uid, friendId).Update("status", 0).Error
 }
 
 // List 获取联系人列表
@@ -66,6 +111,15 @@ func (s *ContactService) List(ctx context.Context, uid int) ([]*model.ContactLis
 	}
 
 	return items, nil
+}
+
+func (s *ContactService) GetContactIds(ctx context.Context, uid int) []int64 {
+
+	ids := make([]int64, 0)
+
+	s.db.Model(&model.Contact{}).Where("user_id = ? and status = ?", uid, 1).Pluck("friend_id", &ids)
+
+	return ids
 }
 
 func (s *ContactService) ListByPage(ctx context.Context, uid int, page int, keyword string) ([]*model.ContactListItem, error) {
@@ -118,58 +172,4 @@ func (s *ContactService) TotalPage(ctx context.Context, uid int) (int, error) {
 	//    page:=math.Ceil(len(items)/50)
 	page := int(math.Ceil(float64(len(items)) / float64(20)))
 	return page, nil
-}
-
-func (s *ContactService) GetContactIds(ctx context.Context, uid int) []int64 {
-	ids := make([]int64, 0)
-
-	s.db.Model(&model.Contact{}).Where("user_id = ? and status = ?", uid, 1).Pluck("friend_id", &ids)
-
-	return ids
-}
-
-//建立好友关系
-func (s *ContactService) Create(ctx context.Context, opts *ContactApplyCreateOpts) error {
-	apply := &model.Contact{
-		UserId:   opts.UserId,
-		FriendId: opts.FriendId,
-		Remark:   opts.Remarks,
-		Status:   1,
-	}
-
-	if err := s.db.Create(apply).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-//添加11直播官方为双向好友
-func (s *ContactService) AddCustomerFriend(ctx context.Context, uid int) error {
-
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		if !(s.Dao().IsFriend(ctx, uid, 7715, false)) {
-			apply := &model.Contact{
-				UserId:   uid,
-				FriendId: 7715,
-				Status:   1,
-			}
-
-			if err := s.db.Create(apply).Error; err != nil {
-				return err
-			}
-
-			apply_friend := &model.Contact{
-				UserId:   7715,
-				FriendId: uid,
-				Status:   1,
-			}
-
-			if err := s.db.Create(apply_friend).Error; err != nil {
-				return err
-			}
-
-		}
-		return nil
-	})
-	return err
 }

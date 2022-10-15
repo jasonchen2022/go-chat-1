@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"go-chat/internal/model"
+	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 )
 

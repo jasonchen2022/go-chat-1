@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"go-chat/internal/dao"
-	"go-chat/internal/model"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 )
 
 type GroupApplyService struct {

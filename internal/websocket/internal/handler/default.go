@@ -7,16 +7,15 @@ import (
 	"strconv"
 
 	"go-chat/config"
-	"go-chat/internal/cache"
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
+	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/im"
 	"go-chat/internal/pkg/jsonutil"
-	"go-chat/internal/pkg/jwtutil"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 	"go-chat/internal/websocket/internal/dto"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -26,33 +25,28 @@ type DefaultWebSocket struct {
 	rds                *redis.Client
 	conf               *config.Config
 	cache              *service.ClientService
-	room               *cache.Room
+	room               *cache.RoomStorage
 	groupMemberService *service.GroupMemberService
 }
 
-func NewDefaultWebSocket(
-	rds *redis.Client,
-	conf *config.Config,
-	client *service.ClientService,
-	room *cache.Room,
-	groupMemberService *service.GroupMemberService,
-) *DefaultWebSocket {
-	return &DefaultWebSocket{rds: rds, conf: conf, cache: client, room: room, groupMemberService: groupMemberService}
+func NewDefaultWebSocket(rds *redis.Client, conf *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService) *DefaultWebSocket {
+	return &DefaultWebSocket{rds: rds, conf: conf, cache: cache, room: room, groupMemberService: groupMemberService}
 }
 
 // Connect 初始化连接
-func (c *DefaultWebSocket) Connect(ctx *gin.Context) {
-	conn, err := im.NewConnect(ctx)
+func (c *DefaultWebSocket) Connect(ctx *ichat.Context) error {
+	conn, err := im.NewConnect(ctx.Context)
 	if err != nil {
 		logrus.Errorf("websocket connect error: %s", err.Error())
-		return
+		return nil
 	}
 
 	// 创建客户端
-	im.NewClient(ctx.Request.Context(), conn, &im.ClientOptions{
+	im.NewClient(ctx.RequestCtx(), conn, &im.ClientOptions{
+		Uid:     ctx.UserId(),
 		Channel: im.Session.Default,
-		Uid:     jwtutil.GetUid(ctx),
 		Storage: c.cache,
+		Buffer:  10,
 	}, im.NewClientCallback(
 		// 连接成功回调
 		im.WithOpenCallback(func(client im.IClient) {
@@ -68,10 +62,13 @@ func (c *DefaultWebSocket) Connect(ctx *gin.Context) {
 			// fmt.Printf("客户端[%d] 已关闭连接，关闭提示【%d】%s \n", client.ClientId(), code, text)
 		}),
 	))
+
+	return nil
 }
 
 // 连接成功回调事件
 func (c *DefaultWebSocket) open(client im.IClient) {
+
 	// 1.查询用户群列表
 	ids := c.groupMemberService.Dao().GetUserGroupIds(client.ClientUid())
 
@@ -86,7 +83,7 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 		})
 	}
 
-	// 推送上线消息
+	// // 推送上线消息
 	// c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
 	// 	"event": entity.EventOnlineStatus,
 	// 	"data": jsonutil.Encode(entity.MapStrAny{
@@ -98,6 +95,7 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 
 // 消息接收回调事件
 func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
+
 	content := string(message)
 
 	event := gjson.Get(content, "event").String()
@@ -121,14 +119,7 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 	case entity.EventTalkRead:
 		var m *dto.TalkReadMessage
 		if err := json.Unmarshal(message, &m); err == nil {
-			if len(m.Data.MsgIds) > 0 {
-				c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
-			} else {
-				recordIds := make([]int, 0)
-				c.groupMemberService.Db().Model(&model.TalkRecords{}).Select("id").Where("user_id = ? and receiver_id = ? and is_read = 0", m.Data.ReceiverId, client.ClientUid()).Limit(30).Scan(&recordIds)
-				c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("user_id = ? and receiver_id = ? and is_read = 0", m.Data.ReceiverId, client.ClientUid()).Update("is_read", 1)
-				m.Data.MsgIds = recordIds
-			}
+			c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
 
 			c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
 				"event": entity.EventTalkRead,
@@ -146,6 +137,7 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 
 // 客户端关闭回调事件
 func (c *DefaultWebSocket) close(client im.IClient, code int, text string) {
+
 	// 1.判断用户是否是多点登录
 
 	// 2.查询用户群列表
@@ -162,7 +154,7 @@ func (c *DefaultWebSocket) close(client im.IClient, code int, text string) {
 		})
 	}
 
-	// 推送下线消息
+	// // 推送下线消息
 	// c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
 	// 	"event": entity.EventOnlineStatus,
 	// 	"data": jsonutil.Encode(entity.MapStrAny{

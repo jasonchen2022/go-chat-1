@@ -8,32 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
-
-	"go-chat/internal/dao"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/timeutil"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
+
+	"gorm.io/gorm"
 )
-
-type TalkSessionCreateOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	IsBoot     bool
-}
-
-type TalkSessionTopOpts struct {
-	UserId int
-	Id     int
-	Type   int
-}
-
-type TalkSessionDisturbOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	IsDisturb  int
-}
 
 type TalkSessionService struct {
 	*BaseService
@@ -60,29 +40,22 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 		"`users`.avatar as user_avatar", "`users`.nickname",
 		"`group`.group_name", "`group`.avatar as group_avatar",
 	}
-	user := &model.QueryUserTypeItem{}
-	if err := s.db.Table("users").Where(&model.Users{Id: uid}).First(user).Error; err != nil {
-		return nil, err
-	}
+
 	query := s.db.Table("talk_session list")
 	query.Joins("left join `users` ON list.receiver_id = `users`.id AND list.talk_type = 1")
-	//只有管理员用户才拥有聊天室权限
-	if user.Type < 1 {
-		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type = 1")
-	} else {
-		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type > 0")
-	}
+	query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2")
 	query.Where("list.user_id = ? and list.is_delete = 0", uid)
 	query.Order("list.updated_at desc")
 
 	if err = query.Select(fields).Scan(&items).Error; err != nil {
 		return nil, err
 	}
+
 	return items, nil
 }
 
 // Create 创建会话列表
-func (s *TalkSessionService) Create(ctx context.Context, opts *TalkSessionCreateOpts) (*model.TalkSession, error) {
+func (s *TalkSessionService) Create(ctx context.Context, opts *model.TalkSessionCreateOpt) (*model.TalkSession, error) {
 	var (
 		err    error
 		result *model.TalkSession
@@ -133,8 +106,14 @@ func (s *TalkSessionService) Delete(ctx context.Context, uid int, id int) error 
 	}).Error
 }
 
+type TalkSessionTopOpt struct {
+	UserId int
+	Id     int
+	Type   int
+}
+
 // Top 会话置顶
-func (s *TalkSessionService) Top(ctx context.Context, opts *TalkSessionTopOpts) error {
+func (s *TalkSessionService) Top(ctx context.Context, opts *TalkSessionTopOpt) error {
 
 	isTop := 0
 
@@ -151,6 +130,13 @@ func (s *TalkSessionService) Top(ctx context.Context, opts *TalkSessionTopOpts) 
 	return err
 }
 
+type TalkSessionDisturbOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	IsDisturb  int
+}
+
 // Top 会话是否置顶
 func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, uid int) (*model.TalkSession, error) {
 	talkSession := &model.TalkSession{}
@@ -161,7 +147,7 @@ func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, u
 }
 
 // Disturb 会话免打扰
-func (s *TalkSessionService) Disturb(ctx context.Context, opts *TalkSessionDisturbOpts) error {
+func (s *TalkSessionService) Disturb(ctx context.Context, opts *TalkSessionDisturbOpt) error {
 	err := s.db.Model(&model.TalkSession{}).
 		Where("user_id = ? and receiver_id = ? and talk_type = ?", opts.UserId, opts.ReceiverId, opts.TalkType).
 		Updates(map[string]interface{}{

@@ -7,33 +7,30 @@ import (
 	"strconv"
 
 	"go-chat/internal/pkg/timeutil"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/model"
+
+	"github.com/sirupsen/logrus"
 
 	"go-chat/config"
-	"go-chat/internal/cache"
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/im"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/service"
-
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 )
 
 type onConsumeFunc func(data string)
 
 type SubscribeConsume struct {
-	conf                  *config.Config
-	ws                    *cache.WsClientSession
-	room                  *cache.Room
-	recordsService        *service.TalkRecordsService
-	contactService        *service.ContactService
-	db                    *gorm.DB
-	sensitiveMatchService *service.SensitiveMatchService
+	conf           *config.Config
+	ws             *cache.WsClientSession
+	room           *cache.RoomStorage
+	recordsService *service.TalkRecordsService
+	contactService *service.ContactService
 }
 
-func NewSubscribeConsume(conf *config.Config, ws *cache.WsClientSession, room *cache.Room, recordsService *service.TalkRecordsService, contactService *service.ContactService, db *gorm.DB, sensitiveMatchService *service.SensitiveMatchService) *SubscribeConsume {
-	return &SubscribeConsume{conf: conf, ws: ws, room: room, recordsService: recordsService, contactService: contactService, db: db, sensitiveMatchService: sensitiveMatchService}
+func NewSubscribeConsume(conf *config.Config, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService) *SubscribeConsume {
+	return &SubscribeConsume{conf: conf, ws: ws, room: room, recordsService: recordsService, contactService: contactService}
 }
 
 func (s *SubscribeConsume) Handle(event string, data string) {
@@ -43,7 +40,7 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 	// 注册消息回调事件
 	handler[entity.EventTalk] = s.onConsumeTalk
 	handler[entity.EventTalkKeyboard] = s.onConsumeTalkKeyboard
-	handler[entity.EventOnlineStatus] = s.onConsumeLogin
+	//handler[entity.EventOnlineStatus] = s.onConsumeLogin
 	handler[entity.EventTalkRevoke] = s.onConsumeTalkRevoke
 	handler[entity.EventTalkJoinGroup] = s.onConsumeTalkJoinGroup
 	handler[entity.EventContactApply] = s.onConsumeContactApply
@@ -58,6 +55,8 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 
 // onConsumeTalk 聊天消息事件
 func (s *SubscribeConsume) onConsumeTalk(body string) {
+
+	//logrus.Info("收到订阅消息：", time.Now().Unix(), body)
 	var msg struct {
 		TalkType   int   `json:"talk_type"`
 		SenderID   int64 `json:"sender_id"`
@@ -95,24 +94,11 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 		logrus.Error("[SubscribeConsume] 读取对话记录失败 err: ", err.Error())
 		return
 	}
-	if data.Content != "" {
-		//检测敏感词
-		var member_type int
-		s.db.Table("users").Where("id = ?", data.UserId).Select([]string{"type"}).Limit(1).Scan(&member_type)
-		//游客或普通会员不能发送敏感消息
-		if member_type <= 0 {
-			senService := s.sensitiveMatchService.GetService()
-			_, content := senService.Match(data.Content, '*')
-			if content != "" {
-				data.Content = content
-			}
-
-		}
-	}
 
 	if len(cids) == 0 {
 		return
 	}
+
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
 	c.SetMessage(&im.Message{
@@ -126,6 +112,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	})
 
 	im.Session.Default.Write(c)
+	//logrus.Info("结束订阅消息：", time.Now().Unix())
 }
 
 // onConsumeTalkKeyboard 键盘输入事件消息
@@ -159,42 +146,42 @@ func (s *SubscribeConsume) onConsumeTalkKeyboard(body string) {
 	im.Session.Default.Write(c)
 }
 
-// onConsumeLogin 用户上线或下线消息
-func (s *SubscribeConsume) onConsumeLogin(body string) {
+// // onConsumeLogin 用户上线或下线消息
+// func (s *SubscribeConsume) onConsumeLogin(body string) {
+// 	var msg struct {
+// 		Status int `json:"status"`
+// 		UserID int `json:"user_id"`
+// 	}
 
-	// var msg struct {
-	// 	Status int `json:"status"`
-	// 	UserID int `json:"user_id"`
-	// }
+// 	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+// 		logrus.Error("[SubscribeConsume] onConsumeLogin Unmarshal err: ", err.Error())
+// 		return
+// 	}
 
-	// if err := json.Unmarshal([]byte(body), &msg); err != nil {
-	// 	logrus.Error("[SubscribeConsume] onConsumeLogin Unmarshal err: ", err.Error())
-	// 	return
-	// }
-	// ctx := context.Background()
-	// cids := make([]int64, 0)
+// 	ctx := context.Background()
+// 	cids := make([]int64, 0)
 
-	// uids := s.contactService.GetContactIds(ctx, msg.UserID)
-	// sid := s.conf.ServerId()
-	// for _, uid := range uids {
-	// 	ids := s.ws.GetUidFromClientIds(ctx, sid, im.Session.Default.Name(), fmt.Sprintf("%d", uid))
+// 	uids := s.contactService.GetContactIds(ctx, msg.UserID)
+// 	sid := s.conf.ServerId()
+// 	for _, uid := range uids {
+// 		ids := s.ws.GetUidFromClientIds(ctx, sid, im.Session.Default.Name(), fmt.Sprintf("%d", uid))
 
-	// 	cids = append(cids, ids...)
-	// }
+// 		cids = append(cids, ids...)
+// 	}
 
-	// if len(cids) == 0 {
-	// 	return
-	// }
+// 	if len(cids) == 0 {
+// 		return
+// 	}
 
-	// c := im.NewSenderContent()
-	// c.SetReceive(cids...)
-	// c.SetMessage(&im.Message{
-	// 	Event:   entity.EventOnlineStatus,
-	// 	Content: msg,
-	// })
+// 	c := im.NewSenderContent()
+// 	c.SetReceive(cids...)
+// 	c.SetMessage(&im.Message{
+// 		Event:   entity.EventOnlineStatus,
+// 		Content: msg,
+// 	})
 
-	// im.Session.Default.Write(c)
-}
+// 	im.Session.Default.Write(c)
+// }
 
 // onConsumeTalkRevoke 撤销聊天消息
 func (s *SubscribeConsume) onConsumeTalkRevoke(body string) {

@@ -5,11 +5,12 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"go-chat/internal/cache"
-	"go-chat/internal/pkg/strutil"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"go-chat/internal/pkg/strutil"
+	"go-chat/internal/repository/cache"
 )
 
 type SmsService struct {
@@ -23,7 +24,7 @@ func NewSmsService(codeCache *cache.SmsCodeCache) *SmsService {
 // CheckSmsCode 验证短信验证码是否正确
 func (s *SmsService) CheckSmsCode(ctx context.Context, channel string, mobile string, code string) bool {
 	value, err := s.smsCodeCache.Get(ctx, channel, mobile)
-	fmt.Println("@@@@=>", value)
+
 	return err == nil && value == code
 }
 

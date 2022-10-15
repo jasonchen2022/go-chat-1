@@ -10,6 +10,9 @@ import (
 	"go-chat/internal/pkg/jsonutil"
 )
 
+type IConn struct {
+}
+
 type IClient interface {
 	ClientId() int64                    // 获取客户端ID
 	ClientUid() int                     // 获取客户端关联用户ID
@@ -18,8 +21,8 @@ type IClient interface {
 }
 
 type IStorage interface {
-	Bind(ctx context.Context, channel string, clientId int64, uid int)
-	UnBind(ctx context.Context, channel string, clientId int64)
+	Bind(ctx context.Context, channel string, cid int64, uid int)
+	UnBind(ctx context.Context, channel string, cid int64)
 }
 
 // ClientInContent 客户端接收消息体
@@ -53,10 +56,16 @@ type ClientOptions struct {
 	Uid     int      // 用户识别ID
 	Channel *Channel // 渠道信息
 	Storage IStorage // 自定义缓存组件，用于绑定用户与客户端的关系
+	Buffer  int      // 缓冲区大小根据业务，自行调整
 }
 
 // NewClient 初始化客户端信息
 func NewClient(ctx context.Context, conn *websocket.Conn, opt *ClientOptions, callBack ICallback) IClient {
+
+	if opt.Buffer <= 0 {
+		opt.Buffer = 10
+	}
+
 	client := &Client{
 		conn:     conn,
 		cid:      Counter.GenID(),
@@ -64,12 +73,12 @@ func NewClient(ctx context.Context, conn *websocket.Conn, opt *ClientOptions, ca
 		uid:      opt.Uid,
 		channel:  opt.Channel,
 		storage:  opt.Storage,
-		outChan:  make(chan *ClientOutContent, 10), // 缓冲区大小根据业务，自行调整
+		outChan:  make(chan *ClientOutContent, opt.Buffer),
 		callBack: callBack,
 	}
 
 	// 设置客户端连接关闭回调事件
-	conn.SetCloseHandler(client.setCloseHandler)
+	conn.SetCloseHandler(client.closeHandler)
 
 	// 绑定客户端映射关系
 	if client.storage != nil {
@@ -115,7 +124,7 @@ func (c *Client) Write(data *ClientOutContent) error {
 
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Printf("Client write err :%v \n", err)
+			fmt.Printf("client write err :%v \n", err)
 		}
 	}()
 
@@ -126,9 +135,9 @@ func (c *Client) Write(data *ClientOutContent) error {
 }
 
 // 推送心跳检测配置
-func (c *Client) writeHeartbeat() {
+func (c *Client) heartbeat() {
 	_ = c.Write(&ClientOutContent{
-		Content: jsonutil.EncodeToByte(&Message{
+		Content: jsonutil.EncodeToBt(&Message{
 			Event: "connect",
 			Content: map[string]interface{}{
 				"ping_interval": heartbeatInterval,
@@ -139,7 +148,7 @@ func (c *Client) writeHeartbeat() {
 }
 
 // 关闭回调
-func (c *Client) setCloseHandler(code int, text string) error {
+func (c *Client) closeHandler(code int, text string) error {
 	if !c.isClosed {
 		c.isClosed = true
 		close(c.outChan) // 关闭通道
@@ -173,6 +182,8 @@ func (c *Client) loopAccept() {
 			break
 		}
 
+		c.lastTime = time.Now().Unix() // 更新最后心跳时间
+
 		msg := string(message)
 
 		res := gjson.Get(msg, "event")
@@ -184,16 +195,11 @@ func (c *Client) loopAccept() {
 
 		switch res.String() {
 		case "heartbeat": // 心跳消息判断
-			c.lastTime = time.Now().Unix()
-
 			_ = c.Write(&ClientOutContent{
-				Content: jsonutil.EncodeToByte(&Message{"heartbeat", "pong"}),
+				Content: jsonutil.EncodeToBt(&Message{"heartbeat", "pong"}),
 			})
-		case "ack":
-			ack.del(&AckBufferOption{
-				Client: c,
-				MsgID:  "",
-			})
+		case "ack": // TODO 后续实现
+			ack.del(&AckBufferOption{Client: c, MsgID: ""})
 		default:
 			// 触发消息回调
 			c.callBack.Message(c, message)
@@ -235,7 +241,7 @@ func (c *Client) init() *Client {
 	go c.loopWrite()
 
 	// 推送心跳检测配置
-	c.writeHeartbeat()
+	c.heartbeat()
 
 	return c
 }

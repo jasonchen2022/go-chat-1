@@ -12,6 +12,7 @@ import (
 func Cors(conf *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
+
 		c.Header("Access-Control-Allow-Origin", conf.Cors.Origin)
 		c.Header("Access-Control-Allow-Headers", conf.Cors.Headers)
 		c.Header("Access-Control-Allow-Methods", conf.Cors.Methods)

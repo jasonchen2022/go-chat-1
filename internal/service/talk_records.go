@@ -3,28 +3,19 @@ package service
 import (
 	"context"
 	"fmt"
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
+	"sort"
+
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
-	"sort"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 
 	"github.com/wxnacy/wgo/arrays"
 )
-
-type QueryTalkRecordsOpts struct {
-	TalkType   int    // 对话类型
-	UserId     int    // 获取消息的用户
-	ReceiverId int    // 接收者ID
-	MsgType    []int  // 消息类型
-	RecordId   int    // 上次查询的最小消息ID
-	Limit      int    // 数据行数
-	Keyword    string //搜搜关键字
-}
 
 type TalkRecordsItem struct {
 	Id               int         `json:"id"`
@@ -75,8 +66,18 @@ func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
 	return s.dao
 }
 
+type QueryTalkRecordsOpt struct {
+	TalkType   int    // 对话类型
+	UserId     int    // 获取消息的用户
+	ReceiverId int    // 接收者ID
+	MsgType    []int  // 消息类型
+	RecordId   int    // 上次查询的最小消息ID
+	Limit      int    // 数据行数
+	Keyword    string //搜搜关键字
+}
+
 // GetTalkRecords 获取对话消息
-func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalkRecordsOpts) ([]*TalkRecordsItem, error) {
+func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalkRecordsOpt) ([]*TalkRecordsItem, error) {
 	var (
 		err    error
 		items  = make([]*model.QueryTalkRecordsItem, 0)
@@ -190,49 +191,6 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 	return s.HandleTalkRecords(ctx, items)
 }
 
-//获取用户未读消息
-func (s *TalkRecordsService) GetNotReadTalkRecords(ctx context.Context, uid int) ([]*TalkRecordsItem, error) {
-	var (
-		err    error
-		items  = make([]*model.QueryTalkRecordsItem, 0)
-		fields = []string{
-			"talk_records.id",
-			"talk_records.talk_type",
-			"talk_records.msg_type",
-			"talk_records.user_id",
-			"talk_records.receiver_id",
-			"talk_records.is_revoke",
-			"talk_records.is_read",
-			"talk_records.content",
-			"talk_records.created_at",
-			"users.nickname",
-			"users.avatar as avatar",
-			"1 as fan_level",
-			"null as fan_label",
-			"users.member_level",
-			"users.member_level_title",
-			"users.type as member_type",
-			"users.is_mute",
-			"0 as is_leader",
-		}
-	)
-
-	query := s.db.Table("talk_records")
-	query.Joins("left join users on talk_records.receiver_id = users.id")
-	//私聊
-	query.Where("talk_records.receiver_id = ? and talk_records.is_read = 0 and talk_records.talk_type = 1 and talk_records.user_id !=1", uid)
-	query.Where("NOT EXISTS (SELECT 1 FROM `talk_records_delete` WHERE talk_records_delete.record_id = talk_records.id AND talk_records_delete.user_id = ? LIMIT 1)", uid)
-	query.Select(fields).Order("talk_records.id desc")
-
-	if err = query.Scan(&items).Error; err != nil {
-		return nil, err
-	}
-	if len(items) == 0 {
-		return make([]*TalkRecordsItem, 0), err
-	}
-	return s.HandleTalkRecords(ctx, items)
-}
-
 // SearchTalkRecords 对话搜索消息
 func (s *TalkRecordsService) SearchTalkRecords() {
 
@@ -273,10 +231,12 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 
 	//如果群聊则查询当前聊天记录内用户信息
 	if record.TalkType == entity.ChatGroupMode {
+		var memberItems = make([]*model.QueryGroupMemberItem, 0)
+
 		memberQuery := s.db.Table("group_member")
 		memberQuery.Joins("left join users on group_member.user_id = users.id")
 		memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
-		memberQuery.Where("group_member.group_id = ? and is_quit =0 ", record.ReceiverId)
+		memberQuery.Where("group_member.group_id = ? ", record.ReceiverId)
 		memberQuery.Where("group_member.user_id = ? ", record.UserId)
 		var memberFields = []string{
 			"group_member.user_id",
@@ -289,7 +249,6 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"`group`.avatar as group_avatar",
 			"`group`.type as group_type",
 		}
-		var memberItems = make([]*model.QueryGroupMemberItem, 0)
 
 		if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
 			if len(memberItems) > 0 {
@@ -355,12 +314,6 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 			"talk_records.created_at",
 			"users.nickname",
 			"users.avatar as avatar",
-			"1 as fan_level",
-			"null as fan_label",
-			"1 as member_level",
-			"users.type as member_type",
-			"users.is_mute",
-			"0 as is_leader",
 		}
 	)
 

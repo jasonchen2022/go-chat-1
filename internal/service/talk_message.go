@@ -10,121 +10,51 @@ import (
 	"strings"
 	"time"
 
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
+
 	"github.com/GUAIK-ORG/go-snowflake/snowflake"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"go-chat/config"
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
+	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 )
 
-type SysTextMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	Text       string
-}
-
-type TextMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	Text       string
-}
-
-type LoginMessageOpts struct {
-	UserId   int
-	Ip       string
-	Address  string
-	Platform string
-	Agent    string
-}
-
-type FileMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	File       *multipart.FileHeader
-}
-
-type ImageMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	File       *multipart.FileHeader
-	ImageUrl   string
-}
-
-type LocationMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	Longitude  string
-	Latitude   string
-}
-
-type CodeMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	Lang       string
-	Code       string
-}
-
-type CardMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	ContactId  int
-}
-
-type VoteMessageOpts struct {
-	UserId     int
-	ReceiverId int
-	Mode       int
-	Anonymous  int
-	Title      string
-	Options    []string
-}
-
-type EmoticonMessageOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	EmoticonId int
-}
-
-type VoteMessageHandleOpts struct {
-	UserId   int
-	RecordId int
-	Options  string
-}
-
 type TalkMessageService struct {
 	*BaseService
-	config             *config.Config
-	unreadTalkCache    *cache.UnreadTalkCache
-	lastMessage        *cache.LastMessage
-	talkRecordsVoteDao *dao.TalkRecordsVoteDao
-	groupMemberDao     *dao.GroupMemberDao
-	sidServer          *cache.SidServer
-	client             *cache.WsClientSession
-	fileSystem         *filesystem.Filesystem
-	splitUploadDao     *dao.SplitUploadDao
+	config                *config.Config
+	unreadTalkCache       *cache.UnreadStorage
+	lastMessage           *cache.MessageStorage
+	talkRecordsVoteDao    *dao.TalkRecordsVoteDao
+	groupMemberDao        *dao.GroupMemberDao
+	sidServer             *cache.SidServer
+	client                *cache.WsClientSession
+	fileSystem            *filesystem.Filesystem
+	splitUploadDao        *dao.SplitUploadDao
+	sensitiveMatchService *SensitiveMatchService
+	contactDao            *dao.ContactDao
 }
 
-func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadTalkCache, lastMessage *cache.LastMessage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao) *TalkMessageService {
-	return &TalkMessageService{BaseService: baseService, config: config, unreadTalkCache: unreadTalkCache, lastMessage: lastMessage, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, sidServer: sidServer, client: client, fileSystem: fileSystem, splitUploadDao: splitUploadDao}
+func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadStorage, lastMessage *cache.MessageStorage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao, sensitiveMatchService *SensitiveMatchService, contactDao *dao.ContactDao) *TalkMessageService {
+	return &TalkMessageService{BaseService: baseService, config: config, unreadTalkCache: unreadTalkCache, lastMessage: lastMessage, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, sidServer: sidServer, client: client, fileSystem: fileSystem, splitUploadDao: splitUploadDao, sensitiveMatchService: sensitiveMatchService, contactDao: contactDao}
+}
+
+type SysTextMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	Text       string
 }
 
 // SendSysMessage 发送文本消息
-func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMessageOpts) error {
+func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMessageOpt) error {
 	record := &model.TalkRecords{
 		TalkType:   opts.TalkType,
 		MsgType:    entity.MsgTypeSystemText,
@@ -144,8 +74,15 @@ func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMe
 	return nil
 }
 
+type TextMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	Text       string
+}
+
 // SendTextMessage 发送文本消息
-func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMessageOpts) error {
+func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMessageOpt) error {
 	record := &model.TalkRecords{
 		TalkType:   opts.TalkType,
 		MsgType:    entity.MsgTypeText,
@@ -153,28 +90,46 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 		ReceiverId: opts.ReceiverId,
 		Content:    opts.Text,
 	}
-
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
 		return c
+	}
+	if record.Content != "" {
+		//检测敏感词
+		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(record.Content, '*')
+			if content != "" {
+				record.Content = content
+			}
+
+		}
 	}
 
 	if err := s.db.Create(record).Error; err != nil {
 		return err
 	}
 
-	if e := s.afterHandle(ctx, record, map[string]string{
+	s.afterHandle(ctx, record, map[string]string{
 		"text": strutil.MtSubstr(record.Content, 0, 30),
-	}); e != nil {
-		return e
-	}
+	})
 
 	return nil
 }
 
+type CodeMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	Lang       string
+	Code       string
+}
+
 // SendCodeMessage 发送代码消息
-func (s *TalkMessageService) SendCodeMessage(ctx context.Context, opts *CodeMessageOpts) error {
+func (s *TalkMessageService) SendCodeMessage(ctx context.Context, opts *CodeMessageOpt) error {
 	var (
 		err    error
 		record = &model.TalkRecords{
@@ -206,15 +161,21 @@ func (s *TalkMessageService) SendCodeMessage(ctx context.Context, opts *CodeMess
 		return err
 	}
 
-	if e := s.afterHandle(ctx, record, map[string]string{"text": "[代码消息]"}); e != nil {
-		return e
-	}
+	s.afterHandle(ctx, record, map[string]string{"text": "[代码消息]"})
 
 	return nil
 }
 
+type ImageMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	File       *multipart.FileHeader
+	ImageUrl   string
+}
+
 // SendImageMessage 发送图片消息
-func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMessageOpts) error {
+func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMessageOpt) error {
 	var (
 		err    error
 		record = &model.TalkRecords{
@@ -277,15 +238,20 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 		return err
 	}
 
-	if e := s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"}); e != nil {
-		return e
-	}
+	s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"})
 
 	return nil
 }
 
+type FileMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	UploadId   string
+}
+
 // SendFileMessage 发送文件消息
-func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMessageOpts) error {
+func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMessageOpt) error {
 
 	var (
 		err    error
@@ -303,21 +269,22 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 		return c
 	}
 
-	stream, err := filesystem.ReadMultipartStream(opts.File)
+	file, err := s.splitUploadDao.GetFile(opts.UserId, opts.UploadId)
 	if err != nil {
 		return err
 	}
 
-	ext := strutil.FileSuffix(opts.File.Filename)
-	sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
-	val := sn.NextVal()
-	fileName := fmt.Sprintf("chat/file/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
-
-	if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
-		return err
+	filePath := fmt.Sprintf("private/files/talks/%s/%s.%s", timeutil.DateNumber(), encrypt.Md5(strutil.Random(16)), file.FileExt)
+	url := ""
+	if entity.GetMediaType(file.FileExt) <= 3 {
+		filePath = fmt.Sprintf("public/media/%s/%s.%s", timeutil.DateNumber(), encrypt.Md5(strutil.Random(16)), file.FileExt)
+		url = s.fileSystem.Default.PublicUrl(filePath)
 	}
 
-	filePath := s.fileSystem.Oss.PublicUrl(fileName)
+	if err := s.fileSystem.Default.Copy(file.Path, filePath); err != nil {
+		logrus.Error("文件拷贝失败 err: ", err.Error())
+		return err
+	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
@@ -328,13 +295,13 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 			RecordId:     record.Id,
 			UserId:       opts.UserId,
 			Source:       1,
-			Type:         entity.GetMediaType(ext),
-			Drive:        entity.FileDriveMode(s.fileSystem.Driver()),
-			OriginalName: opts.File.Filename,
-			Suffix:       ext,
-			Size:         int(opts.File.Size),
+			Type:         entity.GetMediaType(file.FileExt),
+			Drive:        file.Drive,
+			OriginalName: file.OriginalName,
+			Suffix:       file.FileExt,
+			Size:         int(file.FileSize),
 			Path:         filePath,
-			Url:          filePath,
+			Url:          url,
 		}).Error; err != nil {
 			return err
 		}
@@ -346,21 +313,35 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 		return err
 	}
 
-	if e := s.afterHandle(ctx, record, map[string]string{"text": "[文件消息]"}); e != nil {
-		return e
-	}
+	s.afterHandle(ctx, record, map[string]string{"text": "[文件消息]"})
 
 	return nil
 }
 
+type CardMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	ContactId  int
+}
+
 // SendCardMessage 发送用户名片消息
-func (s *TalkMessageService) SendCardMessage(ctx context.Context, opts *CardMessageOpts) error {
+func (s *TalkMessageService) SendCardMessage(ctx context.Context, opts *CardMessageOpt) error {
 	// todo 发送用户名片消息待开发
 	return nil
 }
 
+type VoteMessageOpt struct {
+	UserId     int
+	ReceiverId int
+	Mode       int
+	Anonymous  int
+	Title      string
+	Options    []string
+}
+
 // SendVoteMessage 发送投票消息
-func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMessageOpts) error {
+func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMessageOpt) error {
 	var (
 		err    error
 		record = &model.TalkRecords{
@@ -407,8 +388,15 @@ func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMess
 	return nil
 }
 
+type EmoticonMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	EmoticonId int
+}
+
 // SendEmoticonMessage 发送表情包消息
-func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *EmoticonMessageOpts) error {
+func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *EmoticonMessageOpt) error {
 	var (
 		err      error
 		emoticon model.EmoticonItem
@@ -459,8 +447,16 @@ func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *Emot
 	return nil
 }
 
+type LocationMessageOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	Longitude  string
+	Latitude   string
+}
+
 // SendLocationMessage 发送位置消息
-func (s *TalkMessageService) SendLocationMessage(ctx context.Context, opts *LocationMessageOpts) error {
+func (s *TalkMessageService) SendLocationMessage(ctx context.Context, opts *LocationMessageOpt) error {
 
 	var (
 		err    error
@@ -545,8 +541,14 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 	return nil
 }
 
+type VoteMessageHandleOpt struct {
+	UserId   int
+	RecordId int
+	Options  string
+}
+
 // VoteHandle 投票处理
-func (s *TalkMessageService) VoteHandle(ctx context.Context, opts *VoteMessageHandleOpts) (int, error) {
+func (s *TalkMessageService) VoteHandle(ctx context.Context, opts *VoteMessageHandleOpt) (int, error) {
 	var (
 		err  error
 		vote *model.QueryVoteModel
@@ -636,14 +638,22 @@ func (s *TalkMessageService) VoteHandle(ctx context.Context, opts *VoteMessageHa
 	return vote.VoteId, nil
 }
 
+type LoginMessageOpt struct {
+	UserId   int
+	Ip       string
+	Address  string
+	Platform string
+	Agent    string
+}
+
 // SendLoginMessage 添加登录消息
-func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMessageOpts) error {
+func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMessageOpt) error {
 	var (
 		err    error
 		record = &model.TalkRecords{
 			TalkType:   entity.ChatPrivateMode,
 			MsgType:    entity.MsgTypeLogin,
-			UserId:     1,
+			UserId:     4257,
 			ReceiverId: opts.UserId,
 		}
 	)
@@ -669,10 +679,7 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	})
 
 	if err == nil {
-		if e := s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒！"}); e != nil {
-			return e
-		}
-
+		s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒！"})
 	}
 
 	return err
@@ -717,8 +724,29 @@ func (s *TalkMessageService) checkUserAuth(ctx context.Context, userId int, talk
 	return nil
 }
 
-//公开发送信息接口
-func (s *TalkMessageService) HandleSendMessage(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
+// 发送消息后置处理
+func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) {
+
+	if record.TalkType == entity.ChatPrivateMode {
+		s.unreadTalkCache.Increment(ctx, entity.ChatPrivateMode, record.UserId, record.ReceiverId)
+
+		if record.MsgType == entity.MsgTypeSystemText {
+			s.unreadTalkCache.Increment(ctx, 1, record.ReceiverId, record.UserId)
+		}
+	} else if record.TalkType == entity.ChatGroupMode {
+
+		// todo 需要加缓存
+		ids := s.groupMemberDao.GetMemberIds(record.ReceiverId)
+		for _, uid := range ids {
+
+			if uid == record.UserId {
+				continue
+			}
+
+			s.unreadTalkCache.Increment(ctx, entity.ChatGroupMode, record.ReceiverId, uid)
+		}
+	}
+
 	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
 		Content:  opts["text"],
 		Datetime: timeutil.DateTime(),
@@ -733,61 +761,17 @@ func (s *TalkMessageService) HandleSendMessage(ctx context.Context, record *mode
 			"record_id":   record.Id,
 		}),
 	})
+
 	// 点对点消息采用精确投递
 	if record.TalkType == entity.ChatPrivateMode {
 		sids := s.sidServer.All(ctx, 1)
-		// 小于两台服务器则采用全局广播
+
+		// 小于三台服务器则采用全局广播
 		if len(sids) <= 3 {
 			s.rds.Publish(ctx, entity.IMGatewayAll, content)
 		} else {
-			to := []int{record.ReceiverId}
 			for _, sid := range s.sidServer.All(ctx, 1) {
-				for _, uid := range to {
-					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
-						s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// 发送消息后置处理
-func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.TalkRecords, opts map[string]string) error {
-
-	if record.TalkType == entity.ChatPrivateMode {
-		s.unreadTalkCache.Increment(ctx, record.UserId, record.ReceiverId)
-
-		if record.MsgType == entity.MsgTypeSystemText {
-			s.unreadTalkCache.Increment(ctx, record.ReceiverId, record.UserId)
-		}
-	}
-
-	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
-		Content:  opts["text"],
-		Datetime: timeutil.DateTime(),
-	})
-
-	content := jsonutil.Encode(map[string]interface{}{
-		"event": entity.EventTalk,
-		"data": jsonutil.Encode(map[string]interface{}{
-			"sender_id":   record,
-			"receiver_id": record.ReceiverId,
-			"talk_type":   record.TalkType,
-			"record_id":   record.Id,
-		}),
-	})
-	// 点对点消息采用精确投递
-	if record.TalkType == entity.ChatPrivateMode {
-		sids := s.sidServer.All(ctx, 1)
-		// 小于两台服务器则采用全局广播
-		if len(sids) <= 3 {
-			s.rds.Publish(ctx, entity.IMGatewayAll, content)
-		} else {
-			to := []int{record.UserId, record.ReceiverId}
-			for _, sid := range s.sidServer.All(ctx, 1) {
-				for _, uid := range to {
+				for _, uid := range []int{record.UserId, record.ReceiverId} {
 					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
 						s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
 					}
@@ -797,5 +781,4 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	} else {
 		s.rds.Publish(ctx, entity.IMGatewayAll, content)
 	}
-	return nil
 }

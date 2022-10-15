@@ -173,11 +173,3 @@ func (s *LocalFilesystem) InitiateMultipartUpload(_ string, _ string) (string, e
 
 	return str, nil
 }
-
-func (c *LocalFilesystem) UploadPart(filePath string, uploadID string, num int, stream []byte) (string, error) {
-	return "", nil
-}
-
-func (c *LocalFilesystem) CompleteMultipartUpload(filePath string, uploadID string, opt interface{}) error {
-	return nil
-}

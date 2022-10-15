@@ -10,58 +10,64 @@ import (
 	"context"
 	"github.com/google/wire"
 	"go-chat/config"
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
 	"go-chat/internal/provider"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
 	"go-chat/internal/service"
 	"go-chat/internal/websocket/internal/handler"
 	"go-chat/internal/websocket/internal/process"
 	"go-chat/internal/websocket/internal/process/handle"
+	"go-chat/internal/websocket/internal/process/server"
 	"go-chat/internal/websocket/internal/router"
 )
 
 // Injectors from wire.go:
 
-func Initialize(ctx context.Context, conf *config.Config) *Provider {
+func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	client := provider.NewRedisClient(ctx, conf)
 	sidServer := cache.NewSid(client)
 	wsClientSession := cache.NewWsClientSession(client, conf, sidServer)
 	clientService := service.NewClientService(wsClientSession)
-	room := cache.NewRoom(client)
+	roomStorage := cache.NewRoomStorage(client)
 	db := provider.NewMySQLClient(conf)
 	baseService := service.NewBaseService(db, client)
 	baseDao := dao.NewBaseDao(db, client)
 	relation := cache.NewRelation(client)
 	groupMemberDao := dao.NewGroupMemberDao(baseDao, relation)
 	groupMemberService := service.NewGroupMemberService(baseService, groupMemberDao)
-	defaultWebSocket := handler.NewDefaultWebSocket(client, conf, clientService, room, groupMemberService)
+	defaultWebSocket := handler.NewDefaultWebSocket(client, conf, clientService, roomStorage, groupMemberService)
 	exampleWebsocket := handler.NewExampleWebsocket()
 	handlerHandler := &handler.Handler{
 		DefaultWebSocket: defaultWebSocket,
 		ExampleWebsocket: exampleWebsocket,
 	}
-	session := cache.NewSession(client)
-	engine := router.NewRouter(conf, handlerHandler, session)
+	sessionStorage := cache.NewSessionStorage(client)
+	engine := router.NewRouter(conf, handlerHandler, sessionStorage)
 	websocketServer := provider.NewWebsocketServer(conf, engine)
-	health := process.NewHealth(conf, sidServer)
+	health := server.NewHealth(conf, sidServer)
 	talkVote := cache.NewTalkVote(client)
 	talkRecordsVoteDao := dao.NewTalkRecordsVoteDao(baseDao, talkVote)
 	talkRecordsDao := dao.NewTalkRecordsDao(baseDao)
 	sensitiveMatchService := service.NewSensitiveMatchService(db, client)
 	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService)
-	contactDao := dao.NewContactDao(baseDao, relation)
+	contactRemark := cache.NewContactRemark(client)
+	contactDao := dao.NewContactDao(baseDao, contactRemark, relation)
 	contactService := service.NewContactService(baseService, contactDao)
-	subscribeConsume := handle.NewSubscribeConsume(conf, wsClientSession, room, talkRecordsService, contactService, db, sensitiveMatchService)
-	wsSubscribe := process.NewWsSubscribe(client, conf, subscribeConsume)
-	coroutine := process.NewCoroutine(health, wsSubscribe)
-	mainProvider := &Provider{
-		Config:    conf,
-		WsServer:  websocketServer,
-		Coroutine: coroutine,
+	subscribeConsume := handle.NewSubscribeConsume(conf, wsClientSession, roomStorage, talkRecordsService, contactService)
+	wsSubscribe := server.NewWsSubscribe(client, conf, subscribeConsume)
+	subServers := &process.SubServers{
+		Health:    health,
+		Subscribe: wsSubscribe,
 	}
-	return mainProvider
+	processServer := process.NewServer(subServers)
+	appProvider := &AppProvider{
+		Config:    conf,
+		Server:    websocketServer,
+		Coroutine: processServer,
+	}
+	return appProvider
 }
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewWebsocketServer, router.NewRouter, process.NewCoroutine, process.NewHealth, process.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSession, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoom, cache.NewTalkVote, cache.NewRelation, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(Provider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewWebsocketServer, router.NewRouter, wire.Struct(new(process.SubServers), "*"), process.NewServer, server.NewHealth, server.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSessionStorage, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoomStorage, cache.NewTalkVote, cache.NewRelation, cache.NewContactRemark, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))

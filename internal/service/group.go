@@ -6,54 +6,17 @@ import (
 	"fmt"
 	"time"
 
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
 )
-
-type InviteGroupMembersOpts struct {
-	UserId    int   // 操作人ID
-	GroupId   int   // 群ID
-	MemberIds []int // 群成员ID
-}
-
-type RemoveMembersOpts struct {
-	UserId    int   // 操作人ID
-	GroupId   int   // 群ID
-	MemberIds []int // 群成员ID
-}
-
-type CreateGroupOpts struct {
-	UserId    int // 操作人ID
-	Type      int
-	Name      string // 群名称
-	Avatar    string // 群头像
-	Profile   string // 群简介
-	MemberIds []int  // 联系人ID
-}
-
-type UpdateGroupOpts struct {
-	GroupId int    // 群ID
-	Name    string // 群名称
-	Avatar  string // 群头像
-	Profile string // 群简介
-}
-
-type session struct {
-	ReceiverID int `json:"receiver_id"`
-	IsDisturb  int `json:"is_disturb"`
-}
-
-type GroupMembers struct {
-	Id          int // 群ID
-	MemberCount int //群员总数
-}
 
 type GroupService struct {
 	*BaseService
@@ -71,7 +34,7 @@ func (s *GroupService) Dao() *dao.GroupDao {
 }
 
 // Create 创建群聊
-func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpts) (int, error) {
+func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) (int, error) {
 	var (
 		err      error
 		members  []*model.GroupMember
@@ -158,7 +121,7 @@ func (s *GroupService) Create(ctx context.Context, opts *CreateGroupOpts) (int, 
 }
 
 // Update 更新群信息
-func (s *GroupService) Update(ctx context.Context, opts *UpdateGroupOpts) error {
+func (s *GroupService) Update(ctx context.Context, opts *model.UpdateGroupOpt) error {
 	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
 		"group_name": opts.Name,
 		"avatar":     opts.Avatar,
@@ -169,7 +132,7 @@ func (s *GroupService) Update(ctx context.Context, opts *UpdateGroupOpts) error 
 }
 
 // Update 更新群名称
-func (s *GroupService) Rename(ctx context.Context, opts *UpdateGroupOpts) error {
+func (s *GroupService) Rename(ctx context.Context, opts *model.UpdateGroupOpts) error {
 	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
 		"group_name": opts.Name,
 	})
@@ -177,7 +140,7 @@ func (s *GroupService) Rename(ctx context.Context, opts *UpdateGroupOpts) error 
 }
 
 //更新群头像
-func (s *GroupService) Avatar(ctx context.Context, opts *UpdateGroupOpts) error {
+func (s *GroupService) Avatar(ctx context.Context, opts *model.UpdateGroupOpts) error {
 	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
 		"avatar": opts.Avatar,
 	})
@@ -279,8 +242,14 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 	return nil
 }
 
+type InviteGroupMembersOpt struct {
+	UserId    int   // 操作人ID
+	GroupId   int   // 群ID
+	MemberIds []int // 群成员ID
+}
+
 // InviteMembers 邀请加入群聊
-func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembersOpts) error {
+func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGroupMembersOpt) error {
 	var (
 		err            error
 		addMembers     []*model.GroupMember
@@ -320,6 +289,7 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembe
 	}
 
 	if len(addMembers) == 0 {
+		//return errors.New("邀请的好友，都已成为群成员")
 		return nil
 	}
 
@@ -396,8 +366,14 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *InviteGroupMembe
 	return nil
 }
 
+type RemoveMembersOpt struct {
+	UserId    int   // 操作人ID
+	GroupId   int   // 群ID
+	MemberIds []int // 群成员ID
+}
+
 // RemoveMembers 群成员移除群聊
-func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpts) error {
+func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt) error {
 	var num int64
 
 	if err := s.Db().Model(&model.GroupMember{}).Where("group_id = ? and user_id in ? and is_quit = 0", opts.GroupId, opts.MemberIds).Count(&num).Error; err != nil {
@@ -471,20 +447,17 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 	return nil
 }
 
+type session struct {
+	ReceiverID int `json:"receiver_id"`
+	IsDisturb  int `json:"is_disturb"`
+}
+
 func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	tx := s.db.Table("group_member")
-	tx.Select("`group`.id,`group`.group_name,`group`.type, `group`.avatar,`group`.profile,group_member.leader")
+	tx.Select("`group`.id,`group`.group_name,`group`.avatar,`group`.profile,group_member.leader")
 	tx.Joins("left join `group` on `group`.id = group_member.group_id")
-	user := &model.QueryUserTypeItem{}
-	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
-		return nil, err
-	}
-	//只有管理员用户才拥有聊天室权限
-	if user.Type < 1 {
-		tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type = ?", userId, 0, 1)
-	} else {
-		tx.Where("group_member.user_id = ? and group_member.is_quit = ? and `group`.type > ?", userId, 0, 0)
-	}
+	tx.Where("group_member.user_id = ? and group_member.is_quit = ?", userId, 0)
+
 	items := make([]*model.GroupItem, 0)
 	if err := tx.Scan(&items).Error; err != nil {
 		return nil, err
@@ -518,25 +491,6 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 		if value, ok := hash[items[i].Id]; ok {
 			items[i].IsDisturb = value.IsDisturb
 		}
-
-	}
-
-	//查询群员总数
-	db := s.db.Table("group").Select("`group`.id, (select count(1)  from group_member where group.id= group_member.group_id and  group_member.is_quit = 0) as `member_count`")
-	db.Where("id in ?", ids)
-	groups := make([]*GroupMembers, 0)
-	if err := db.Find(&groups).Error; err != nil {
-		return nil, err
-	}
-
-	for i := range items {
-		for j := range groups {
-			if groups[j].Id == items[i].Id {
-				items[i].MemberCount = groups[j].MemberCount
-			}
-
-		}
-
 	}
 
 	return items, nil

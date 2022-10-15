@@ -2,25 +2,38 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"go-chat/config"
-	"go-chat/internal/cache"
-	"go-chat/internal/http/internal/handler"
-	"go-chat/internal/pkg/jwtutil"
+	"go-chat/internal/http/internal/handler/admin"
+	"go-chat/internal/pkg/ichat"
+	"go-chat/internal/pkg/jwt"
+	"go-chat/internal/repository/cache"
 )
 
 // RegisterAdminRoute 注册 Admin 路由
-func RegisterAdminRoute(conf *config.Config, router *gin.Engine, handler *handler.AdminHandler, session *cache.Session) {
+func RegisterAdminRoute(secret string, router *gin.Engine, handler *admin.Handler, session *cache.SessionStorage) {
+
 	// 授权验证中间件
-	authorize := jwtutil.Auth(conf.Jwt.Secret, "admin", session)
+	authorize := jwt.Auth(secret, "admin", session)
 
 	// v1 接口
-	v1 := router.Group("/admin/v1", authorize)
+	v1 := router.Group("/admin/v1")
 	{
-		common := v1.Group("/common")
+		index := v1.Group("/index")
 		{
-			common.GET("/index", func(context *gin.Context) {
-				context.JSON(200, "holle word")
-			})
+			index.GET("", ichat.HandlerFunc(handler.V1.Index.Index))
+		}
+
+		auth := v1.Group("/auth")
+		{
+			auth.GET("/login", ichat.HandlerFunc(handler.V1.Auth.Login))
+			auth.GET("/logout", ichat.HandlerFunc(handler.V1.Auth.Logout))
+			auth.GET("/refresh", authorize, ichat.HandlerFunc(handler.V1.Auth.Refresh))
+		}
+
+		other := v1.Group("/other", authorize)
+		{
+			other.GET("/test", ichat.HandlerFunc(func(ctx *ichat.Context) error {
+				return nil
+			}))
 		}
 	}
 }

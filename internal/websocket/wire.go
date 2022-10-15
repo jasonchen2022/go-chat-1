@@ -7,13 +7,14 @@ import (
 	"context"
 
 	"go-chat/config"
-	"go-chat/internal/cache"
-	"go-chat/internal/dao"
 	"go-chat/internal/provider"
+	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
 	"go-chat/internal/service"
-	handle2 "go-chat/internal/websocket/internal/handler"
+	"go-chat/internal/websocket/internal/handler"
 	"go-chat/internal/websocket/internal/process"
-	handle "go-chat/internal/websocket/internal/process/handle"
+	"go-chat/internal/websocket/internal/process/handle"
+	"go-chat/internal/websocket/internal/process/server"
 	"go-chat/internal/websocket/internal/router"
 
 	"github.com/google/wire"
@@ -24,22 +25,26 @@ var providerSet = wire.NewSet(
 	provider.NewMySQLClient,
 	provider.NewRedisClient,
 	provider.NewWebsocketServer,
+
+	// 路由
 	router.NewRouter,
 
 	// process
-	process.NewCoroutine,
-	process.NewHealth,
-	process.NewWsSubscribe,
+	wire.Struct(new(process.SubServers), "*"),
+	process.NewServer,
+	server.NewHealth,
+	server.NewWsSubscribe,
 	handle.NewSubscribeConsume,
 
 	// 缓存
-	cache.NewSession,
+	cache.NewSessionStorage,
 	cache.NewSid,
 	cache.NewRedisLock,
 	cache.NewWsClientSession,
-	cache.NewRoom,
+	cache.NewRoomStorage,
 	cache.NewTalkVote,
 	cache.NewRelation,
+	cache.NewContactRemark,
 
 	// dao 数据层
 	dao.NewBaseDao,
@@ -57,13 +62,13 @@ var providerSet = wire.NewSet(
 	service.NewSensitiveMatchService,
 
 	// handle
-	handle2.NewDefaultWebSocket,
-	handle2.NewExampleWebsocket,
+	handler.NewDefaultWebSocket,
+	handler.NewExampleWebsocket,
 
-	wire.Struct(new(handle2.Handler), "*"),
-	wire.Struct(new(Provider), "*"),
+	wire.Struct(new(handler.Handler), "*"),
+	wire.Struct(new(AppProvider), "*"),
 )
 
-func Initialize(ctx context.Context, conf *config.Config) *Provider {
+func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	panic(wire.Build(providerSet))
 }

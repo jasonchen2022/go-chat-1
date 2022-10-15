@@ -6,24 +6,25 @@ import (
 	"os"
 	"time"
 
-	"go-chat/config"
-	"go-chat/internal/model"
+	"go-chat/internal/repository/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"gorm.io/plugin/dbresolver"
+
+	"go-chat/config"
 )
 
 func NewMySQLClient(conf *config.Config) *gorm.DB {
 
 	gormConfig := &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   conf.MySQL.Prefix, //表前缀
-			SingularTable: true,              // 使用单数表名，启用该选项，此时，`Article` 的表名应该是 `it_article`
+			SingularTable: true,
 		},
 	}
+
 	if !conf.Debug() {
 		writer, _ := os.OpenFile(fmt.Sprintf("%s/logs/sql.log", conf.Log.Path), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 
@@ -36,6 +37,7 @@ func NewMySQLClient(conf *config.Config) *gorm.DB {
 			},
 		)
 	}
+
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       conf.MySQL.GetDsn(), // DSN data source name
 		DisableDatetimePrecision:  true,                // 禁用 datetime 精度，MySQL 5.6 之前的数据库不支持
@@ -46,9 +48,12 @@ func NewMySQLClient(conf *config.Config) *gorm.DB {
 
 	dsn_ff := conf.MySQLFF.GetDsn()
 	//注意：指定实体查询另外一个库
-	db.Use(dbresolver.Register(dbresolver.Config{
+	err1 := db.Use(dbresolver.Register(dbresolver.Config{
 		Replicas: []gorm.Dialector{mysql.Open(dsn_ff)},
 	}, &model.Member{}, &model.DictData{}, &model.Fans{}))
+	if err1 != nil {
+		panic(fmt.Errorf("mysql connect error :%v", err1))
+	}
 	if err != nil {
 		panic(fmt.Errorf("mysql connect error :%v", err))
 	}

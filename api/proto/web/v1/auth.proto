@@ -4,12 +4,11 @@ package web;
 option go_package = "web/v1;web";
 
 import "validate/validate.proto";
-
 import "tagger/tagger.proto";
 
 message AuthLoginRequest{
   // 登录手机号
-  string mobile = 1 [(validate.rules).string = {min_len: 11, max_len: 11}];
+  string mobile = 1 [(validate.rules).string = {min_len:11,max_len:11}];
   // 登录密码
   string password = 2 [(tagger.tags) = "form:\"password\""];
   // 登录平台
@@ -18,6 +17,22 @@ message AuthLoginRequest{
 
 message AuthLoginResponse{
   string type = 1;
-  string token = 2;
-  string expires_in = 3;
+  string access_token = 2;
+  int64 expires_in = 3;
+}
+
+message AuthRefreshResponse{
+  string type = 1;
+  string access_token = 2;
+  int64 expires_in = 3;
+}
+
+message AuthRefreshRequest{
+  string refresh_token = 1;
+}
+
+
+service Auth{
+  rpc Login(AuthLoginRequest) returns (AuthLoginResponse);
+  rpc Refresh(AuthRefreshRequest) returns (AuthRefreshResponse);
 }

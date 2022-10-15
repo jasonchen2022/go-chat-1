@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"go-chat/internal/repository/dao/note"
+	"go-chat/internal/repository/model"
 	"gorm.io/gorm"
 
-	"go-chat/internal/dao/note"
-	"go-chat/internal/model"
 	"go-chat/internal/service"
 )
 

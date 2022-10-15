@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"go-chat/internal/dao"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/sliceutil"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 )
 
 type EmoticonService struct {

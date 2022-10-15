@@ -5,18 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"go-chat/internal/dao"
 	"go-chat/internal/entity"
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/sliceutil"
+	"go-chat/internal/repository/dao"
+	"go-chat/internal/repository/model"
 )
-
-type TalkMessageDeleteOpts struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	RecordIds  string
-}
 
 type TalkService struct {
 	*BaseService
@@ -27,8 +20,15 @@ func NewTalkService(baseService *BaseService, groupMemberDao *dao.GroupMemberDao
 	return &TalkService{BaseService: baseService, groupMemberDao: groupMemberDao}
 }
 
+type TalkMessageDeleteOpt struct {
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	RecordIds  string
+}
+
 // RemoveRecords 删除消息记录
-func (s *TalkService) RemoveRecords(ctx context.Context, opts *TalkMessageDeleteOpts) error {
+func (s *TalkService) RemoveRecords(ctx context.Context, opts *TalkMessageDeleteOpt) error {
 
 	// 需要删除的消息记录ID
 	ids := sliceutil.UniqueInt(sliceutil.ParseIds(opts.RecordIds))

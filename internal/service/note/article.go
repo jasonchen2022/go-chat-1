@@ -6,31 +6,14 @@ import (
 	"fmt"
 	"html"
 
+	"go-chat/internal/repository/model"
 	"gorm.io/gorm"
 
-	"go-chat/internal/model"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/service"
 )
-
-type ArticleEditOpts struct {
-	UserId    int
-	ArticleId int
-	ClassId   int
-	Title     string
-	Content   string
-	MdContent string
-}
-
-type ArticleListOpts struct {
-	UserId   int
-	Keyword  string
-	FindType int
-	Cid      int
-	Page     int
-}
 
 type ArticleService struct {
 	*service.BaseService
@@ -69,8 +52,17 @@ func (s *ArticleService) Detail(ctx context.Context, uid, articleId int) (*model
 	}, nil
 }
 
+type ArticleEditOpt struct {
+	UserId    int
+	ArticleId int
+	ClassId   int
+	Title     string
+	Content   string
+	MdContent string
+}
+
 // Create 创建笔记
-func (s *ArticleService) Create(ctx context.Context, opts *ArticleEditOpts) (int, error) {
+func (s *ArticleService) Create(ctx context.Context, opts *ArticleEditOpt) (int, error) {
 
 	abstract := strutil.MtSubstr(opts.MdContent, 0, 200)
 
@@ -110,7 +102,7 @@ func (s *ArticleService) Create(ctx context.Context, opts *ArticleEditOpts) (int
 }
 
 // Update 更新笔记信息
-func (s *ArticleService) Update(ctx context.Context, opts *ArticleEditOpts) error {
+func (s *ArticleService) Update(ctx context.Context, opts *ArticleEditOpt) error {
 
 	abstract := strutil.Strip(opts.MdContent)
 	abstract = strutil.MtSubstr(abstract, 0, 200)
@@ -136,8 +128,16 @@ func (s *ArticleService) Update(ctx context.Context, opts *ArticleEditOpts) erro
 	})
 }
 
+type ArticleListOpt struct {
+	UserId   int
+	Keyword  string
+	FindType int
+	Cid      int
+	Page     int
+}
+
 // List 笔记列表
-func (s *ArticleService) List(ctx context.Context, opts *ArticleListOpts) ([]*model.ArticleItem, error) {
+func (s *ArticleService) List(ctx context.Context, opts *ArticleListOpt) ([]*model.ArticleItem, error) {
 
 	query := s.Db().Table("article").Select("article.*,article_class.class_name")
 	query.Joins("left join article_class on article_class.id = article.class_id")

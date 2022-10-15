@@ -1,8 +1,6 @@
 package config
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // MySQL 数据库配置信息
 type MySQL struct {
@@ -18,7 +16,7 @@ type MySQL struct {
 
 func (m *MySQL) GetDsn() string {
 	return fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local&timeout=30s",
+		"%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
 		m.UserName,
 		m.Password,
 		m.Host,

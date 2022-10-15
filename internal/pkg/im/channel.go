@@ -8,11 +8,16 @@ import (
 	"time"
 )
 
+type IChannel interface {
+	Name() string
+	Count() int64
+}
+
 // Channel 渠道管理（多渠道划分，实现不同业务之间隔离）
 type Channel struct {
 	name    string              // 渠道名称
 	count   int64               // 客户端连接数
-	node    *Node               // 客户端列表【客户端ID取余拆分，降低 map 长度，减少 map 加锁时间提高并发处理量】
+	node    *Node               // 客户端列表【客户端ID取余拆分，降低 map 长度】
 	outChan chan *SenderContent // 消息发送通道
 }
 
@@ -66,13 +71,17 @@ func (c *Channel) delClient(client *Client) {
 
 // 推送客户端数据
 func (c *Channel) loopPush(ctx context.Context) {
+
 	out := 2 * time.Second
 	timer := time.NewTimer(out)
 
 	defer timer.Stop()
 
 	for {
+		timer.Reset(out)
+
 		select {
+		case <-timer.C:
 		case <-ctx.Done():
 			return
 		case body, ok := <-c.outChan:
@@ -92,8 +101,6 @@ func (c *Channel) loopPush(ctx context.Context) {
 					}
 				}
 			}
-		case <-timer.C:
-			timer.Reset(out)
 		}
 	}
 }
