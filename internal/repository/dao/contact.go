@@ -8,8 +8,6 @@ import (
 
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
-
-	"github.com/sirupsen/logrus"
 )
 
 type IContactDao interface {
@@ -116,7 +114,6 @@ func (dao *ContactDao) GetMemberType(ctx context.Context, userId int) int {
 	} else {
 		member_type, _ = strconv.Atoi(result)
 	}
-	logrus.Info("member_type：", strconv.Itoa(member_type))
 	return member_type
 
 }

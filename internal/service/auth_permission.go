@@ -49,8 +49,15 @@ func (a *AuthPermissionService) IsAuth(ctx context.Context, prem *AuthPermission
 		// 判断群是否解散
 		group := &model.Group{}
 		err := a.groupMemberDao.Db().First(group, "id = ?", prem.ReceiverId).Error
-		if err != nil || group.Id == 0 || group.IsDismiss == 1 {
+		if err != nil {
 			return false
+		}
+		if group.Id == 0 || group.IsDismiss == 1 {
+			return false
+		}
+		//聊天室可以查看
+		if group.Type == 3 {
+			return true
 		}
 		return a.groupMemberDao.IsMember(prem.ReceiverId, prem.UserId, true)
 	}

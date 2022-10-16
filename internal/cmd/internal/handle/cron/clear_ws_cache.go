@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"fmt"
 
 	"go-chat/internal/repository/cache"
 
@@ -25,12 +26,17 @@ func (c *ClearWsCache) Spec() string {
 func (c *ClearWsCache) Handle(ctx context.Context) error {
 
 	logrus.Info("开始清除redis缓存")
-	iter := c.server.Redis().Scan(ctx, 0, "ws:*", 5000).Iterator()
+	for _, sid := range c.server.GetExpireServerAll(ctx) {
 
-	for iter.Next(ctx) {
-		c.server.Redis().Del(ctx, iter.Val())
-		logrus.Info("删除Redis：", iter.Val())
+		iter := c.server.Redis().Scan(ctx, 0, fmt.Sprintf("ws:%s:*", sid), 100).Iterator()
+
+		for iter.Next(ctx) {
+			c.server.Redis().Del(ctx, iter.Val())
+		}
+
+		_ = c.server.DelExpireServer(ctx, sid)
 	}
+
 	logrus.Info("结束清除redis缓存")
 	return nil
 }
