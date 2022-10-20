@@ -40,7 +40,7 @@ func (c *ClearGroup) clearGroup() {
 	for {
 		items := make([]*model.Group, 0)
 
-		err := c.db.Model(&model.Group{}).Where("id > ? and type = 3 and created_at <= ? and group_name not like '?%'", lastId, time.Now().AddDate(0, 0, -1), "主播").Order("id asc").Limit(size).Scan(&items).Error
+		err := c.db.Model(&model.Group{}).Where("id > ? and type = 3 and id != 34 and created_at <= ? and group_name not like '?%'", lastId, time.Now().AddDate(0, 0, -1), "主播").Order("id asc").Limit(size).Scan(&items).Error
 		if err != nil {
 			break
 		}

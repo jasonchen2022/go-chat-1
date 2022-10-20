@@ -32,11 +32,13 @@ func GetMediaType(ext string) int {
 const (
 	FileDriveLocal = 1
 	FileDriveCos   = 2
+	FileDriveOss   = 3
 )
 
 var fileSystemDriveMap = map[string]int{
 	"local": FileDriveLocal,
 	"cos":   FileDriveCos,
+	"oss":   FileDriveOss,
 }
 
 func FileDriveMode(drive string) int {

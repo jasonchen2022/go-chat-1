@@ -67,7 +67,11 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			contact.GET("/apply/unread-num", ichat.HandlerFunc(handler.V1.ContactsApply.ApplyUnreadNum))     // 联系人申请未读数
 			contact.POST("/apply/online/service", ichat.HandlerFunc(handler.V1.ContactsApply.OnlineService)) // 在线客服
 		}
-
+		// 聊天室相关分组
+		chatGroup := v1.Group("/chat")
+		{
+			chatGroup.POST("/create", ichat.HandlerFunc(handler.V1.Group.CreateChat)) // 创建群组
+		}
 		// 聊天群相关分组
 		userGroup := v1.Group("/group").Use(authorize)
 		{

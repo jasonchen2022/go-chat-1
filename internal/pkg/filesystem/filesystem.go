@@ -69,6 +69,8 @@ func NewFilesystem(conf *config.Config) *Filesystem {
 	switch s.driver {
 	case "cos":
 		s.Default = s.Cos
+	case "oss":
+		s.Default = s.Oss
 	default:
 		s.Default = s.Local
 	}

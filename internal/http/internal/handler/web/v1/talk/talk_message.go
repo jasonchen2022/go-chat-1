@@ -2,6 +2,7 @@ package talk
 
 import (
 	"errors"
+	"fmt"
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
@@ -106,6 +107,8 @@ func (c *Message) Text(ctx *ichat.Context) error {
 		return ctx.BusinessError(err.Error())
 	}
 
+	fmt.Printf("开始发送消息！")
+
 	if err := c.service.SendTextMessage(ctx.RequestCtx(), &service.TextMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
@@ -114,7 +117,7 @@ func (c *Message) Text(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
+	fmt.Printf("结束发送消息！")
 	return ctx.Success(nil)
 }
 

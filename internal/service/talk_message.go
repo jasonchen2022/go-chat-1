@@ -95,19 +95,19 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 	if c != nil {
 		return c
 	}
-	if record.Content != "" {
-		//检测敏感词
-		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
-		//游客或普通会员不能发送敏感消息
-		if member_type <= 0 {
-			senService := s.sensitiveMatchService.GetService()
-			_, content := senService.Match(record.Content, '*')
-			if content != "" {
-				record.Content = content
-			}
+	// if record.Content != "" {
+	// 	//检测敏感词
+	// 	member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+	// 	//游客或普通会员不能发送敏感消息
+	// 	if member_type <= 0 {
+	// 		senService := s.sensitiveMatchService.GetService()
+	// 		_, content := senService.Match(record.Content, '*')
+	// 		if content != "" {
+	// 			record.Content = content
+	// 		}
 
-		}
-	}
+	// 	}
+	// }
 
 	if err := s.db.Create(record).Error; err != nil {
 		return err
@@ -187,6 +187,10 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 	)
 	filePath := ""
 	ext := ""
+	fileName := ""
+	size := 0
+	sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
+	val := sn.NextVal()
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
@@ -198,9 +202,8 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			return err
 		}
 		ext := strutil.FileSuffix(opts.File.Filename)
-		sn, _ := snowflake.NewSnowflake(int64(0), int64(0))
-		val := sn.NextVal()
-		fileName := fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
+		size = int(opts.File.Size)
+		fileName = fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
 		if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
 			return err
@@ -210,6 +213,7 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 	} else {
 		filePath = opts.ImageUrl
 		ext = strutil.FileSuffix(opts.ImageUrl)
+		fileName = fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 	}
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
@@ -222,9 +226,9 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			Source:       1,
 			Type:         entity.GetMediaType(ext),
 			Drive:        entity.FileDriveMode(s.fileSystem.Driver()),
-			OriginalName: opts.File.Filename,
+			OriginalName: fileName,
 			Suffix:       ext,
-			Size:         int(opts.File.Size),
+			Size:         size,
 			Path:         filePath,
 			Url:          filePath,
 		}).Error; err != nil {
@@ -735,16 +739,19 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 		}
 	} else if record.TalkType == entity.ChatGroupMode {
 
-		// todo 需要加缓存
-		ids := s.groupMemberDao.GetMemberIds(record.ReceiverId)
-		for _, uid := range ids {
+		go func() {
+			// todo 需要加缓存
+			ids := s.groupMemberDao.GetMemberIds(record.ReceiverId)
+			for _, uid := range ids {
 
-			if uid == record.UserId {
-				continue
+				if uid == record.UserId {
+					continue
+				}
+
+				s.unreadTalkCache.Increment(ctx, entity.ChatGroupMode, record.ReceiverId, uid)
 			}
+		}()
 
-			s.unreadTalkCache.Increment(ctx, entity.ChatGroupMode, record.ReceiverId, uid)
-		}
 	}
 
 	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
@@ -781,4 +788,5 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	} else {
 		s.rds.Publish(ctx, entity.IMGatewayAll, content)
 	}
+
 }
