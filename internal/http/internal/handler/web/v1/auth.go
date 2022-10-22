@@ -110,8 +110,12 @@ func (c *Auth) Sync(ctx *ichat.Context) error {
 	user, _ := c.userService.Dao().FindByMobile(member.Mobile)
 	if user == nil {
 		password, _ := encrypt.HashPassword("12345689")
+		timetemp := strconv.FormatInt(time.Now().Unix(), 10)
+		timeresult := strings.TrimLeft(timetemp, "1")
+		timeid, _ := strconv.Atoi(timeresult)
 		_, err := c.userService.Dao().Create(&model.Users{
 			Id:               member.Id,
+			MemberId:         (timeid + member.Id) * 2, //（时间戳+ID主键）* 2
 			MemberLevel:      member.MemberLevel,
 			MemberLevelTitle: member.MemberLevelTitle,
 			Username:         member.UserName,

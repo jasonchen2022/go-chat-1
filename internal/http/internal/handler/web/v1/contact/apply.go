@@ -38,16 +38,35 @@ func (c *Apply) Create(ctx *ichat.Context) error {
 	}
 
 	uid := ctx.UserId()
-	if !c.contactService.Dao().IsFriend(ctx.Context, uid, params.FriendId, false) {
+	// 无法添加自己为好友
+	if uid == params.FriendId {
+		return ctx.InvalidParams("无法添加自己为好友")
+
+	}
+	if c.contactService.Dao().IsFriend(ctx.Context, uid, params.FriendId, false) {
 		return ctx.Success(nil)
 	}
-
-	if err := c.service.Create(ctx.Context, &service.ContactApplyCreateOpts{
-		UserId:   ctx.UserId(),
-		Remarks:  params.Remarks,
-		FriendId: params.FriendId,
-	}); err != nil {
-		return ctx.BusinessError(err)
+	err := c.service.Db().Transaction(func(tx *gorm.DB) error {
+		//创建双向好友
+		er := c.contactService.Create(ctx.Context, &service.ContactApplyCreateOpts{
+			UserId:   uid,
+			FriendId: params.FriendId,
+		})
+		if er != nil {
+			return er
+		}
+		//创建双向好友
+		eq := c.contactService.Create(ctx.Context, &service.ContactApplyCreateOpts{
+			UserId:   params.FriendId,
+			FriendId: uid,
+		})
+		if eq != nil {
+			return eq
+		}
+		return nil
+	})
+	if err != nil {
+		return ctx.InvalidParams(err.Error())
 	}
 
 	return ctx.Success(nil)

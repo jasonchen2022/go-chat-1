@@ -5,6 +5,7 @@ import "time"
 type Users struct {
 	Id               int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`                       // 用户ID
 	Type             int       `gorm:"column:type;default:0;NOT NULL" json:"type"`                           // 用户类型
+	MemberId         int       `gorm:"column:member_id;default:0;NOT NULL" json:"member_id"`                 // 用户唯一ID
 	MemberLevel      int       `gorm:"column:member_level;default:0;NOT NULL" json:"member_level"`           // 用户等级
 	MemberLevelTitle string    `gorm:"column:member_level_title;" json:"member_level_title"`                 // 用户等级名称
 	ExperiencePoints int       `gorm:"column:experience_points;default:0;NOT NULL" json:"experience_points"` // 用户等级
@@ -45,6 +46,7 @@ type UserTemp struct {
 type QueryUserItem struct {
 	Id               int    `json:"id"`
 	Nickname         string `json:"nickname"`
+	MemberId         int    `son:"member_id"`
 	MemberLevel      int    `json:"member_level"`
 	MemberType       int    `json:"member_type"`
 	MemberLevelTitle string `json:"member_level_title"`

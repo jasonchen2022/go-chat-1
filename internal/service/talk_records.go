@@ -31,6 +31,7 @@ type TalkRecordsItem struct {
 	IsLeader         int         `json:"is_leader"`
 	FanLevel         int         `json:"fan_level"`
 	FanLabel         string      `json:"fan_label"`
+	MemberId         int         `json:"member_id"`
 	MemberLevel      int         `json:"member_level"`
 	MemberLevelTitle string      `json:"member_level_title"`
 	MemberType       int         `json:"member_type"`
@@ -95,6 +96,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"users.avatar as avatar",
 			"1 as fan_level",
 			"null as fan_label",
+			"users.member_id",
 			"users.member_level",
 			"users.member_level_title",
 			"users.type as member_type",
@@ -156,6 +158,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				"group_member.user_id",
 				"users.type as member_type",
 				"users.is_mute",
+				"users.member_id",
 				"users.member_level",
 				"users.member_level_title",
 				"group_member.leader as is_leader",
@@ -174,6 +177,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 								record.IsLeader = item.IsLeader
 								record.MemberType = item.MemberType
 								record.MemberLevel = item.MemberLevel
+								record.MemberId = item.MemberId
 								record.MemberLevelTitle = item.MemberLevelTitle
 								record.IsMute = item.IsMute
 								record.GroupName = item.GroupName
@@ -213,6 +217,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"users.avatar as avatar",
 			"1 as fan_level",
 			"null as fan_label",
+			"users.member_id",
 			"users.member_level",
 			"users.member_level_title",
 			"users.type as member_type",
@@ -242,6 +247,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"group_member.user_id",
 			"users.type as member_type",
 			"users.is_mute",
+			"users.member_id",
 			"users.member_level",
 			"users.member_level_title",
 			"group_member.leader as is_leader",
@@ -257,6 +263,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 						record.IsLeader = item.IsLeader
 						record.MemberType = item.MemberType
 						record.MemberLevel = item.MemberLevel
+						record.MemberId = item.MemberId
 						record.MemberLevelTitle = item.MemberLevelTitle
 						record.IsMute = item.IsMute
 						record.GroupName = item.GroupName
@@ -434,7 +441,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					inviteUserIds = append(inviteUserIds, tempUserIds[i])
 				}
 			}
-			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
+			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_id", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
 		}
 		//邀请操作人管理员ID
 		if len(hashInvites) > 0 {
@@ -614,6 +621,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					m["users"] = results
 					//如果是入群通知则再查一次用户数据
 					if len(results) > 0 {
+						data.MemberId = results[0].Id
 						data.MemberLevel = results[0].MemberLevel
 						data.MemberLevelTitle = results[0].MemberLevelTitle
 						data.MemberType = results[0].MemberType

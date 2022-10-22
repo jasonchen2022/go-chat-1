@@ -36,6 +36,7 @@ type QueryTalkRecordsItem struct {
 	Avatar           string    `json:"avatar"`
 	FanLevel         int       `json:"fan_level"`
 	FanLabel         string    `json:"fan_label"`
+	MemberId         int       `json:"member_id"`
 	MemberType       int       `json:"member_type"`
 	MemberLevel      int       `json:"member_level"`
 	MemberLevelTitle string    `json:"member_level_title"`
@@ -49,6 +50,7 @@ type QueryGroupMemberItem struct {
 	UserId           int    `json:"user_id"`
 	IsLeader         int    `json:"is_leader"`
 	MemberType       int    `json:"member_type"`
+	MemberId         int    `json:"member_id"`
 	MemberLevel      int    `json:"member_level"`
 	MemberLevelTitle string `json:"member_level_title"`
 	IsMute           int    `json:"is_mute"`

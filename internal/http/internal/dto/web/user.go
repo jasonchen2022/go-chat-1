@@ -1,13 +1,17 @@
 package web
 
 type GetUserInfoResponse struct {
-	Id       int    `json:"id"`
-	Mobile   string `json:"mobile"`
-	Nickname string `json:"nickname"`
-	Avatar   string `json:"avatar"`
-	Gender   int    `json:"gender"`
-	Motto    string `json:"motto"`
-	Email    string `json:"email"`
+	Id               int    `json:"id"`
+	Mobile           string `json:"mobile"`
+	Nickname         string `json:"nickname"`
+	Avatar           string `json:"avatar"`
+	Gender           int    `json:"gender"`
+	Motto            string `json:"motto"`
+	Email            string `json:"email"`
+	MemberId         int    `son:"member_id"`
+	MemberLevel      int    `json:"member_level"`
+	MemberType       int    `json:"member_type"`
+	MemberLevelTitle string `json:"member_level_title"`
 }
 
 // ChangeUserDetailRequest ...

@@ -100,10 +100,7 @@ func (s *TalkSessionService) Create(ctx context.Context, opts *model.TalkSession
 
 // Delete 删除会话
 func (s *TalkSessionService) Delete(ctx context.Context, uid int, id int) error {
-	return s.db.Model(&model.TalkSession{}).Where("id = ? and user_id = ?", id, uid).Updates(map[string]interface{}{
-		"is_delete":  1,
-		"updated_at": time.Now(),
-	}).Error
+	return s.db.Delete(&model.TalkSession{}, "id = ? and user_id = ?", id, uid).Error
 }
 
 type TalkSessionTopOpt struct {

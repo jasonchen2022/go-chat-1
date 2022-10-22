@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
 
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/cache"
@@ -57,7 +56,7 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 // onConsumeTalk 聊天消息事件
 func (s *SubscribeConsume) onConsumeTalk(body string) {
 
-	logrus.Info("收到订阅消息：", time.Now().Unix(), body)
+	//logrus.Info("收到订阅消息：", time.Now().Unix(), body)
 	var msg struct {
 		TalkType   int   `json:"talk_type"`
 		SenderID   int64 `json:"sender_id"`
@@ -113,7 +112,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	})
 
 	im.Session.Default.Write(c)
-	logrus.Info("结束订阅消息：", time.Now().Unix())
+	//logrus.Info("结束订阅消息：", time.Now().Unix())
 }
 
 // onConsumeTalkKeyboard 键盘输入事件消息

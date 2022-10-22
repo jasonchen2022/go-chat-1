@@ -29,13 +29,17 @@ func (u *User) Detail(ctx *ichat.Context) error {
 	}
 
 	return ctx.Success(&web.GetUserInfoResponse{
-		Id:       user.Id,
-		Mobile:   user.Mobile,
-		Nickname: user.Nickname,
-		Avatar:   user.Avatar,
-		Gender:   user.Gender,
-		Motto:    user.Motto,
-		Email:    user.Email,
+		Id:               user.Id,
+		Mobile:           user.Mobile,
+		Nickname:         user.Nickname,
+		Avatar:           user.Avatar,
+		Gender:           user.Gender,
+		Motto:            user.Motto,
+		Email:            user.Email,
+		MemberId:         user.MemberId,
+		MemberLevel:      user.MemberLevel,
+		MemberType:       user.Type,
+		MemberLevelTitle: user.MemberLevelTitle,
 	})
 }
 

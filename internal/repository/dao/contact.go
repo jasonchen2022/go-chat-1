@@ -40,6 +40,10 @@ func (dao *ContactDao) Remarks(ctx context.Context, uid int, fids []int) (map[in
 // IsFriend 判断是否为好友关系
 func (dao *ContactDao) IsFriend(ctx context.Context, uid int, friendId int, cache bool) bool {
 
+	// if dao.IsLeader(friendId) || dao.IsLeader(uid) {
+	// 	return true
+	// }
+
 	if cache && dao.relation.IsContactRelation(ctx, uid, friendId) == nil {
 		return true
 	}

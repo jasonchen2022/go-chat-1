@@ -82,7 +82,7 @@ type TextMessageOpt struct {
 }
 
 // SendTextMessage 发送文本消息
-func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMessageOpt) error {
+func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMessageOpt) (int, error) {
 	record := &model.TalkRecords{
 		TalkType:   opts.TalkType,
 		MsgType:    entity.MsgTypeText,
@@ -93,31 +93,31 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
-		return c
+		return 0, c
 	}
-	// if record.Content != "" {
-	// 	//检测敏感词
-	// 	member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
-	// 	//游客或普通会员不能发送敏感消息
-	// 	if member_type <= 0 {
-	// 		senService := s.sensitiveMatchService.GetService()
-	// 		_, content := senService.Match(record.Content, '*')
-	// 		if content != "" {
-	// 			record.Content = content
-	// 		}
+	if record.Content != "" {
+		//检测敏感词
+		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(record.Content, '*')
+			if content != "" {
+				record.Content = content
+			}
 
-	// 	}
-	// }
+		}
+	}
 
 	if err := s.db.Create(record).Error; err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{
 		"text": strutil.MtSubstr(record.Content, 0, 30),
 	})
 
-	return nil
+	return record.Id, nil
 }
 
 type CodeMessageOpt struct {
@@ -175,7 +175,7 @@ type ImageMessageOpt struct {
 }
 
 // SendImageMessage 发送图片消息
-func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMessageOpt) error {
+func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMessageOpt) (int, error) {
 	var (
 		err    error
 		record = &model.TalkRecords{
@@ -194,19 +194,19 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
-		return c
+		return 0, c
 	}
 	if opts.File != nil {
 		stream, err := filesystem.ReadMultipartStream(opts.File)
 		if err != nil {
-			return err
+			return 0, err
 		}
 		ext := strutil.FileSuffix(opts.File.Filename)
 		size = int(opts.File.Size)
 		fileName = fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
 		if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
-			return err
+			return 0, err
 		}
 
 		filePath = s.fileSystem.Oss.PublicUrl(fileName)
@@ -239,12 +239,12 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"})
 
-	return nil
+	return record.Id, nil
 }
 
 type FileMessageOpt struct {
@@ -255,7 +255,7 @@ type FileMessageOpt struct {
 }
 
 // SendFileMessage 发送文件消息
-func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMessageOpt) error {
+func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMessageOpt) (int, error) {
 
 	var (
 		err    error
@@ -270,12 +270,12 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
 	if c != nil {
-		return c
+		return 0, c
 	}
 
 	file, err := s.splitUploadDao.GetFile(opts.UserId, opts.UploadId)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	filePath := fmt.Sprintf("private/files/talks/%s/%s.%s", timeutil.DateNumber(), encrypt.Md5(strutil.Random(16)), file.FileExt)
@@ -287,7 +287,7 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 
 	if err := s.fileSystem.Default.Copy(file.Path, filePath); err != nil {
 		logrus.Error("文件拷贝失败 err: ", err.Error())
-		return err
+		return 0, err
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -314,12 +314,12 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{"text": "[文件消息]"})
 
-	return nil
+	return record.Id, nil
 }
 
 type CardMessageOpt struct {
@@ -330,9 +330,9 @@ type CardMessageOpt struct {
 }
 
 // SendCardMessage 发送用户名片消息
-func (s *TalkMessageService) SendCardMessage(ctx context.Context, opts *CardMessageOpt) error {
+func (s *TalkMessageService) SendCardMessage(ctx context.Context, opts *CardMessageOpt) (int, error) {
 	// todo 发送用户名片消息待开发
-	return nil
+	return 0, nil
 }
 
 type VoteMessageOpt struct {
@@ -345,7 +345,7 @@ type VoteMessageOpt struct {
 }
 
 // SendVoteMessage 发送投票消息
-func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMessageOpt) error {
+func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMessageOpt) (int, error) {
 	var (
 		err    error
 		record = &model.TalkRecords{
@@ -384,12 +384,12 @@ func (s *TalkMessageService) SendVoteMessage(ctx context.Context, opts *VoteMess
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{"text": "[投票消息]"})
 
-	return nil
+	return record.Id, nil
 }
 
 type EmoticonMessageOpt struct {
@@ -400,7 +400,7 @@ type EmoticonMessageOpt struct {
 }
 
 // SendEmoticonMessage 发送表情包消息
-func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *EmoticonMessageOpt) error {
+func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *EmoticonMessageOpt) (int, error) {
 	var (
 		err      error
 		emoticon model.EmoticonItem
@@ -413,11 +413,11 @@ func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *Emot
 	)
 
 	if err = s.db.Model(&model.EmoticonItem{}).Where("id = ?", opts.EmoticonId).First(&emoticon).Error; err != nil {
-		return err
+		return 0, err
 	}
 
 	if emoticon.UserId > 0 && emoticon.UserId != opts.UserId {
-		return errors.New("表情包不存在！")
+		return 0, errors.New("表情包不存在！")
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -443,12 +443,12 @@ func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *Emot
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{"text": "[图片消息]"})
 
-	return nil
+	return record.Id, nil
 }
 
 type LocationMessageOpt struct {
@@ -460,7 +460,7 @@ type LocationMessageOpt struct {
 }
 
 // SendLocationMessage 发送位置消息
-func (s *TalkMessageService) SendLocationMessage(ctx context.Context, opts *LocationMessageOpt) error {
+func (s *TalkMessageService) SendLocationMessage(ctx context.Context, opts *LocationMessageOpt) (int, error) {
 
 	var (
 		err    error
@@ -490,12 +490,12 @@ func (s *TalkMessageService) SendLocationMessage(ctx context.Context, opts *Loca
 	})
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	s.afterHandle(ctx, record, map[string]string{"text": "[位置消息]"})
 
-	return nil
+	return record.Id, nil
 }
 
 // SendRevokeRecordMessage 撤销推送消息

@@ -2,7 +2,6 @@ package talk
 
 import (
 	"errors"
-	"fmt"
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
@@ -106,19 +105,16 @@ func (c *Message) Text(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	fmt.Printf("开始发送消息！")
-
-	if err := c.service.SendTextMessage(ctx.RequestCtx(), &service.TextMessageOpt{
+	id, err := c.service.SendTextMessage(ctx.RequestCtx(), &service.TextMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		Text:       params.Text,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-	fmt.Printf("结束发送消息！")
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Code 发送代码块消息
@@ -181,17 +177,18 @@ func (c *Message) Image(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendImageMessage(ctx.RequestCtx(), &service.ImageMessageOpt{
+	id, err := c.service.SendImageMessage(ctx.RequestCtx(), &service.ImageMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		File:       file,
-	}); err != nil {
+	})
+
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Image 发送图片消息
@@ -220,17 +217,17 @@ func (c *Message) ImageByUrl(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendImageMessage(ctx.RequestCtx(), &service.ImageMessageOpt{
+	id, err := c.service.SendImageMessage(ctx.RequestCtx(), &service.ImageMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		ImageUrl:   params.ImageUrl,
 		File:       nil,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // File 发送文件消息
@@ -249,17 +246,17 @@ func (c *Message) File(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendFileMessage(ctx.RequestCtx(), &service.FileMessageOpt{
+	id, err := c.service.SendFileMessage(ctx.RequestCtx(), &service.FileMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		UploadId:   params.UploadId,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Vote 发送投票消息
@@ -286,19 +283,19 @@ func (c *Message) Vote(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendVoteMessage(ctx.RequestCtx(), &service.VoteMessageOpt{
+	id, err := c.service.SendVoteMessage(ctx.RequestCtx(), &service.VoteMessageOpt{
 		UserId:     uid,
 		ReceiverId: params.ReceiverId,
 		Mode:       params.Mode,
 		Anonymous:  params.Anonymous,
 		Title:      params.Title,
 		Options:    params.Options,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Emoticon 发送表情包消息
@@ -317,17 +314,17 @@ func (c *Message) Emoticon(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendEmoticonMessage(ctx.RequestCtx(), &service.EmoticonMessageOpt{
+	id, err := c.service.SendEmoticonMessage(ctx.RequestCtx(), &service.EmoticonMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		EmoticonId: params.EmoticonId,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Forward 发送转发消息
@@ -384,18 +381,18 @@ func (c *Message) Card(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	// todo SendCardMessage
-	if err := c.service.SendCardMessage(ctx.RequestCtx(), &service.CardMessageOpt{
+	id, err := c.service.SendCardMessage(ctx.RequestCtx(), &service.CardMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		ContactId:  0,
-	}); err != nil {
+	})
+	// todo SendCardMessage
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
 
 // Collect 收藏聊天图片
@@ -486,16 +483,16 @@ func (c *Message) Location(ctx *ichat.Context) error {
 	}); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-
-	if err := c.service.SendLocationMessage(ctx.RequestCtx(), &service.LocationMessageOpt{
+	id, err := c.service.SendLocationMessage(ctx.RequestCtx(), &service.LocationMessageOpt{
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		Longitude:  params.Longitude,
 		Latitude:   params.Latitude,
-	}); err != nil {
+	})
+	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil)
+	return ctx.Success(id)
 }
