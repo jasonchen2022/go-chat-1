@@ -20,6 +20,7 @@ import (
 	"go-chat/internal/http/internal/handler/web/v1/article"
 	"go-chat/internal/http/internal/handler/web/v1/contact"
 	"go-chat/internal/http/internal/handler/web/v1/group"
+	"go-chat/internal/http/internal/handler/web/v1/site"
 	"go-chat/internal/http/internal/handler/web/v1/talk"
 	"go-chat/internal/http/internal/router"
 	"go-chat/internal/provider"
@@ -119,6 +120,9 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	class := article.NewClass(articleClassService)
 	articleTagService := note2.NewArticleTagService(baseService)
 	tag := article.NewTag(articleTagService)
+	navigationDao := dao.NewNavigationDao(baseDao)
+	navigationService := service.NewNavigationService(navigationDao)
+	navigation := site.NewNavigation(navigationService)
 	webV1 := &web.V1{
 		Common:        common,
 		Auth:          auth,
@@ -138,6 +142,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 		ArticleAnnex:  annex,
 		ArticleClass:  class,
 		ArticleTag:    tag,
+		Navigation:    navigation,
 	}
 	webHandler := &web.Handler{
 		V1: webV1,
@@ -180,6 +185,6 @@ var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, 
 
 var cacheProviderSet = wire.NewSet(cache.NewSessionStorage, cache.NewSid, cache.NewUnreadStorage, cache.NewRedisLock, cache.NewWsClientSession, cache.NewMessageStorage, cache.NewTalkVote, cache.NewRoomStorage, cache.NewRelation, cache.NewSmsCodeCache, cache.NewContactRemark)
 
-var daoProviderSet = wire.NewSet(dao.NewBaseDao, dao.NewContactDao, dao.NewGroupMemberDao, dao.NewUserDao, dao.NewMemberDao, dao.NewGroupDao, dao.NewGroupApply, dao.NewTalkRecordsDao, dao.NewGroupNoticeDao, dao.NewTalkSessionDao, dao.NewEmoticonDao, dao.NewTalkRecordsVoteDao, dao.NewFileSplitUploadDao, note.NewArticleClassDao, note.NewArticleAnnexDao, organize.NewDepartmentDao, organize.NewOrganizeDao, organize.NewPositionDao, dao.NewRobotDao)
+var daoProviderSet = wire.NewSet(dao.NewBaseDao, dao.NewContactDao, dao.NewGroupMemberDao, dao.NewUserDao, dao.NewMemberDao, dao.NewGroupDao, dao.NewGroupApply, dao.NewTalkRecordsDao, dao.NewGroupNoticeDao, dao.NewTalkSessionDao, dao.NewEmoticonDao, dao.NewTalkRecordsVoteDao, dao.NewFileSplitUploadDao, note.NewArticleClassDao, note.NewArticleAnnexDao, organize.NewDepartmentDao, organize.NewOrganizeDao, organize.NewPositionDao, dao.NewRobotDao, dao.NewNavigationDao)
 
-var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewSensitiveMatchService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, service.NewMemberService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService, service.NewTemplateService)
+var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewSensitiveMatchService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, service.NewMemberService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService, service.NewTemplateService, service.NewNavigationService)

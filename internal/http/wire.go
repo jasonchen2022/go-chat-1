@@ -79,6 +79,7 @@ var daoProviderSet = wire.NewSet(
 	organize3.NewOrganizeDao,
 	organize3.NewPositionDao,
 	dao.NewRobotDao,
+	dao.NewNavigationDao,
 )
 
 var serviceProviderSet = wire.NewSet(
@@ -111,6 +112,7 @@ var serviceProviderSet = wire.NewSet(
 	organize.NewOrganizeService,
 	organize.NewPositionService,
 	service.NewTemplateService,
+	service.NewNavigationService,
 )
 
 func Initialize(ctx context.Context, conf *config.Config) *AppProvider {

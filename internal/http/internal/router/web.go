@@ -72,6 +72,13 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 		{
 			chatGroup.POST("/create", ichat.HandlerFunc(handler.V1.Group.CreateChat)) // 创建群组
 		}
+
+		// 站点导航
+		navGroup := v1.Group("/site")
+		{
+			navGroup.GET("/navigation", ichat.HandlerFunc(handler.V1.Navigation.List)) // 创建群组
+		}
+
 		// 聊天群相关分组
 		userGroup := v1.Group("/group").Use(authorize)
 		{
