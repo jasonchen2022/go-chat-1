@@ -8,7 +8,7 @@ type GetUserInfoResponse struct {
 	Gender           int    `json:"gender"`
 	Motto            string `json:"motto"`
 	Email            string `json:"email"`
-	MemberId         int    `son:"member_id"`
+	MemberId         int    `json:"member_id"`
 	MemberLevel      int    `json:"member_level"`
 	MemberType       int    `json:"member_type"`
 	MemberLevelTitle string `json:"member_level_title"`
