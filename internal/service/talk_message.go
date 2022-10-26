@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"mime/multipart"
 	"sort"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/GUAIK-ORG/go-snowflake/snowflake"
 	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 	"gorm.io/gorm"
 
 	"go-chat/config"
@@ -769,24 +771,123 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 		}),
 	})
 
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
 	// 点对点消息采用精确投递
 	if record.TalkType == entity.ChatPrivateMode {
 		sids := s.sidServer.All(ctx, 1)
 
 		// 小于三台服务器则采用全局广播
 		if len(sids) <= 3 {
-			s.rds.Publish(ctx, entity.IMGatewayAll, content)
+			//s.rds.Publish(ctx, entity.IMGatewayAll, content)
+			s.sendAll(channel, content)
 		} else {
 			for _, sid := range s.sidServer.All(ctx, 1) {
 				for _, uid := range []int{record.UserId, record.ReceiverId} {
 					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
-						s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
+						//s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
+						s.sendSingle(channel, sid, content)
 					}
 				}
 			}
 		}
 	} else {
-		s.rds.Publish(ctx, entity.IMGatewayAll, content)
+		//s.rds.Publish(ctx, entity.IMGatewayAll, content)
+		s.sendAll(channel, content)
 	}
 
+}
+
+func (s *TalkMessageService) sendAll(channel *amqp.Channel, content string) {
+
+	// 声明一个queue
+	if _, err := channel.QueueDeclare(
+		entity.IMGatewayAll, // name
+		true,                // durable
+		false,               // delete when unused
+		false,               // exclusive
+		false,               // no-wait
+		nil,                 // arguments
+	); err != nil {
+		log.Println("Failed to declare a queue:", err.Error())
+
+	}
+	// exchange 绑定 queue
+	err := channel.QueueBind(entity.IMGatewayAll, entity.IMGatewayAll, "project", false, nil)
+	if err != nil {
+		log.Println("Failed to declare a queuebind:", err.Error())
+	}
+
+	if err := channel.Publish(
+		"project",           // exchange
+		entity.IMGatewayAll, // routing key
+		false,               // mandatory
+		false,               // immediate
+		amqp.Publishing{
+			Headers:         amqp.Table{},
+			ContentType:     "text/plain",
+			ContentEncoding: "",
+			Body:            []byte(content),
+			//Expiration:      "60000", // 消息过期时间
+		},
+	); err != nil {
+		log.Println("Failed to publish a message:", err.Error())
+	}
+}
+
+func (s *TalkMessageService) sendSingle(channel *amqp.Channel, sid string, content string) {
+
+	gateway := entity.GetIMGatewayPrivate(sid)
+	// 声明一个queue
+	if _, err := channel.QueueDeclare(
+		gateway, // name
+		true,    // durable
+		false,   // delete when unused
+		false,   // exclusive
+		false,   // no-wait
+		nil,     // arguments
+	); err != nil {
+		log.Println("Failed to declare a queue:", err.Error())
+
+	}
+	// exchange 绑定 queue
+	err := channel.QueueBind(gateway, gateway, "project", false, nil)
+	if err != nil {
+		log.Println("Failed to declare a queuebind:", err.Error())
+	}
+
+	if err := channel.Publish(
+		"project", // exchange
+		gateway,   // routing key
+		false,     // mandatory
+		false,     // immediate
+		amqp.Publishing{
+			Headers:         amqp.Table{},
+			ContentType:     "text/plain",
+			ContentEncoding: "",
+			Body:            []byte(content),
+			//Expiration:      "60000", // 消息过期时间
+		},
+	); err != nil {
+		log.Println("Failed to publish a message:", err.Error())
+	}
 }

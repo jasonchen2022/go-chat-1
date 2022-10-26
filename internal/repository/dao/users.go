@@ -107,7 +107,7 @@ func (dao *UsersDao) RandomUser(userId, index int, userName string) ([]*model.Us
 				// if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("Id <> ?", userId).Where("id = ?", value).Scan(&users).Error; err != nil {
 				// 	return nil, err
 				// }
-				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("id = ?", value).Scan(&users).Error; err != nil {
+				if err := dao.Db().Model(&model.Users{}).Where("type != ?", -1).Where("member_id = ?", value).Scan(&users).Error; err != nil {
 					return nil, err
 				}
 			}

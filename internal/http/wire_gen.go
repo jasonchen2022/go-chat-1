@@ -51,7 +51,8 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	common := v1.NewCommon(conf, smsService, userService)
 	memberDao := dao.NewMemberDao(baseDao)
 	memberService := service.NewMemberService(memberDao)
-	baseService := service.NewBaseService(db, client)
+	connection := provider.NewRabbitMQClient(ctx, conf)
+	baseService := service.NewBaseService(db, client, connection)
 	contactRemark := cache.NewContactRemark(client)
 	relation := cache.NewRelation(client)
 	contactDao := dao.NewContactDao(baseDao, contactRemark, relation)
@@ -181,7 +182,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewHttpClient, provider.NewEmailClient, provider.NewHttpServer, provider.NewFilesystem, provider.NewRequestClient, router.NewRouter, wire.Struct(new(web.Handler), "*"), wire.Struct(new(admin.Handler), "*"), wire.Struct(new(open.Handler), "*"), wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRabbitMQClient, provider.NewHttpClient, provider.NewEmailClient, provider.NewHttpServer, provider.NewFilesystem, provider.NewRequestClient, router.NewRouter, wire.Struct(new(web.Handler), "*"), wire.Struct(new(admin.Handler), "*"), wire.Struct(new(open.Handler), "*"), wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
 
 var cacheProviderSet = wire.NewSet(cache.NewSessionStorage, cache.NewSid, cache.NewUnreadStorage, cache.NewRedisLock, cache.NewWsClientSession, cache.NewMessageStorage, cache.NewTalkVote, cache.NewRoomStorage, cache.NewRelation, cache.NewSmsCodeCache, cache.NewContactRemark)
 

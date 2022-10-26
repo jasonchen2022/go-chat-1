@@ -18,6 +18,7 @@ type Config struct {
 	Redis      *Redis      `json:"redis" yaml:"redis"`
 	MySQL      *MySQL      `json:"mysql" yaml:"mysql"`
 	MySQLFF    *MySQL      `json:"mysqlFF" yaml:"mysql_ff"`
+	RabbitMQ   *RabbitMQ   `json:"rabbitmq" yaml:"rabbitmq"`
 	Jwt        *Jwt        `json:"jwt" yaml:"jwt"`
 	Cors       *Cors       `json:"cors" yaml:"cors"`
 	Log        *Log        `json:"log" yaml:"log"`
