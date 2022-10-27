@@ -542,8 +542,28 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 		}),
 	}
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
 
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+	s.sendAll(channel, jsonutil.Encode(body))
+	//s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
 	return nil
 }
 

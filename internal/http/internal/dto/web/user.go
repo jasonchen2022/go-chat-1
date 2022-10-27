@@ -47,3 +47,8 @@ type RandUserRequest struct {
 	UserName string `form:"user_name" json:"user_name" binding:"" label:"user_name"`
 	Index    int    `form:"index" json:"index" binding:"required,min=6,max=20" label:"index"`
 }
+
+// ChangeMuteRequest ...
+type ChangeMuteRequest struct {
+	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
+}

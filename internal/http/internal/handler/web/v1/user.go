@@ -28,19 +28,7 @@ func (u *User) Detail(ctx *ichat.Context) error {
 		return ctx.Error(err.Error())
 	}
 
-	return ctx.Success(&web.GetUserInfoResponse{
-		Id:               user.Id,
-		Mobile:           user.Mobile,
-		Nickname:         user.Nickname,
-		Avatar:           user.Avatar,
-		Gender:           user.Gender,
-		Motto:            user.Motto,
-		Email:            user.Email,
-		MemberId:         user.MemberId,
-		MemberLevel:      user.MemberLevel,
-		MemberType:       user.Type,
-		MemberLevelTitle: user.MemberLevelTitle,
-	})
+	return ctx.Success(user)
 }
 
 // Setting 用户设置
@@ -179,4 +167,34 @@ func (u *User) RandomUser(ctx *ichat.Context) error {
 		return ctx.BusinessError("取发现用户列表出错")
 	}
 	return ctx.Success(users, "成功")
+}
+
+// Mute 禁言
+func (u *User) Mute(ctx *ichat.Context) error {
+	params := &web.ChangeMuteRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+
+	}
+	user, err := u.service.Dao().FindById(params.UserId)
+	if err == nil {
+		if user.IsMute == 1 {
+			_, _ = u.service.Dao().BaseUpdate(&model.Users{}, entity.MapStrAny{
+				"id": params.UserId,
+			}, entity.MapStrAny{
+				"is_mute": 0,
+			})
+			return ctx.Success(nil, "解禁成功")
+		} else {
+			_, _ = u.service.Dao().BaseUpdate(&model.Users{}, entity.MapStrAny{
+				"id": params.UserId,
+			}, entity.MapStrAny{
+				"is_mute": 1,
+			})
+			return ctx.Success(nil, "禁言成功")
+		}
+	} else {
+		return ctx.BusinessError(err.Error())
+	}
+
 }

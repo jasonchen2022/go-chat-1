@@ -84,12 +84,12 @@ func (c *Contact) Delete(ctx *ichat.Context) error {
 	}
 
 	// 解除好友关系后需添加一条聊天记录
-	_ = c.talkMessageService.SendSysMessage(ctx.Context, &service.SysTextMessageOpt{
-		UserId:     uid,
-		TalkType:   entity.ChatPrivateMode,
-		ReceiverId: params.FriendId,
-		Text:       "你与对方已经解除了好友关系！！！",
-	})
+	// _ = c.talkMessageService.SendSysMessage(ctx.Context, &service.SysTextMessageOpt{
+	// 	UserId:     uid,
+	// 	TalkType:   entity.ChatPrivateMode,
+	// 	ReceiverId: params.FriendId,
+	// 	Text:       "你与对方已经解除了好友关系！！！",
+	// })
 
 	// 删除聊天会话
 	sid := c.talkListService.Dao().FindBySessionId(uid, params.FriendId, entity.ChatPrivateMode)
@@ -171,6 +171,8 @@ func (c *Contact) Detail(ctx *ichat.Context) error {
 		"motto":           user.Motto,
 		"nickname":        user.Nickname,
 		"nickname_remark": "",
+		"member_type":     user.Type, //用户类型(0会员 1主播 2专家 3超管)
+		"is_mute":         user.IsMute,
 	}
 
 	if uid != params.UserId {
