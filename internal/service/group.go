@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"go-chat/internal/repository/cache"
@@ -20,13 +21,14 @@ import (
 
 type GroupService struct {
 	*BaseService
-	dao       *dao.GroupDao
-	memberDao *dao.GroupMemberDao
-	relation  *cache.Relation
+	dao         *dao.GroupDao
+	memberDao   *dao.GroupMemberDao
+	relation    *cache.Relation
+	talkMessage *TalkMessageService
 }
 
-func NewGroupService(baseService *BaseService, dao *dao.GroupDao, memberDao *dao.GroupMemberDao, relation *cache.Relation) *GroupService {
-	return &GroupService{BaseService: baseService, dao: dao, memberDao: memberDao, relation: relation}
+func NewGroupService(baseService *BaseService, dao *dao.GroupDao, memberDao *dao.GroupMemberDao, relation *cache.Relation, talkMessage *TalkMessageService) *GroupService {
+	return &GroupService{BaseService: baseService, dao: dao, memberDao: memberDao, relation: relation, talkMessage: talkMessage}
 }
 
 func (s *GroupService) Dao() *dao.GroupDao {
@@ -115,7 +117,27 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 		}),
 	}
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body))
 
 	return group.Id, err
 }
@@ -220,16 +242,16 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 
 	s.relation.DelGroupRelation(ctx, uid, groupId)
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	body1 := map[string]interface{}{
 		"event": entity.EventTalkJoinGroup,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"type":     2,
 			"group_id": groupId,
 			"uids":     []int{uid},
 		}),
-	}))
+	}
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	body2 := map[string]interface{}{
 		"event": entity.EventTalk,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"sender_id":   record.UserId,
@@ -237,7 +259,31 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 			"talk_type":   record.TalkType,
 			"record_id":   record.Id,
 		}),
-	}))
+	}
+
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
+
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
 
 	return nil
 }
@@ -343,17 +389,38 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 		return err
 	}
 
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
 	// 广播网关将在线的用户加入房间
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	body1 := map[string]interface{}{
 		"event": entity.EventTalkJoinGroup,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"type":     1,
 			"group_id": opts.GroupId,
 			"uids":     opts.MemberIds,
 		}),
-	}))
+	}
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	body2 := map[string]interface{}{
 		"event": entity.EventTalk,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"sender_id":   record.UserId,
@@ -361,8 +428,10 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 			"talk_type":   record.TalkType,
 			"record_id":   record.Id,
 		}),
-	}))
+	}
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
 
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
 	return nil
 }
 
@@ -425,16 +494,36 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 
 	s.relation.BatchDelGroupRelation(ctx, opts.MemberIds, opts.GroupId)
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+	body1 := map[string]interface{}{
 		"event": entity.EventTalkJoinGroup,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"type":     2,
 			"group_id": opts.GroupId,
 			"uids":     opts.MemberIds,
 		}),
-	}))
+	}
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(map[string]interface{}{
+	body2 := map[string]interface{}{
 		"event": entity.EventTalk,
 		"data": jsonutil.Encode(map[string]interface{}{
 			"sender_id":   int64(record.UserId),
@@ -442,7 +531,10 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 			"talk_type":   record.TalkType,
 			"record_id":   int64(record.Id),
 		}),
-	}))
+	}
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
+
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
 
 	return nil
 }

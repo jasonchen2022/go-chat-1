@@ -17,11 +17,12 @@ import (
 
 type TalkSessionService struct {
 	*BaseService
-	dao *dao.TalkSessionDao
+	dao        *dao.TalkSessionDao
+	contactDao *dao.ContactDao
 }
 
-func NewTalkSessionService(base *BaseService, dao *dao.TalkSessionDao) *TalkSessionService {
-	return &TalkSessionService{base, dao}
+func NewTalkSessionService(base *BaseService, dao *dao.TalkSessionDao, contactDao *dao.ContactDao) *TalkSessionService {
+	return &TalkSessionService{base, dao, contactDao}
 }
 
 func (s *TalkSessionService) Dao() *dao.TalkSessionDao {
@@ -33,6 +34,7 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 		err   error
 		items = make([]*model.SearchTalkSession, 0)
 	)
+	member_type := s.contactDao.GetMemberType(ctx, uid)
 
 	fields := []string{
 		"list.id", "list.talk_type", "list.receiver_id", "list.updated_at",
@@ -43,7 +45,12 @@ func (s *TalkSessionService) List(ctx context.Context, uid int) ([]*model.Search
 
 	query := s.db.Table("talk_session list")
 	query.Joins("left join `users` ON list.receiver_id = `users`.id AND list.talk_type = 1")
-	query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2")
+	if member_type < 1 {
+		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type = 1")
+	} else {
+		query.Joins("left join `group` ON list.receiver_id = `group`.id AND list.talk_type = 2 and  group.type > 0")
+	}
+
 	query.Where("list.user_id = ? and list.is_delete = 0", uid)
 	query.Order("list.updated_at desc")
 

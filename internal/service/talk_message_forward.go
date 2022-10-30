@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 
 	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -33,10 +35,11 @@ type forwardItem struct {
 
 type TalkMessageForwardService struct {
 	*BaseService
+	talkMessage *TalkMessageService
 }
 
-func NewTalkMessageForwardService(base *BaseService) *TalkMessageForwardService {
-	return &TalkMessageForwardService{base}
+func NewTalkMessageForwardService(base *BaseService, talkMessage *TalkMessageService) *TalkMessageForwardService {
+	return &TalkMessageForwardService{base, talkMessage}
 }
 
 type TalkForwardOpt struct {
@@ -142,8 +145,30 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 		return err
 	}
 
+	// 创建一个Channel
+	channel, err := t.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
 	for _, item := range items {
-		t.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
+
+		body := entity.MapStrAny{
 			"event": entity.EventTalk,
 			"data": jsonutil.Encode(entity.MapStrAny{
 				"sender_id":   forward.UserId,
@@ -151,7 +176,8 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 				"talk_type":   item.TalkType,
 				"record_id":   item.RecordId,
 			}),
-		}))
+		}
+		t.talkMessage.SendAll(channel, jsonutil.Encode(body))
 	}
 
 	return nil

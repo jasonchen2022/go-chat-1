@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
 	"go-chat/config"
@@ -18,19 +19,22 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 	"github.com/tidwall/gjson"
 )
 
 type DefaultWebSocket struct {
 	rds                *redis.Client
+	mq                 *amqp.Connection
 	conf               *config.Config
 	cache              *service.ClientService
 	room               *cache.RoomStorage
 	groupMemberService *service.GroupMemberService
+	talkMessage        *service.TalkMessageService
 }
 
-func NewDefaultWebSocket(rds *redis.Client, conf *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService) *DefaultWebSocket {
-	return &DefaultWebSocket{rds: rds, conf: conf, cache: cache, room: room, groupMemberService: groupMemberService}
+func NewDefaultWebSocket(rds *redis.Client, mq *amqp.Connection, conf *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService, talkMessage *service.TalkMessageService) *DefaultWebSocket {
+	return &DefaultWebSocket{rds: rds, conf: conf, cache: cache, room: room, groupMemberService: groupMemberService, talkMessage: talkMessage}
 }
 
 // Connect 初始化连接
@@ -100,19 +104,41 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 
 	event := gjson.Get(content, "event").String()
 
+	// 创建一个Channel
+	channel, err := c.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
 	switch event {
 
 	// 对话键盘事件
 	case entity.EventTalkKeyboard:
 		var m *dto.KeyboardMessage
 		if err := json.Unmarshal(message, &m); err == nil {
-			c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
+			body := entity.MapStrAny{
 				"event": entity.EventTalkKeyboard,
 				"data": jsonutil.Encode(entity.MapStrAny{
 					"sender_id":   m.Data.SenderID,
 					"receiver_id": m.Data.ReceiverID,
 				}),
-			}))
+			}
+			c.talkMessage.SendAll(channel, jsonutil.Encode(body))
 		}
 
 	// 对话消息读事件
@@ -121,14 +147,16 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 		if err := json.Unmarshal(message, &m); err == nil {
 			c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
 
-			c.rds.Publish(context.Background(), entity.IMGatewayAll, jsonutil.Encode(entity.MapStrAny{
+			body := entity.MapStrAny{
 				"event": entity.EventTalkRead,
 				"data": jsonutil.Encode(entity.MapStrAny{
 					"sender_id":   client.ClientUid(),
 					"receiver_id": m.Data.ReceiverId,
 					"ids":         m.Data.MsgIds,
 				}),
-			}))
+			}
+
+			c.talkMessage.SendAll(channel, jsonutil.Encode(body))
 		}
 	default:
 		fmt.Printf("消息事件未定义%s", event)

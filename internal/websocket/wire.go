@@ -26,6 +26,7 @@ var providerSet = wire.NewSet(
 	provider.NewRedisClient,
 	provider.NewRabbitMQClient,
 	provider.NewWebsocketServer,
+	provider.NewFilesystem,
 
 	// 路由
 	router.NewRouter,
@@ -46,6 +47,8 @@ var providerSet = wire.NewSet(
 	cache.NewTalkVote,
 	cache.NewRelation,
 	cache.NewContactRemark,
+	cache.NewUnreadStorage,
+	cache.NewMessageStorage,
 
 	// dao 数据层
 	dao.NewBaseDao,
@@ -53,6 +56,7 @@ var providerSet = wire.NewSet(
 	dao.NewTalkRecordsVoteDao,
 	dao.NewGroupMemberDao,
 	dao.NewContactDao,
+	dao.NewFileSplitUploadDao,
 
 	// 服务
 	service.NewBaseService,
@@ -61,6 +65,7 @@ var providerSet = wire.NewSet(
 	service.NewGroupMemberService,
 	service.NewContactService,
 	service.NewSensitiveMatchService,
+	service.NewTalkMessageService,
 
 	// handle
 	handler.NewDefaultWebSocket,

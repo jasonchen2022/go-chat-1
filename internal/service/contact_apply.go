@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	model2 "go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -32,10 +34,11 @@ type ContactApplyDeclineOpts struct {
 
 type ContactApplyService struct {
 	*BaseService
+	talkMessage *TalkMessageService
 }
 
-func NewContactsApplyService(base *BaseService) *ContactApplyService {
-	return &ContactApplyService{BaseService: base}
+func NewContactsApplyService(base *BaseService, talkMessage *TalkMessageService) *ContactApplyService {
+	return &ContactApplyService{BaseService: base, talkMessage: talkMessage}
 }
 
 func (s *ContactApplyService) Create(ctx context.Context, opts *ContactApplyCreateOpts) error {
@@ -58,9 +61,28 @@ func (s *ContactApplyService) Create(ctx context.Context, opts *ContactApplyCrea
 		}),
 	}
 
-	s.rds.Incr(ctx, fmt.Sprintf("friend-apply:user_%d", opts.FriendId))
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
 
-	s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		"project", //name
+		"direct",  //exchangeType
+		true,      //durable
+		false,     //auto-deleted
+		false,     //internal
+		false,     //noWait
+		nil,       //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
+	s.talkMessage.SendAll(channel, jsonutil.Encode(body))
 
 	return nil
 }
@@ -134,7 +156,28 @@ func (s *ContactApplyService) Decline(ctx context.Context, opts *ContactApplyDec
 			}),
 		}
 
-		s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
+		// 创建一个Channel
+		channel, err := s.mq.Channel()
+		if err != nil {
+			log.Println("Failed to open a channel:", err.Error())
+
+		}
+		defer channel.Close()
+
+		// 声明exchange
+		if err := channel.ExchangeDeclare(
+			"project", //name
+			"direct",  //exchangeType
+			true,      //durable
+			false,     //auto-deleted
+			false,     //internal
+			false,     //noWait
+			nil,       //arguments
+		); err != nil {
+			log.Println("Failed to declare a exchange:", err.Error())
+		}
+		s.talkMessage.SendAll(channel, jsonutil.Encode(body))
+
 	}
 
 	return err

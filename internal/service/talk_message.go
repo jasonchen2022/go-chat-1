@@ -562,8 +562,7 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
-	s.sendAll(channel, jsonutil.Encode(body))
-	//s.rds.Publish(ctx, entity.IMGatewayAll, jsonutil.Encode(body))
+	s.SendAll(channel, jsonutil.Encode(body))
 	return nil
 }
 
@@ -818,26 +817,23 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 
 		// 小于三台服务器则采用全局广播
 		if len(sids) <= 3 {
-			//s.rds.Publish(ctx, entity.IMGatewayAll, content)
-			s.sendAll(channel, content)
+			s.SendAll(channel, content)
 		} else {
 			for _, sid := range s.sidServer.All(ctx, 1) {
 				for _, uid := range []int{record.UserId, record.ReceiverId} {
 					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
-						//s.rds.Publish(ctx, entity.GetIMGatewayPrivate(sid), content)
-						s.sendSingle(channel, sid, content)
+						s.SendSingle(channel, sid, content)
 					}
 				}
 			}
 		}
 	} else {
-		//s.rds.Publish(ctx, entity.IMGatewayAll, content)
-		s.sendAll(channel, content)
+		s.SendAll(channel, content)
 	}
 
 }
 
-func (s *TalkMessageService) sendAll(channel *amqp.Channel, content string) {
+func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
 
 	// 声明一个queue
 	if _, err := channel.QueueDeclare(
@@ -874,7 +870,7 @@ func (s *TalkMessageService) sendAll(channel *amqp.Channel, content string) {
 	}
 }
 
-func (s *TalkMessageService) sendSingle(channel *amqp.Channel, sid string, content string) {
+func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, content string) {
 
 	gateway := entity.GetIMGatewayPrivate(sid)
 	// 声明一个queue
