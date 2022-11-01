@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/im"
 	"go-chat/internal/pkg/jsonutil"
+	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
@@ -58,7 +60,7 @@ func (c *DefaultWebSocket) Connect(ctx *ichat.Context) error {
 		}),
 		// 接收消息回调
 		im.WithMessageCallback(func(client im.IClient, message []byte) {
-			c.message(client, message)
+			c.message(ctx, client, message)
 		}),
 		// 关闭连接回调
 		im.WithCloseCallback(func(client im.IClient, code int, text string) {
@@ -98,13 +100,18 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 }
 
 // 消息接收回调事件
-func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
+func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, message []byte) {
 
 	content := string(message)
 
 	event := gjson.Get(content, "event").String()
 
 	// 创建一个Channel
+	if c.mq == nil {
+		conf := config.ReadConfig(parseConfigArg())
+		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	channel, err := c.mq.Channel()
 	if err != nil {
 		log.Println("Failed to open a channel:", err.Error())
@@ -161,6 +168,14 @@ func (c *DefaultWebSocket) message(client im.IClient, message []byte) {
 	default:
 		fmt.Printf("消息事件未定义%s", event)
 	}
+}
+
+func parseConfigArg() string {
+	var conf string
+	flag.StringVar(&conf, "config", "./config.yaml", "配置文件路径")
+	flag.StringVar(&conf, "c", "./config.yaml", "配置文件路径")
+	flag.Parse()
+	return conf
 }
 
 // 客户端关闭回调事件
