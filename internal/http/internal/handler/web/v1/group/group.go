@@ -347,6 +347,8 @@ func (c *Group) Detail(ctx *ichat.Context) error {
 	info["is_disturb"] = 0
 	info["is_top"] = 0
 	info["is_show_nickname"] = 0
+	info["is_mute"] = groupInfo.IsMute
+	info["is_overt"] = groupInfo.IsOvert
 	info["notice"] = entity.H{}
 
 	if notice, _ := c.groupNoticeService.Dao().GetLatestNotice(ctx.Context, params.GroupId); err == nil {
@@ -589,6 +591,43 @@ func (c *Group) NoSpeak(ctx *ichat.Context) error {
 	err := c.groupMemberService.UpdateMuteStatus(params.GroupId, params.UserId, status)
 	if err != nil {
 		return ctx.BusinessError("设置群成员禁言状态失败！")
+	}
+
+	return ctx.Success(entity.H{})
+}
+
+//全员禁言
+func (c *Group) AllNoSpeak(ctx *ichat.Context) error {
+	params := &web.GroupAllNoSpeakRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	uid := ctx.UserId()
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
+		return ctx.BusinessError("暂无权限！")
+	}
+
+	err := c.groupMemberService.UpdateAllMuteStatus(params.GroupId, params.Mode)
+	if err != nil {
+		return ctx.BusinessError("设置群成员禁言状态失败！")
+	}
+
+	return ctx.Success(entity.H{})
+}
+
+func (c *Group) Open(ctx *ichat.Context) error {
+	params := &web.GroupOpenRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	uid := ctx.UserId()
+	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
+		return ctx.BusinessError("暂无权限！")
+	}
+
+	err := c.groupMemberService.UpdateIsOvertStatus(params.GroupId, params.Mode)
+	if err != nil {
+		return ctx.BusinessError("设置群公开失败！")
 	}
 
 	return ctx.Success(entity.H{})

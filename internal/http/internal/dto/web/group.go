@@ -95,3 +95,14 @@ type GroupAvatarRequest struct {
 	GroupCommonRequest
 	Avatar string `form:"avatar" json:"avatar" binding:""`
 }
+type GroupAllNoSpeakRequest struct {
+	Mode    int `form:"mode" json:"mode" `
+	GroupId int `form:"group_id" json:"group_id" binding:"min=1"`
+	UserId  int `form:"user_id" json:"user_id" binding:"min=1"`
+}
+
+type GroupOpenRequest struct {
+	Mode    int `form:"mode" json:"mode" `
+	GroupId int `form:"group_id" json:"group_id" binding:"min=1"`
+	UserId  int `form:"user_id" json:"user_id" binding:"min=1"`
+}

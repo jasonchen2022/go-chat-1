@@ -4,6 +4,7 @@ import (
 	"go-chat/internal/entity"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
+
 	"gorm.io/gorm"
 )
 
@@ -52,4 +53,13 @@ func (s *GroupMemberService) UpdateLeaderStatus(groupId int, userId int, leader 
 
 func (s *GroupMemberService) UpdateMuteStatus(groupId int, userId int, status int) error {
 	return s.Db().Model(model.GroupMember{}).Where("group_id = ? and user_id = ?", groupId, userId).UpdateColumn("is_mute", status).Error
+}
+
+//全员禁言
+func (s *GroupMemberService) UpdateAllMuteStatus(groupId int, status int) error {
+	return s.Db().Model(model.Group{}).Where("id = ? ", groupId).UpdateColumn("is_mute", status).Error
+}
+
+func (s *GroupMemberService) UpdateIsOvertStatus(groupId int, status int) error {
+	return s.Db().Model(model.Group{}).Where("id = ? ", groupId).UpdateColumn("is_overt", status).Error
 }

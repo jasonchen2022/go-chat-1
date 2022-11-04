@@ -29,7 +29,7 @@ func (c *Apply) Create(ctx *ichat.Context) error {
 
 	err := c.applyServ.Insert(ctx.RequestCtx(), params.GroupId, ctx.UserId(), params.Remark)
 	if err != nil {
-		return ctx.BusinessError("创建群聊失败，请稍后再试！")
+		return ctx.BusinessError(err)
 	}
 
 	// TODO 这里需要推送给群主
