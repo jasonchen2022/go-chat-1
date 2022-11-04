@@ -60,46 +60,47 @@ func (c *Talk) List(ctx *ichat.Context) error {
 
 	items := make([]*web.TalkListItem, 0)
 	for _, item := range data {
-		value := &web.TalkListItem{
-			Id:          int32(item.Id),
-			TalkType:    int32(item.TalkType),
-			ReceiverId:  int32(item.ReceiverId),
-			IsTop:       int32(item.IsTop),
-			IsDisturb:   int32(item.IsDisturb),
-			IsRobot:     int32(item.IsRobot),
-			Avatar:      item.UserAvatar,
-			MsgText:     "",
-			UpdatedTime: item.UpdatedAt.Unix(),
-			UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
-		}
-
-		if num, ok := unReads[fmt.Sprintf("%d_%d", item.TalkType, item.ReceiverId)]; ok {
-			value.UnreadNum = int32(num)
-		}
-
-		if item.TalkType == 1 {
-			value.Name = item.Nickname
-			value.Avatar = item.UserAvatar
-			value.Avatar = item.UserAvatar
-			if len(remarks) > 0 {
-				value.RemarkName = remarks[item.ReceiverId]
+		if item.Nickname != "" || item.GroupName != "" {
+			value := &web.TalkListItem{
+				Id:          int32(item.Id),
+				TalkType:    int32(item.TalkType),
+				ReceiverId:  int32(item.ReceiverId),
+				IsTop:       int32(item.IsTop),
+				IsDisturb:   int32(item.IsDisturb),
+				IsRobot:     int32(item.IsRobot),
+				Avatar:      item.UserAvatar,
+				MsgText:     "",
+				UpdatedTime: item.UpdatedAt.Unix(),
+				UpdatedAt:   timeutil.FormatDatetime(item.UpdatedAt),
 			}
-			//value.IsOnline = int32(strutil.BoolToInt(c.wsClient.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(int(value.ReceiverId)))))
-		} else {
-			value.Name = item.GroupName
-			value.Avatar = item.GroupAvatar
-		}
 
-		// 查询缓存消息
-		if msg, err := c.lastMessage.Get(ctx.RequestCtx(), item.TalkType, uid, item.ReceiverId); err == nil {
-			value.MsgText = msg.Content
-			value.UpdatedAt = msg.Datetime
-			value.UpdatedTime = timeutil.ParseDateTime(msg.Datetime).Unix()
-		}
+			if num, ok := unReads[fmt.Sprintf("%d_%d", item.TalkType, item.ReceiverId)]; ok {
+				value.UnreadNum = int32(num)
+			}
 
-		items = append(items, value)
+			if item.TalkType == 1 {
+				value.Name = item.Nickname
+				value.Avatar = item.UserAvatar
+				value.Avatar = item.UserAvatar
+				if len(remarks) > 0 {
+					value.RemarkName = remarks[item.ReceiverId]
+				}
+				//value.IsOnline = int32(strutil.BoolToInt(c.wsClient.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(int(value.ReceiverId)))))
+			} else {
+				value.Name = item.GroupName
+				value.Avatar = item.GroupAvatar
+			}
+
+			// 查询缓存消息
+			if msg, err := c.lastMessage.Get(ctx.RequestCtx(), item.TalkType, uid, item.ReceiverId); err == nil {
+				value.MsgText = msg.Content
+				value.UpdatedAt = msg.Datetime
+				value.UpdatedTime = timeutil.ParseDateTime(msg.Datetime).Unix()
+			}
+
+			items = append(items, value)
+		}
 	}
-
 	return ctx.Success(items)
 }
 

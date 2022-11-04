@@ -77,7 +77,6 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 
 	// 1.查询用户群列表
 	ids := c.groupMemberService.Dao().GetUserGroupIds(client.ClientUid())
-
 	// 2.客户端加入群房间
 	for _, id := range ids {
 		_ = c.room.Add(context.Background(), &cache.RoomOption{

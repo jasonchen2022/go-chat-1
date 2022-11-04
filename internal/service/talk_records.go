@@ -236,12 +236,10 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 
 	//如果群聊则查询当前聊天记录内用户信息
 	if record.TalkType == entity.ChatGroupMode {
-		var memberItems = make([]*model.QueryGroupMemberItem, 0)
-
 		memberQuery := s.db.Table("group_member")
 		memberQuery.Joins("left join users on group_member.user_id = users.id")
 		memberQuery.Joins("left join `group` on `group`.id = group_member.group_id")
-		memberQuery.Where("group_member.group_id = ? ", record.ReceiverId)
+		memberQuery.Where("group_member.group_id = ?  and is_quit =0 ", record.ReceiverId)
 		memberQuery.Where("group_member.user_id = ? ", record.UserId)
 		var memberFields = []string{
 			"group_member.user_id",
@@ -255,7 +253,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"`group`.avatar as group_avatar",
 			"`group`.type as group_type",
 		}
-
+		var memberItems = make([]*model.QueryGroupMemberItem, 0)
 		if err = memberQuery.Select(memberFields).Scan(&memberItems).Error; err == nil {
 			if len(memberItems) > 0 {
 				for _, item := range memberItems {
@@ -441,7 +439,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					inviteUserIds = append(inviteUserIds, tempUserIds[i])
 				}
 			}
-			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_id", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
+			s.db.Table("users").Select("id", "nickname", "type as member_type", "member_level", "member_level_title").Where("id in ?", inviteUserIds).Scan(&noticeResult)
 		}
 		//邀请操作人管理员ID
 		if len(hashInvites) > 0 {
@@ -621,7 +619,6 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 					m["users"] = results
 					//如果是入群通知则再查一次用户数据
 					if len(results) > 0 {
-						data.MemberId = results[0].Id
 						data.MemberLevel = results[0].MemberLevel
 						data.MemberLevelTitle = results[0].MemberLevelTitle
 						data.MemberType = results[0].MemberType

@@ -46,7 +46,6 @@ type UserTemp struct {
 type QueryUserItem struct {
 	Id               int    `json:"id"`
 	Nickname         string `json:"nickname"`
-	MemberId         int    `son:"member_id"`
 	MemberLevel      int    `json:"member_level"`
 	MemberType       int    `json:"member_type"`
 	MemberLevelTitle string `json:"member_level_title"`

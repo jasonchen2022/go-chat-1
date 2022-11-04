@@ -547,7 +547,7 @@ type session struct {
 func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	tx := s.db.Table("group_member")
 	tx.Select("`group`.id,`group`.group_name,`group`.avatar,`group`.profile,group_member.leader")
-	tx.Joins("left join `group` on `group`.id = group_member.group_id")
+	tx.Joins("join `group` on `group`.id = group_member.group_id")
 	tx.Where("group_member.user_id = ? and group_member.is_quit = ?", userId, 0)
 
 	items := make([]*model.GroupItem, 0)

@@ -114,7 +114,6 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 	if err := s.db.Create(record).Error; err != nil {
 		return 0, err
 	}
-
 	s.afterHandle(ctx, record, map[string]string{
 		"text": strutil.MtSubstr(record.Content, 0, 30),
 	})
@@ -810,7 +809,6 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
-
 	// 点对点消息采用精确投递
 	if record.TalkType == entity.ChatPrivateMode {
 		sids := s.sidServer.All(ctx, 1)
@@ -852,7 +850,6 @@ func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
 	if err != nil {
 		log.Println("Failed to declare a queuebind:", err.Error())
 	}
-
 	if err := channel.Publish(
 		"project",           // exchange
 		entity.IMGatewayAll, // routing key
