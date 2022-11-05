@@ -30,4 +30,5 @@ const (
 	MsgTypeLogin       = 8  // 登录通知
 	MsgTypeGroupInvite = 9  // 入群退群消息
 	MsgTypeLocation    = 10 // 位置消息
+	MsgTypeRedPackets  = 11 // 红包
 )
