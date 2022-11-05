@@ -98,11 +98,11 @@ func (s *UserService) UpdatePassword(uid int, oldPassword string, password strin
 
 	user, err := s.Dao().FindById(uid)
 	if err != nil {
-		return errors.New("用户不存在！")
+		return errors.New("用户不存在")
 	}
 
 	if !encrypt.VerifyPassword(user.Password, oldPassword) {
-		return errors.New("密码验证不正确！")
+		return errors.New("密码验证不正确")
 	}
 
 	hash, err := encrypt.HashPassword(password)

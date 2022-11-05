@@ -95,7 +95,7 @@ func (c *Apply) Accept(ctx *ichat.Context) error {
 		UserId:     applyInfo.UserId,
 		TalkType:   entity.ChatPrivateMode,
 		ReceiverId: applyInfo.FriendId,
-		Text:       "你们已成为好友，可以开始聊天咯！",
+		Text:       "你们已成为好友，可以开始聊天咯",
 	})
 
 	return ctx.Success(nil)

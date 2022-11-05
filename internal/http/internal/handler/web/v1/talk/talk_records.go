@@ -178,11 +178,11 @@ func (c *Records) Download(ctx *ichat.Context) error {
 	if uid != resp.Record.UserId {
 		if resp.Record.TalkType == entity.ChatPrivateMode {
 			if resp.Record.ReceiverId != uid {
-				return ctx.Unauthorized("无访问权限！")
+				return ctx.Unauthorized("无访问权限")
 			}
 		} else {
 			if !c.groupMemberService.Dao().IsMember(resp.Record.ReceiverId, uid, false) {
-				return ctx.Unauthorized("无访问权限！")
+				return ctx.Unauthorized("无访问权限")
 			}
 		}
 	}

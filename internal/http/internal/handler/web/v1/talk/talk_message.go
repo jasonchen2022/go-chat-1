@@ -51,7 +51,7 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 	if opt.TalkType == entity.ChatPrivateMode {
 		// 这里需要判断双方是否都是企业成员，如果是则无需添加好友即可聊天
 		// if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
-		// 	return errors.New("系统繁忙，请稍后再试！！！")
+		// 	return errors.New("系统繁忙，请稍后再试")
 		// } else if isOk {
 		// 	return nil
 		// }
@@ -65,24 +65,24 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 			return nil
 		}
 
-		return errors.New("暂无权限发送消息！")
+		return errors.New("暂无权限发送消息")
 	} else {
 		groupMemberInfo := &model.GroupMember{}
 		err := c.groupMemberService.Db().First(groupMemberInfo, "group_id = ? and user_id = ?", opt.ReceiverId, opt.UserId).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				return errors.New("暂无权限发送消息！")
+				return errors.New("暂无权限发送消息")
 			}
 
-			return errors.New("系统繁忙，请稍后再试！！！")
+			return errors.New("系统繁忙，请稍后再试")
 		}
 
 		if groupMemberInfo.IsQuit == 1 {
-			return errors.New("暂无权限发送消息！")
+			return errors.New("暂无权限发送消息")
 		}
 
 		if groupMemberInfo.IsMute == 1 {
-			return errors.New("已被群主或管理员禁言！")
+			return errors.New("已被群主或管理员禁言")
 		}
 	}
 
@@ -157,7 +157,7 @@ func (c *Message) Image(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("image")
 	if err != nil {
-		return ctx.InvalidParams("image 字段必传！")
+		return ctx.InvalidParams("image 字段必传")
 	}
 
 	if !sliceutil.InStr(strutil.FileSuffix(file.Filename), []string{"png", "jpg", "jpeg", "gif"}) {
@@ -166,7 +166,7 @@ func (c *Message) Image(ctx *ichat.Context) error {
 
 	// 判断上传文件大小（5M）
 	if file.Size > 5<<20 {
-		return ctx.InvalidParams("上传文件大小不能超过5M！")
+		return ctx.InvalidParams("上传文件大小不能超过5M")
 	}
 
 	uid := ctx.UserId()
@@ -199,7 +199,7 @@ func (c *Message) ImageByUrl(ctx *ichat.Context) error {
 	}
 
 	if params.ImageUrl == "" {
-		return ctx.InvalidParams("image_url 字段必传！")
+		return ctx.InvalidParams("image_url 字段必传")
 	}
 
 	if !sliceutil.InStr(strutil.FileSuffix(params.ImageUrl), []string{"png", "jpg", "jpeg", "gif"}) {
@@ -268,11 +268,11 @@ func (c *Message) Vote(ctx *ichat.Context) error {
 	}
 
 	if len(params.Options) <= 1 {
-		return ctx.InvalidParams("options 选项必须大于1！")
+		return ctx.InvalidParams("options 选项必须大于1")
 	}
 
 	if len(params.Options) > 6 {
-		return ctx.InvalidParams("options 选项不能超过6个！")
+		return ctx.InvalidParams("options 选项不能超过6个")
 	}
 
 	uid := ctx.UserId()
@@ -336,7 +336,7 @@ func (c *Message) Forward(ctx *ichat.Context) error {
 	}
 
 	if params.ReceiveGroupIds == "" && params.ReceiveUserIds == "" {
-		return ctx.InvalidParams("receive_user_ids 和 receive_group_ids 不能都为空！")
+		return ctx.InvalidParams("receive_user_ids 和 receive_group_ids 不能都为空")
 	}
 
 	uid := ctx.UserId()

@@ -137,7 +137,7 @@ func (c *Talk) Create(ctx *ichat.Context) error {
 		UserId:     uid,
 		ReceiverId: params.ReceiverId,
 	}) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	result, err := c.talkListService.Create(ctx.RequestCtx(), &model.TalkSessionCreateOpt{

@@ -48,7 +48,7 @@ func (c *Apply) Agree(ctx *ichat.Context) error {
 
 	apply := &model.GroupApply{}
 	if err := c.applyServ.Db().First(apply, params.ApplyId).Error; err != nil {
-		return ctx.BusinessError("数据不存在！")
+		return ctx.BusinessError("数据不存在")
 	}
 
 	if !c.memberServ.Dao().IsLeader(apply.GroupId, uid) {
@@ -62,7 +62,7 @@ func (c *Apply) Agree(ctx *ichat.Context) error {
 			MemberIds: []int{apply.UserId},
 		})
 		if err != nil {
-			return ctx.BusinessError("处理失败！")
+			return ctx.BusinessError("处理失败")
 		}
 	}
 
@@ -83,7 +83,7 @@ func (c *Apply) Delete(ctx *ichat.Context) error {
 
 	err := c.applyServ.Delete(ctx.Context, params.ApplyId, ctx.UserId())
 	if err != nil {
-		return ctx.BusinessError("创建群聊失败，请稍后再试！")
+		return ctx.BusinessError("创建群聊失败，请稍后再试")
 	}
 
 	return ctx.Success(entity.H{})
@@ -103,7 +103,7 @@ func (c *Apply) List(ctx *ichat.Context) error {
 	list, err := c.applyServ.Dao().List(ctx.RequestCtx(), params.GroupId)
 	if err != nil {
 		logger.Error("[Apply List] 接口异常 err:", err.Error())
-		return ctx.BusinessError("创建群聊失败，请稍后再试！")
+		return ctx.BusinessError("创建群聊失败，请稍后再试")
 	}
 
 	items := make([]*entity.H, 0)

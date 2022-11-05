@@ -80,7 +80,7 @@ func (c *Group) Create(ctx *ichat.Context) error {
 		MemberIds: sliceutil.ParseIds(params.MembersIds),
 	})
 	if err != nil {
-		return ctx.BusinessError("创建群聊失败，请稍后再试！")
+		return ctx.BusinessError("创建群聊失败，请稍后再试")
 	}
 
 	return ctx.Success(entity.H{
@@ -146,7 +146,7 @@ func (c *Group) CreateChat(ctx *ichat.Context) error {
 	})
 	if err != nil {
 		fmt.Printf("创建聊天室出错：%s", err.Error())
-		return ctx.BusinessError("创建群聊失败，请稍后再试！")
+		return ctx.BusinessError("创建群聊失败，请稍后再试")
 	}
 
 	return ctx.Success(entity.H{
@@ -164,18 +164,18 @@ func (c *Group) Dismiss(ctx *ichat.Context) error {
 
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限解散群组！")
+		return ctx.BusinessError("暂无权限解散群组")
 	}
 
 	if err := c.service.Dismiss(ctx.RequestCtx(), params.GroupId, ctx.UserId()); err != nil {
-		return ctx.BusinessError("群组解散失败！")
+		return ctx.BusinessError("群组解散失败")
 	}
 
 	_ = c.messageService.SendSysMessage(ctx.Context, &service.SysTextMessageOpt{
 		UserId:     uid,
 		TalkType:   entity.ChatGroupMode,
 		ReceiverId: params.GroupId,
-		Text:       "群组已被群主或管理员解散！",
+		Text:       "群组已被群主或管理员解散",
 	})
 
 	return ctx.Success(nil)
@@ -191,7 +191,7 @@ func (c *Group) Invite(ctx *ichat.Context) error {
 
 	key := fmt.Sprintf("group-join:%d", params.GroupId)
 	if !c.redisLock.Lock(ctx.Context, key, 20) {
-		return ctx.BusinessError("网络异常，请稍后再试！")
+		return ctx.BusinessError("网络异常，请稍后再试")
 	}
 
 	defer c.redisLock.UnLock(ctx.Context, key)
@@ -200,11 +200,11 @@ func (c *Group) Invite(ctx *ichat.Context) error {
 	uids := sliceutil.UniqueInt(sliceutil.ParseIds(params.Ids))
 
 	if len(uids) == 0 {
-		return ctx.BusinessError("邀请好友列表不能为空！")
+		return ctx.BusinessError("邀请好友列表不能为空")
 	}
 
 	if !c.groupMemberService.Dao().IsMember(params.GroupId, uid, true) {
-		return ctx.BusinessError("非群组成员，无权邀请好友！")
+		return ctx.BusinessError("非群组成员，无权邀请好友")
 	}
 
 	if err := c.service.InviteMembers(ctx.Context, &model.InviteGroupMembersOpt{
@@ -228,7 +228,7 @@ func (c *Group) Join(ctx *ichat.Context) error {
 
 	// key := fmt.Sprintf("group-join-chat:%d", params.GroupId)
 	// if !c.redisLock.Lock(ctx.Context, key, 20) {
-	// 	return ctx.BusinessError("网络异常，请稍后再试！")
+	// 	return ctx.BusinessError("网络异常，请稍后再试")
 	// }
 
 	// defer c.redisLock.UnLock(ctx.Context, key)
@@ -293,7 +293,7 @@ func (c *Group) Setting(ctx *ichat.Context) error {
 		UserId:     uid,
 		TalkType:   entity.ChatGroupMode,
 		ReceiverId: params.GroupId,
-		Text:       "群主或管理员修改了群信息！",
+		Text:       "群主或管理员修改了群信息",
 	})
 
 	content := jsonutil.Encode(map[string]interface{}{
@@ -427,7 +427,7 @@ func (c *Group) EditRemark(ctx *ichat.Context) error {
 	}
 
 	if err := c.groupMemberService.CardEdit(params.GroupId, ctx.UserId(), params.VisitCard); err != nil {
-		return ctx.BusinessError("修改群备注失败！")
+		return ctx.BusinessError("修改群备注失败")
 	}
 
 	return ctx.Success(nil)
@@ -485,7 +485,7 @@ func (c *Group) Members(ctx *ichat.Context) error {
 	}
 
 	if !c.groupMemberService.Dao().IsMember(params.GroupId, ctx.UserId(), false) {
-		return ctx.BusinessError("非群成员无权查看成员列表！")
+		return ctx.BusinessError("非群成员无权查看成员列表")
 	}
 
 	return ctx.Success(c.groupMemberService.Dao().GetMembers(params.GroupId))
@@ -501,7 +501,7 @@ func (c *Group) OvertList(ctx *ichat.Context) error {
 
 	list, err := c.service.Dao().SearchOvertList(ctx.Context, params.Name, params.Page, 21)
 	if err != nil {
-		return ctx.BusinessError("查询异常！")
+		return ctx.BusinessError("查询异常")
 	}
 
 	if len(list) == 0 {
@@ -518,7 +518,7 @@ func (c *Group) OvertList(ctx *ichat.Context) error {
 
 	count, err := c.groupMemberService.Dao().CountGroupMemberNum(ids)
 	if err != nil {
-		return ctx.BusinessError("查询异常！")
+		return ctx.BusinessError("查询异常")
 	}
 
 	countMap := make(map[int]int)
@@ -528,7 +528,7 @@ func (c *Group) OvertList(ctx *ichat.Context) error {
 
 	checks, err := c.groupMemberService.Dao().CheckUserGroup(ids, ctx.UserId())
 	if err != nil {
-		return ctx.BusinessError("查询异常！")
+		return ctx.BusinessError("查询异常")
 	}
 
 	items := make([]*entity.H, 0)
@@ -568,16 +568,16 @@ func (c *Group) Handover(ctx *ichat.Context) error {
 
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	if uid == params.UserId {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	err := c.groupMemberService.Handover(params.GroupId, uid, params.UserId)
 	if err != nil {
-		return ctx.BusinessError("转让群主失败！")
+		return ctx.BusinessError("转让群主失败")
 	}
 
 	return ctx.Success(entity.H{})
@@ -593,7 +593,7 @@ func (c *Group) AssignAdmin(ctx *ichat.Context) error {
 
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsMaster(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	leader := 0
@@ -604,7 +604,7 @@ func (c *Group) AssignAdmin(ctx *ichat.Context) error {
 	err := c.groupMemberService.UpdateLeaderStatus(params.GroupId, params.UserId, leader)
 	if err != nil {
 		logger.Error("[Group AssignAdmin] 设置管理员信息失败 err :", err.Error())
-		return ctx.BusinessError("设置管理员信息失败！")
+		return ctx.BusinessError("设置管理员信息失败")
 	}
 
 	return ctx.Success(entity.H{})
@@ -620,7 +620,7 @@ func (c *Group) NoSpeak(ctx *ichat.Context) error {
 
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	status := 1
@@ -630,7 +630,7 @@ func (c *Group) NoSpeak(ctx *ichat.Context) error {
 
 	err := c.groupMemberService.UpdateMuteStatus(params.GroupId, params.UserId, status)
 	if err != nil {
-		return ctx.BusinessError("设置群成员禁言状态失败！")
+		return ctx.BusinessError("设置群成员禁言状态失败")
 	}
 
 	return ctx.Success(entity.H{})
@@ -644,12 +644,12 @@ func (c *Group) AllNoSpeak(ctx *ichat.Context) error {
 	}
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	err := c.groupMemberService.UpdateAllMuteStatus(params.GroupId, params.Mode)
 	if err != nil {
-		return ctx.BusinessError("设置群成员禁言状态失败！")
+		return ctx.BusinessError("设置群成员禁言状态失败")
 	}
 
 	content := jsonutil.Encode(map[string]interface{}{
@@ -693,12 +693,12 @@ func (c *Group) Open(ctx *ichat.Context) error {
 	}
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 	}
 
 	err := c.groupMemberService.UpdateIsOvertStatus(params.GroupId, params.Mode)
 	if err != nil {
-		return ctx.BusinessError("设置群公开失败！")
+		return ctx.BusinessError("设置群公开失败")
 	}
 
 	return ctx.Success(entity.H{})
@@ -713,7 +713,7 @@ func (c *Group) Avatar(ctx *ichat.Context) error {
 	}
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限！")
+		return ctx.BusinessError("暂无权限")
 
 	}
 	err := c.service.Avatar(ctx.Context, &model.UpdateGroupOpts{
@@ -722,7 +722,7 @@ func (c *Group) Avatar(ctx *ichat.Context) error {
 	})
 	if err != nil {
 		logger.Error("[Group NoSpeak] 设置群头像失败 err :", err.Error())
-		return ctx.BusinessError("操作失败！")
+		return ctx.BusinessError("操作失败")
 
 	}
 	return ctx.Success(entity.H{})

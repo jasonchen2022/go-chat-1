@@ -195,7 +195,7 @@ func (c *Article) Upload(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("image")
 	if err != nil {
-		return ctx.InvalidParams("image 字段必传！")
+		return ctx.InvalidParams("image 字段必传")
 	}
 
 	if !sliceutil.InStr(strutil.FileSuffix(file.Filename), []string{"png", "jpg", "jpeg", "gif", "webp"}) {
@@ -204,7 +204,7 @@ func (c *Article) Upload(ctx *ichat.Context) error {
 
 	// 判断上传文件大小（5M）
 	if file.Size > 5<<20 {
-		return ctx.InvalidParams("上传文件大小不能超过5M！")
+		return ctx.InvalidParams("上传文件大小不能超过5M")
 	}
 
 	stream, err := filesystem.ReadMultipartStream(file)
