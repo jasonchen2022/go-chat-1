@@ -14,11 +14,12 @@ import (
 )
 
 type SmsService struct {
+	*BaseService
 	smsCodeCache *cache.SmsCodeCache
 }
 
-func NewSmsService(codeCache *cache.SmsCodeCache) *SmsService {
-	return &SmsService{smsCodeCache: codeCache}
+func NewSmsService(baseService *BaseService, codeCache *cache.SmsCodeCache) *SmsService {
+	return &SmsService{BaseService: baseService, smsCodeCache: codeCache}
 }
 
 // CheckSmsCode 验证短信验证码是否正确
@@ -56,7 +57,12 @@ func (s *SmsService) SendSmsCode(ctx context.Context, channel string, mobile str
 	smsapi := "http://api.smsbao.com/" //短信平台帐号
 	account := "zhiboakak"             //短信平台密码
 	password := md5.Sum([]byte("zhibo999"))
-	smscontent := "【11zb】您的本次验证码为:" + string(code) + ",该验证码5分钟有效"
+	smscontent := ""
+	if s.config.GetEnv() == "alone" {
+		smscontent = "【liaoqiu】您的本次验证码为:" + string(code) + ",该验证码5分钟有效"
+	} else {
+		smscontent = "【11zb】您的本次验证码为:" + string(code) + ",该验证码5分钟有效"
+	}
 	ss := fmt.Sprintf("%x", password)
 	sendurl := smsapi + "sms?u=" + account + "&p=" + ss + "&m=" + mobile + "&c=" + url.QueryEscape(smscontent)
 	res, err := http.Get(sendurl)
@@ -68,6 +74,7 @@ func (s *SmsService) SendSmsCode(ctx context.Context, channel string, mobile str
 		defer res.Body.Close()
 	}
 	body, _ := ioutil.ReadAll(res.Body)
+
 	if string(body) == "0" {
 		// 添加发送记录
 		if err := s.smsCodeCache.Set(ctx, channel, mobile, code, 60*5); err != nil {

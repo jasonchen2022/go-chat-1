@@ -71,13 +71,13 @@ func (s *ContactApplyService) Create(ctx context.Context, opts *ContactApplyCrea
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -166,13 +166,13 @@ func (s *ContactApplyService) Decline(ctx context.Context, opts *ContactApplyDec
 
 		// 声明exchange
 		if err := channel.ExchangeDeclare(
-			"project", //name
-			"direct",  //exchangeType
-			true,      //durable
-			false,     //auto-deleted
-			false,     //internal
-			false,     //noWait
-			nil,       //arguments
+			s.config.RabbitMQ.ExchangeName, //name
+			"fanout",                       //exchangeType
+			true,                           //durable
+			false,                          //auto-deleted
+			false,                          //internal
+			false,                          //noWait
+			nil,                            //arguments
 		); err != nil {
 			log.Println("Failed to declare a exchange:", err.Error())
 		}

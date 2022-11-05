@@ -2,12 +2,15 @@ package group
 
 import (
 	"fmt"
+	"log"
 	"time"
 
+	"go-chat/config"
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/ichat"
+	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
@@ -16,6 +19,7 @@ import (
 	"go-chat/internal/service"
 
 	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
 )
 
 type Group struct {
@@ -28,6 +32,8 @@ type Group struct {
 	groupNoticeService *service.GroupNoticeService
 	messageService     *service.TalkMessageService
 	memberService      *service.MemberService
+	mq                 *amqp.Connection
+	config             *config.Config
 }
 
 func NewGroup(
@@ -40,6 +46,8 @@ func NewGroup(
 	groupNoticeService *service.GroupNoticeService,
 	messageService *service.TalkMessageService,
 	memberService *service.MemberService,
+	mq *amqp.Connection,
+	config *config.Config,
 ) *Group {
 	return &Group{
 		service:            service,
@@ -51,6 +59,8 @@ func NewGroup(
 		groupNoticeService: groupNoticeService,
 		messageService:     messageService,
 		memberService:      memberService,
+		mq:                 mq,
+		config:             config,
 	}
 }
 
@@ -611,6 +621,37 @@ func (c *Group) AllNoSpeak(ctx *ichat.Context) error {
 	if err != nil {
 		return ctx.BusinessError("设置群成员禁言状态失败！")
 	}
+
+	content := jsonutil.Encode(map[string]interface{}{
+		"event": entity.EventTalkMuteGroup,
+		"data": jsonutil.Encode(map[string]interface{}{
+			"group_id": params.GroupId,
+			"is_mute":  params.Mode,
+		}),
+	})
+
+	// 创建一个Channel
+	channel, err := c.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		c.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
+	c.messageService.SendAll(channel, content)
 
 	return ctx.Success(entity.H{})
 }

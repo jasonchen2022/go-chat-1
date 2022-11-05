@@ -39,6 +39,7 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 
 	// 注册消息回调事件
 	handler[entity.EventTalk] = s.onConsumeTalk
+	handler[entity.EventTalkMuteGroup] = s.onConsumeMuteGroup
 	handler[entity.EventTalkKeyboard] = s.onConsumeTalkKeyboard
 	//handler[entity.EventOnlineStatus] = s.onConsumeLogin
 	handler[entity.EventTalkRevoke] = s.onConsumeTalkRevoke
@@ -51,6 +52,42 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 	} else {
 		logrus.Warnf("Event: [%s]未注册回调方法\n", event)
 	}
+}
+
+// onConsumeMuteGroup 聊天消息事件
+func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
+	var msg struct {
+		GroupId int   `json:"group_id"`
+		IsMute  int64 `json:"is_mute"`
+	}
+	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+		logrus.Error("[SubscribeConsume] onConsumeTalk Unmarshal err: ", err.Error())
+		return
+	}
+	ctx := context.Background()
+	cids := make([]int64, 0)
+	ids := s.room.All(ctx, &cache.RoomOption{
+		Channel:  im.Session.Default.Name(),
+		RoomType: entity.RoomImGroup,
+		Number:   strconv.Itoa(int(msg.GroupId)),
+		Sid:      s.conf.ServerId(),
+	})
+
+	cids = append(cids, ids...)
+	if len(cids) == 0 {
+		return
+	}
+
+	c := im.NewSenderContent()
+	c.SetReceive(cids...)
+	c.SetMessage(&im.Message{
+		Event: entity.EventTalkMuteGroup,
+		Content: entity.MapStrAny{
+			"data": msg,
+		},
+	})
+
+	im.Session.Default.Write(c)
 }
 
 // onConsumeTalk 聊天消息事件

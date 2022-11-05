@@ -127,13 +127,13 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -271,13 +271,13 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -399,13 +399,13 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -504,13 +504,13 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}

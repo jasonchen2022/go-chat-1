@@ -28,15 +28,15 @@ import (
 type DefaultWebSocket struct {
 	rds                *redis.Client
 	mq                 *amqp.Connection
-	conf               *config.Config
+	config             *config.Config
 	cache              *service.ClientService
 	room               *cache.RoomStorage
 	groupMemberService *service.GroupMemberService
 	talkMessage        *service.TalkMessageService
 }
 
-func NewDefaultWebSocket(rds *redis.Client, mq *amqp.Connection, conf *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService, talkMessage *service.TalkMessageService) *DefaultWebSocket {
-	return &DefaultWebSocket{rds: rds, conf: conf, cache: cache, room: room, groupMemberService: groupMemberService, talkMessage: talkMessage}
+func NewDefaultWebSocket(rds *redis.Client, mq *amqp.Connection, config *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService, talkMessage *service.TalkMessageService) *DefaultWebSocket {
+	return &DefaultWebSocket{rds: rds, config: config, cache: cache, room: room, groupMemberService: groupMemberService, talkMessage: talkMessage}
 }
 
 // Connect 初始化连接
@@ -83,7 +83,7 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 			Channel:  im.Session.Default.Name(),
 			RoomType: entity.RoomImGroup,
 			Number:   strconv.Itoa(id),
-			Sid:      c.conf.ServerId(),
+			Sid:      c.config.ServerId(),
 			Cid:      client.ClientId(),
 		})
 	}
@@ -120,13 +120,13 @@ func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, messag
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		c.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -191,7 +191,7 @@ func (c *DefaultWebSocket) close(client im.IClient, code int, text string) {
 			Channel:  im.Session.Default.Name(),
 			RoomType: entity.RoomImGroup,
 			Number:   strconv.Itoa(id),
-			Sid:      c.conf.ServerId(),
+			Sid:      c.config.ServerId(),
 			Cid:      client.ClientId(),
 		})
 	}

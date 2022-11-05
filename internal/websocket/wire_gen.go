@@ -31,7 +31,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	clientService := service.NewClientService(wsClientSession)
 	roomStorage := cache.NewRoomStorage(client)
 	db := provider.NewMySQLClient(conf)
-	baseService := service.NewBaseService(db, client, connection)
+	baseService := service.NewBaseService(db, client, connection, conf)
 	baseDao := dao.NewBaseDao(db, client)
 	relation := cache.NewRelation(client)
 	groupMemberDao := dao.NewGroupMemberDao(baseDao, relation)
