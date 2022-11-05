@@ -45,9 +45,6 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		log.Println("Failed to open a channel:", err.Error())
 		return err
 	}
-	defer ch.Close()
-
-	defer w.mq.Close()
 
 	// 声明一个群聊队列
 	qGroup, err := ch.QueueDeclare(

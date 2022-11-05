@@ -39,7 +39,7 @@ func (r *RoomStorage) Add(ctx context.Context, opts *RoomOption) error {
 
 	err := r.rds.SAdd(ctx, key, opts.Cid).Err()
 	if err == nil {
-		r.rds.Expire(ctx, key, time.Second*60*2) //2分钟缓存
+		r.rds.Expire(ctx, key, time.Minute*60*24*7)
 	}
 
 	return err

@@ -28,12 +28,13 @@ func (m *Group) TableName() string {
 }
 
 type GroupItem struct {
-	Id        int    `json:"id"`
-	GroupName string `json:"group_name"`
-	Avatar    string `json:"avatar"`
-	Profile   string `json:"profile"`
-	Leader    int    `json:"leader"`
-	IsDisturb int    `json:"is_disturb"`
+	Id          int    `json:"id"`
+	GroupName   string `json:"group_name"`
+	Avatar      string `json:"avatar"`
+	Profile     string `json:"profile"`
+	Leader      int    `json:"leader"`
+	IsDisturb   int    `json:"is_disturb"`
+	MemberCount int    `json:"member_count"`
 }
 
 type CreateGroupOpts struct {
@@ -71,4 +72,9 @@ type UpdateGroupOpts struct {
 	Name    string // 群名称
 	Avatar  string // 群头像
 	Profile string // 群简介
+}
+
+type GroupItemOpts struct {
+	Id          int `json:"id"`
+	MemberCount int `json:"member_count"`
 }

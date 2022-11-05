@@ -8,14 +8,15 @@ const (
 
 // WebSocket 消息事件枚举
 const (
-	EventTalk          = "event_talk"            // 对话消息通知
-	EventTalkKeyboard  = "event_talk_keyboard"   // 键盘输入事件通知
-	EventTalkRevoke    = "event_talk_revoke"     // 聊天消息撤销通知
-	EventTalkJoinGroup = "event_talk_join_group" // 邀请加入群聊通知
-	EventTalkMuteGroup = "event_talk_mute_group" // 邀请加入群聊通知
-	EventTalkRead      = "event_talk_read"       // 对话消息读事件
-	EventOnlineStatus  = "event_login"           // 用户在线状态通知
-	EventContactApply  = "event_contact_apply"   // 好友申请消息通知
+	EventTalk            = "event_talk"              // 对话消息通知
+	EventTalkKeyboard    = "event_talk_keyboard"     // 键盘输入事件通知
+	EventTalkRevoke      = "event_talk_revoke"       // 聊天消息撤销通知
+	EventTalkJoinGroup   = "event_talk_join_group"   // 邀请加入群聊通知
+	EventTalkMuteGroup   = "event_talk_mute_group"   // 邀请加入群聊通知
+	EventTalkUpdateGroup = "event_talk_update_group" // 修改群资料通知
+	EventTalkRead        = "event_talk_read"         // 对话消息读事件
+	EventOnlineStatus    = "event_login"             // 用户在线状态通知
+	EventContactApply    = "event_contact_apply"     // 好友申请消息通知
 )
 
 // 聊天消息类型

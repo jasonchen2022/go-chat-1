@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/cache"
@@ -40,6 +41,7 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 	// 注册消息回调事件
 	handler[entity.EventTalk] = s.onConsumeTalk
 	handler[entity.EventTalkMuteGroup] = s.onConsumeMuteGroup
+	handler[entity.EventTalkUpdateGroup] = s.onConsumeUpdateGroup
 	handler[entity.EventTalkKeyboard] = s.onConsumeTalkKeyboard
 	//handler[entity.EventOnlineStatus] = s.onConsumeLogin
 	handler[entity.EventTalkRevoke] = s.onConsumeTalkRevoke
@@ -64,12 +66,28 @@ func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
 		logrus.Error("[SubscribeConsume] onConsumeTalk Unmarshal err: ", err.Error())
 		return
 	}
+	s.onSend(msg.GroupId, entity.EventTalkMuteGroup, msg)
+}
+
+// onConsumeUpdateGroup 聊天消息事件
+func (s *SubscribeConsume) onConsumeUpdateGroup(body string) {
+	var msg struct {
+		GroupId int `json:"group_id"`
+	}
+	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+		logrus.Error("[SubscribeConsume] onConsumeTalk Unmarshal err: ", err.Error())
+		return
+	}
+	s.onSend(msg.GroupId, entity.EventTalkUpdateGroup, msg)
+}
+
+func (s *SubscribeConsume) onSend(receiverId int, messageType string, msg interface{}) {
 	ctx := context.Background()
 	cids := make([]int64, 0)
 	ids := s.room.All(ctx, &cache.RoomOption{
 		Channel:  im.Session.Default.Name(),
 		RoomType: entity.RoomImGroup,
-		Number:   strconv.Itoa(int(msg.GroupId)),
+		Number:   strconv.Itoa(int(receiverId)),
 		Sid:      s.conf.ServerId(),
 	})
 
@@ -81,7 +99,7 @@ func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
 	c.SetMessage(&im.Message{
-		Event: entity.EventTalkMuteGroup,
+		Event: messageType,
 		Content: entity.MapStrAny{
 			"data": msg,
 		},
@@ -93,7 +111,7 @@ func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
 // onConsumeTalk 聊天消息事件
 func (s *SubscribeConsume) onConsumeTalk(body string) {
 
-	//logrus.Info("收到订阅消息：", time.Now().Unix(), body)
+	logrus.Info("收到订阅消息：", time.Now().Unix(), body)
 	var msg struct {
 		TalkType   int   `json:"talk_type"`
 		SenderID   int64 `json:"sender_id"`
@@ -122,7 +140,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 			Number:   strconv.Itoa(int(msg.ReceiverID)),
 			Sid:      s.conf.ServerId(),
 		})
-
+		logrus.Info("获取群ID：", jsonutil.Encode(ids))
 		cids = append(cids, ids...)
 	}
 
@@ -149,7 +167,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	})
 
 	im.Session.Default.Write(c)
-	//logrus.Info("结束订阅消息：", time.Now().Unix())
+	logrus.Info("结束订阅消息：", time.Now().Unix())
 }
 
 // onConsumeTalkKeyboard 键盘输入事件消息

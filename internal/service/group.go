@@ -144,13 +144,20 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 
 // Update 更新群信息
 func (s *GroupService) Update(ctx context.Context, opts *model.UpdateGroupOpt) error {
-	_, err := s.Dao().BaseUpdate(&model.Group{Id: opts.GroupId}, nil, entity.MapStrAny{
-		"group_name": opts.Name,
-		"avatar":     opts.Avatar,
-		"profile":    opts.Profile,
-	})
+	if opts.Name != "" {
+		err := s.db.Model(&model.Group{}).Where("id = ?", opts.GroupId).Update("group_name", opts.Name).Error
+		return err
+	}
+	if opts.Avatar != "" {
+		err := s.db.Model(&model.Group{}).Where("id = ?", opts.GroupId).Update("avatar", opts.Avatar).Error
+		return err
+	}
+	if opts.Profile != "" {
+		err := s.db.Model(&model.Group{}).Where("id = ?", opts.GroupId).Update("profile", opts.Profile).Error
+		return err
+	}
+	return nil
 
-	return err
 }
 
 // Update 更新群名称
@@ -565,6 +572,12 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 		ids = append(ids, items[i].Id)
 	}
 
+	td := s.db.Table("`group`").Where("id in ?", ids).Select("id", "(select count(1) from group_member where group_member.group_id=`group`.id and is_quit = 0) as member_count")
+
+	items_group := make([]*model.GroupItemOpts, 0)
+	if err := td.Scan(&items_group).Error; err != nil {
+		return nil, err
+	}
 	query := s.db.Table("talk_session")
 	query.Select("receiver_id,is_disturb")
 	query.Where("talk_type = ? and receiver_id in ?", 2, ids)
@@ -582,6 +595,11 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	for i := range items {
 		if value, ok := hash[items[i].Id]; ok {
 			items[i].IsDisturb = value.IsDisturb
+		}
+		for j := range items_group {
+			if items[i].Id == items_group[j].Id {
+				items[i].MemberCount = items_group[j].MemberCount
+			}
 		}
 	}
 

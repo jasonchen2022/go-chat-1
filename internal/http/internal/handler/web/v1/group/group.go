@@ -296,6 +296,36 @@ func (c *Group) Setting(ctx *ichat.Context) error {
 		Text:       "群主或管理员修改了群信息！",
 	})
 
+	content := jsonutil.Encode(map[string]interface{}{
+		"event": entity.EventTalkUpdateGroup,
+		"data": jsonutil.Encode(map[string]interface{}{
+			"group_id": params.GroupId,
+		}),
+	})
+
+	// 创建一个Channel
+	channel, err := c.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		c.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+
+	c.messageService.SendAll(channel, content)
+
 	return ctx.Success(nil)
 }
 
