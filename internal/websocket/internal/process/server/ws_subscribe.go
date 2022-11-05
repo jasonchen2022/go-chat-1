@@ -62,8 +62,13 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		log.Println("Failed to open a channel:", err.Error())
 		return err
 	}
+	ch2, err := w.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel2:", err.Error())
+		return err
+	}
 	// 声明一个私聊队列
-	qPrivate, err := ch.QueueDeclare(
+	qPrivate, err := ch2.QueueDeclare(
 		gateway, // name
 		true,    // durable
 		false,   // delete when usused
@@ -90,7 +95,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		return err
 	}
 	//注册私聊消费者
-	msgsPrivate, err := ch.Consume(
+	msgsPrivate, err := ch2.Consume(
 		qPrivate.Name, // queue
 		"",            // 标签
 		true,          // auto-ack

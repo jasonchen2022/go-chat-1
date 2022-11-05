@@ -155,13 +155,13 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		t.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}

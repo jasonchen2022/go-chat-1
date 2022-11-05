@@ -551,13 +551,13 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -799,13 +799,13 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
-		"project", //name
-		"direct",  //exchangeType
-		true,      //durable
-		false,     //auto-deleted
-		false,     //internal
-		false,     //noWait
-		nil,       //arguments
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
 	); err != nil {
 		log.Println("Failed to declare a exchange:", err.Error())
 	}
@@ -846,15 +846,15 @@ func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
 
 	}
 	// exchange 绑定 queue
-	err := channel.QueueBind(entity.IMGatewayAll, entity.IMGatewayAll, "project", false, nil)
+	err := channel.QueueBind(entity.IMGatewayAll, "", s.config.RabbitMQ.ExchangeName, false, nil)
 	if err != nil {
 		log.Println("Failed to declare a queuebind:", err.Error())
 	}
 	if err := channel.Publish(
-		"project",           // exchange
-		entity.IMGatewayAll, // routing key
-		false,               // mandatory
-		false,               // immediate
+		s.config.RabbitMQ.ExchangeName, // exchange
+		entity.IMGatewayAll,            // routing key
+		false,                          // mandatory
+		false,                          // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",
@@ -883,16 +883,16 @@ func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, conte
 
 	}
 	// exchange 绑定 queue
-	err := channel.QueueBind(gateway, gateway, "project", false, nil)
+	err := channel.QueueBind(gateway, "", s.config.RabbitMQ.ExchangeName, false, nil)
 	if err != nil {
 		log.Println("Failed to declare a queuebind:", err.Error())
 	}
 
 	if err := channel.Publish(
-		"project", // exchange
-		gateway,   // routing key
-		false,     // mandatory
-		false,     // immediate
+		s.config.RabbitMQ.ExchangeName, // exchange
+		gateway,                        // routing key
+		false,                          // mandatory
+		false,                          // immediate
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "text/plain",

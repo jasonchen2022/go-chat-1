@@ -4,7 +4,7 @@ package web
 type (
 	SmsCodeRequest struct {
 		Mobile  string `form:"mobile" json:"mobile" binding:"required,len=11,phone" label:"mobile"`
-		Channel string `form:"channel" json:"channel" binding:"required,oneof=login register forget_account change_account" label:"channel"`
+		Channel string `form:"channel" json:"channel" binding:"required,oneof=login_account register forget_account change_account" label:"channel"`
 	}
 
 	SmsCodeResponse struct{}
