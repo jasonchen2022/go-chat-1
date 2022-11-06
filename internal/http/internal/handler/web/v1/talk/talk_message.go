@@ -117,6 +117,34 @@ func (c *Message) Text(ctx *ichat.Context) error {
 	return ctx.Success(id)
 }
 
+// RedPackets 发送红包消息
+func (c *Message) RedPackets(ctx *ichat.Context) error {
+
+	params := &web.TextMessageRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+
+	uid := ctx.UserId()
+	if err := c.authority(ctx, &AuthorityOpts{
+		TalkType:   params.TalkType,
+		UserId:     uid,
+		ReceiverId: params.ReceiverId,
+	}); err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+	id, err := c.service.SendRedPacketsMessage(ctx.RequestCtx(), &service.TextMessageOpt{
+		UserId:     uid,
+		TalkType:   params.TalkType,
+		ReceiverId: params.ReceiverId,
+		Text:       params.Text,
+	})
+	if err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+	return ctx.Success(id)
+}
+
 // Code 发送代码块消息
 func (c *Message) Code(ctx *ichat.Context) error {
 

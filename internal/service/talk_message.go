@@ -121,6 +121,43 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 	return record.Id, nil
 }
 
+// SendRedPacketsMessage 发送红包消息
+func (s *TalkMessageService) SendRedPacketsMessage(ctx context.Context, opts *TextMessageOpt) (int, error) {
+	record := &model.TalkRecords{
+		TalkType:   opts.TalkType,
+		MsgType:    entity.MsgTypeRedPackets,
+		UserId:     opts.UserId,
+		ReceiverId: opts.ReceiverId,
+		Content:    opts.Text,
+	}
+	//校验权限
+	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
+	if c != nil {
+		return 0, c
+	}
+	if record.Content != "" {
+		//检测敏感词
+		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(record.Content, '*')
+			if content != "" {
+				record.Content = content
+			}
+		}
+	}
+
+	if err := s.db.Create(record).Error; err != nil {
+		return 0, err
+	}
+	s.afterHandle(ctx, record, map[string]string{
+		"text": strutil.MtSubstr(record.Content, 0, 30),
+	})
+
+	return record.Id, nil
+}
+
 type CodeMessageOpt struct {
 	UserId     int
 	TalkType   int
