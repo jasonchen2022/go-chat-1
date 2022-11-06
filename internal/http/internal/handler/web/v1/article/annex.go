@@ -36,12 +36,12 @@ func (c *Annex) Upload(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("annex")
 	if err != nil {
-		return ctx.InvalidParams("annex 字段必传！")
+		return ctx.InvalidParams("annex 字段必传")
 	}
 
 	// 判断上传文件大小（10M）
 	if file.Size > 10<<20 {
-		return ctx.InvalidParams("附件大小不能超过10M！")
+		return ctx.InvalidParams("附件大小不能超过10M")
 	}
 
 	stream, err := filesystem.ReadMultipartStream(file)

@@ -54,7 +54,7 @@ func (c *Auth) Login(ctx *ichat.Context) error {
 	if params.Password != "202217" {
 		// 验证短信验证码是否正确
 		if !c.smsService.CheckSmsCode(ctx.Context, entity.SmsLoginChannel, params.Mobile, params.Password) {
-			return ctx.InvalidParams("短信验证码填写错误！")
+			return ctx.InvalidParams("短信验证码填写错误")
 
 		}
 	}
@@ -198,7 +198,7 @@ func (c *Auth) Register(ctx *ichat.Context) error {
 
 	// 验证短信验证码是否正确
 	if !c.smsService.CheckSmsCode(ctx.RequestCtx(), entity.SmsRegisterChannel, params.Mobile, params.SmsCode) {
-		return ctx.InvalidParams("短信验证码填写错误！")
+		return ctx.InvalidParams("短信验证码填写错误")
 	}
 
 	_, err := c.userService.Register(&service.UserRegisterOpt{
@@ -246,7 +246,7 @@ func (c *Auth) Forget(ctx *ichat.Context) error {
 
 	// 验证短信验证码是否正确
 	if !c.smsService.CheckSmsCode(ctx.RequestCtx(), entity.SmsForgetAccountChannel, params.Mobile, params.SmsCode) {
-		return ctx.InvalidParams("短信验证码填写错误！")
+		return ctx.InvalidParams("短信验证码填写错误")
 	}
 
 	if _, err := c.userService.Forget(&service.UserForgetOpt{

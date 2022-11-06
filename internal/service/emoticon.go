@@ -29,7 +29,7 @@ func (s *EmoticonService) RemoveUserSysEmoticon(uid int, emoticonId int) error {
 	ids := s.dao.GetUserInstallIds(uid)
 
 	if !sliceutil.InInt(emoticonId, ids) {
-		return fmt.Errorf("数据不存在！")
+		return fmt.Errorf("数据不存在")
 	}
 
 	items := make([]string, 0, len(ids)-1)

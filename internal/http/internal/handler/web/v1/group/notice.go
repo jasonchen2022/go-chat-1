@@ -47,7 +47,7 @@ func (c *Notice) CreateAndUpdate(ctx *ichat.Context) error {
 			IsTop:     params.IsTop,
 			IsConfirm: params.IsConfirm,
 		})
-		msg = "添加群公告成功！"
+		msg = "添加群公告成功"
 	} else {
 		err = c.service.Update(ctx.RequestCtx(), &service.GroupNoticeEditOpt{
 			GroupId:   params.GroupId,
@@ -57,7 +57,7 @@ func (c *Notice) CreateAndUpdate(ctx *ichat.Context) error {
 			IsTop:     params.IsTop,
 			IsConfirm: params.IsConfirm,
 		})
-		msg = "更新群公告成功！"
+		msg = "更新群公告成功"
 	}
 
 	if err != nil {
@@ -79,7 +79,7 @@ func (c *Notice) Delete(ctx *ichat.Context) error {
 		return ctx.BusinessError(err.Error())
 	}
 
-	return ctx.Success(nil, "群公告删除成功！")
+	return ctx.Success(nil, "群公告删除成功")
 }
 
 // List 获取群公告列表(所有)
@@ -92,7 +92,7 @@ func (c *Notice) List(ctx *ichat.Context) error {
 
 	// 判断是否是群成员
 	if !c.member.Dao().IsMember(params.GroupId, ctx.UserId(), true) {
-		return ctx.BusinessError("无获取数据权限！")
+		return ctx.BusinessError("无获取数据权限")
 	}
 
 	items, _ := c.service.Dao().GetListAll(ctx.Context, params.GroupId)

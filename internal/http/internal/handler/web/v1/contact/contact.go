@@ -88,7 +88,7 @@ func (c *Contact) Delete(ctx *ichat.Context) error {
 	// 	UserId:     uid,
 	// 	TalkType:   entity.ChatPrivateMode,
 	// 	ReceiverId: params.FriendId,
-	// 	Text:       "你与对方已经解除了好友关系！！！",
+	// 	Text:       "你与对方已经解除了好友关系",
 	// })
 
 	// 删除聊天会话
@@ -111,7 +111,7 @@ func (c *Contact) Search(ctx *ichat.Context) error {
 	user, err := c.userService.Dao().FindByMobile(params.Mobile)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ctx.BusinessError("用户不存在！")
+			return ctx.BusinessError("用户不存在")
 		}
 
 		return ctx.BusinessError(err.Error())
@@ -155,7 +155,7 @@ func (c *Contact) Detail(ctx *ichat.Context) error {
 	user, err := c.userService.Dao().FindById(params.UserId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ctx.BusinessError("用户不存在！")
+			return ctx.BusinessError("用户不存在")
 		}
 
 		return ctx.BusinessError(err.Error())

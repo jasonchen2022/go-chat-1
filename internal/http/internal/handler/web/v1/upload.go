@@ -54,7 +54,7 @@ func (u *Upload) File(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("file")
 	if err != nil {
-		return ctx.InvalidParams("文件上传失败！")
+		return ctx.InvalidParams("文件上传失败")
 
 	}
 	ext := path.Ext(file.Filename)
@@ -106,7 +106,7 @@ func (u *Upload) MultipartUpload(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("file")
 	if err != nil {
-		return ctx.InvalidParams("文件上传失败！")
+		return ctx.InvalidParams("文件上传失败")
 	}
 
 	err = u.service.MultipartUpload(ctx.RequestCtx(), &service.MultipartUploadOpts{

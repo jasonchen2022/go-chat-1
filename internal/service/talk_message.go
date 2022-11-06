@@ -455,7 +455,7 @@ func (s *TalkMessageService) SendEmoticonMessage(ctx context.Context, opts *Emot
 	}
 
 	if emoticon.UserId > 0 && emoticon.UserId != opts.UserId {
-		return 0, errors.New("表情包不存在！")
+		return 0, errors.New("表情包不存在")
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -564,7 +564,7 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 	}
 	///无时间限制
 	// if time.Now().Unix() > record.CreatedAt.Add(3*time.Minute).Unix() {
-	// 	return errors.New("超出有效撤回时间范围，无法进行撤销！")
+	// 	return errors.New("超出有效撤回时间范围，无法进行撤销")
 	// }
 
 	if err = s.db.Model(&model.TalkRecords{Id: recordId}).Update("is_revoke", 1).Error; err != nil {
@@ -740,7 +740,7 @@ func (s *TalkMessageService) SendLoginMessage(ctx context.Context, opts *LoginMe
 	})
 
 	if err == nil {
-		s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒！"})
+		s.afterHandle(ctx, record, map[string]string{"text": "[系统通知] 账号登录提醒"})
 	}
 
 	return err
@@ -771,7 +771,7 @@ func (s *TalkMessageService) checkUserAuth(ctx context.Context, userId int, talk
 		return err
 	}
 	if user.IsMute == 1 {
-		return errors.New("你已被禁言，请文明聊天！")
+		return errors.New("你已被禁言，请文明聊天")
 	}
 	//检测游客只能在聊天室发言
 	if user.Type == -1 && talkType == 2 {

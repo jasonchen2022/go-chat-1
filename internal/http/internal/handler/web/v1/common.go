@@ -32,18 +32,18 @@ func (c *Common) SmsCode(ctx *ichat.Context) error {
 	// // 需要判断账号是否存在
 	// case entity.SmsLoginChannel, entity.SmsForgetAccountChannel:
 	// 	if !c.userService.Dao().IsMobileExist(params.Mobile) {
-	// 		response.BusinessError(ctx, "账号不存在或密码错误！")
+	// 		response.BusinessError(ctx, "账号不存在或密码错误")
 	// 		return
 	// 	}
 
 	// // 需要判断账号是否存在
 	// case entity.SmsRegisterChannel, entity.SmsChangeAccountChannel:
 	// 	if c.userService.Dao().IsMobileExist(params.Mobile) {
-	// 		response.BusinessError(ctx, "手机号已被他人使用！")
+	// 		response.BusinessError(ctx, "手机号已被他人使用")
 	// 		return
 	// 	}
 	// default:
-	// 	response.BusinessError(ctx, "发送异常！")
+	// 	response.BusinessError(ctx, "发送异常")
 	// 	return
 	// }
 
@@ -58,9 +58,9 @@ func (c *Common) SmsCode(ctx *ichat.Context) error {
 		return ctx.Success(entity.MapStrAny{
 			"is_debug": true,
 			"sms_code": code,
-		}, "发送成功！")
+		}, "发送成功")
 	} else {
-		return ctx.Success(nil, "发送成功！")
+		return ctx.Success(nil, "发送成功")
 	}
 }
 

@@ -77,11 +77,11 @@ func (s *TalkService) CollectRecord(ctx context.Context, uid int, recordId int) 
 	}
 
 	if record.MsgType != entity.MsgTypeFile {
-		return errors.New("当前消息不支持收藏！")
+		return errors.New("当前消息不支持收藏")
 	}
 
 	if record.IsRevoke == 1 {
-		return errors.New("当前消息不支持收藏！")
+		return errors.New("当前消息不支持收藏")
 	}
 
 	if record.TalkType == entity.ChatPrivateMode {

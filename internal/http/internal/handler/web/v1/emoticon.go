@@ -97,7 +97,7 @@ func (c *Emoticon) Upload(ctx *ichat.Context) error {
 
 	file, err := ctx.Context.FormFile("emoticon")
 	if err != nil {
-		return ctx.InvalidParams("emoticon 字段必传！")
+		return ctx.InvalidParams("emoticon 字段必传")
 	}
 
 	if !sliceutil.InStr(strutil.FileSuffix(file.Filename), []string{"png", "jpg", "jpeg", "gif"}) {
@@ -106,19 +106,19 @@ func (c *Emoticon) Upload(ctx *ichat.Context) error {
 
 	// 判断上传文件大小（5M）
 	if file.Size > 5<<20 {
-		return ctx.InvalidParams("上传文件大小不能超过5M！")
+		return ctx.InvalidParams("上传文件大小不能超过5M")
 	}
 
 	stream, err := filesystem.ReadMultipartStream(file)
 	if err != nil {
-		return ctx.BusinessError("上传失败！")
+		return ctx.BusinessError("上传失败")
 	}
 
 	meta := utils.LoadImage(bytes.NewReader(stream))
 	ext := strutil.FileSuffix(file.Filename)
 	src := fmt.Sprintf("public/media/image/emoticon/%s/%s", time.Now().Format("20060102"), strutil.GenImageName(ext, meta.Width, meta.Height))
 	if err = c.fileSystem.Default.Write(stream, src); err != nil {
-		return ctx.BusinessError("上传失败！")
+		return ctx.BusinessError("上传失败")
 	}
 
 	m := &model.EmoticonItem{
@@ -130,7 +130,7 @@ func (c *Emoticon) Upload(ctx *ichat.Context) error {
 	}
 
 	if err := c.service.Db().Create(m).Error; err != nil {
-		return ctx.BusinessError("上传失败！")
+		return ctx.BusinessError("上传失败")
 	}
 
 	return ctx.Success(entity.H{
@@ -177,7 +177,7 @@ func (c *Emoticon) SetSystemEmoticon(ctx *ichat.Context) error {
 	}
 
 	if !c.redisLock.Lock(ctx.Context, key, 5) {
-		return ctx.BusinessError("请求频繁！")
+		return ctx.BusinessError("请求频繁")
 	}
 	defer c.redisLock.UnLock(ctx.Context, key)
 
