@@ -480,7 +480,7 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 		}
 
 		//删除当前聊天列表
-		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id = ? and talk_type = 2", opts.GroupId, opts.UserId)
+		tx.Delete(&model.TalkSession{}, "receiver_id = ? and user_id in ? and talk_type = 2", opts.GroupId, opts.MemberIds)
 
 		if err := tx.Create(&model.TalkRecordsInvite{
 			RecordId:      record.Id,

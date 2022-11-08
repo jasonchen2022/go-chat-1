@@ -644,7 +644,7 @@ func (c *Group) AllNoSpeak(ctx *ichat.Context) error {
 	}
 	uid := ctx.UserId()
 	if !c.groupMemberService.Dao().IsLeader(params.GroupId, uid) {
-		return ctx.BusinessError("暂无权限")
+		return ctx.BusinessError("该群已全员禁言")
 	}
 
 	err := c.groupMemberService.UpdateAllMuteStatus(params.GroupId, params.Mode)
