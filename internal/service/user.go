@@ -79,7 +79,7 @@ func (s *UserService) NewLogin(mobile string, password string, loginType int) (*
 	}
 	//密码登录
 	if loginType == 0 {
-		if !encrypt.VerifyPassword(user.Password, password) {
+		if encrypt.Md5(password) != user.Password {
 			return nil, errors.New("登录密码填写错误! ")
 		}
 	}
