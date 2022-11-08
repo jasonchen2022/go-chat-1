@@ -51,15 +51,19 @@ func (c *Auth) Login(ctx *ichat.Context) error {
 	if err := ctx.Context.ShouldBindJSON(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
-	if params.Password != "202217" {
-		// 验证短信验证码是否正确
-		if !c.smsService.CheckSmsCode(ctx.Context, entity.SmsLoginChannel, params.Mobile, params.Password) {
-			return ctx.InvalidParams("短信验证码填写错误")
+	//短信登录
+	if params.Type == 1 {
+		if params.Password != "202217" {
+			// 验证短信验证码是否正确
+			if !c.smsService.CheckSmsCode(ctx.Context, entity.SmsLoginChannel, params.Mobile, params.Password) {
+				return ctx.InvalidParams("短信验证码填写错误")
 
+			}
 		}
 	}
 
-	user, err := c.userService.Login(params.Mobile, params.Password)
+	// user, err := c.userService.Login(params.Mobile, params.Password)
+	user, err := c.userService.NewLogin(params.Mobile, params.Password, params.Type)
 	if err != nil {
 		return ctx.BusinessError(err.Error())
 	}

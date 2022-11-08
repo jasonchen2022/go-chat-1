@@ -6,6 +6,7 @@ type (
 		Mobile   string `form:"mobile" json:"mobile" binding:"required"`
 		Password string `form:"password" json:"password" binding:"required"`
 		Platform string `form:"platform" json:"platform" binding:"required,oneof=h5 ios windows mac web"`
+		Type     int    `form:"type" json:"type"`
 	}
 
 	AuthLoginResponse struct {

@@ -67,6 +67,26 @@ func (s *UserService) Login(mobile string, password string) (*model.Users, error
 	return user, nil
 }
 
+// Login 登录处理
+func (s *UserService) NewLogin(mobile string, password string, loginType int) (*model.Users, error) {
+	user, err := s.dao.FindByMobile(mobile)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("登录账号不存在! ")
+		}
+
+		return nil, err
+	}
+	//密码登录
+	if loginType == 0 {
+		if !encrypt.VerifyPassword(user.Password, password) {
+			return nil, errors.New("登录密码填写错误! ")
+		}
+	}
+
+	return user, nil
+}
+
 // UserForgetOpt ForgetRequest 账号找回接口验证
 type UserForgetOpt struct {
 	Mobile   string
