@@ -380,6 +380,7 @@ func (c *Group) Detail(ctx *ichat.Context) error {
 	info["group_name"] = groupInfo.Name
 	info["profile"] = groupInfo.Profile
 	info["avatar"] = groupInfo.Avatar
+	info["is_dismiss"] = groupInfo.IsDismiss
 	info["created_at"] = timeutil.FormatDatetime(groupInfo.CreatedAt)
 	info["is_manager"] = uid == groupInfo.CreatorId
 	info["manager_nickname"] = ""
