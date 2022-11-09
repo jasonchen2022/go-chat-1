@@ -3,10 +3,13 @@ package service
 import (
 	"context"
 	"math"
+	"strings"
+	"unicode/utf8"
 
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
 
+	"github.com/mozillazg/go-pinyin"
 	"gorm.io/gorm"
 )
 
@@ -111,7 +114,25 @@ func (s *ContactService) List(ctx context.Context, uid int) ([]*model.ContactLis
 	if err := tx.Scan(&items).Error; err != nil {
 		return nil, err
 	}
+	var a = pinyin.NewArgs()
+	for _, item := range items {
+		_, size := utf8.DecodeRuneInString(item.Nickname)
+		word := item.Nickname[:size]
 
+		if item.Remark != "" {
+			_, size = utf8.DecodeRuneInString(item.Remark)
+			word = item.Remark[:size]
+		}
+		result := pinyin.Pinyin(string(word), a)
+		englishIndex := ""
+		if len(result) > 0 {
+			englishIndex = string(result[0][0][0])
+		}
+		if englishIndex == "" {
+			englishIndex = "#"
+		}
+		item.EnglishIndex = strings.ToUpper(englishIndex)
+	}
 	return items, nil
 }
 

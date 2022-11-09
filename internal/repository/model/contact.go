@@ -14,11 +14,12 @@ type Contact struct {
 }
 
 type ContactListItem struct {
-	Id       int    `gorm:"column:id" json:"id"`                // 用户ID
-	Nickname string `gorm:"column:nickname" json:"nickname"`    // 用户昵称
-	Gender   uint8  `gorm:"column:gender" json:"gender"`        // 用户性别[0:未知;1:男;2:女;]
-	Motto    string `gorm:"column:motto" json:"motto"`          // 用户座右铭
-	Avatar   string `grom:"column:avatar" json:"avatar" `       // 好友头像
-	Remark   string `gorm:"column:remark" json:"friend_remark"` // 好友的备注
-	IsOnline int    `json:"is_online"`                          // 是否在线
+	Id           int    `gorm:"column:id" json:"id"`                // 用户ID
+	Nickname     string `gorm:"column:nickname" json:"nickname"`    // 用户昵称
+	Gender       uint8  `gorm:"column:gender" json:"gender"`        // 用户性别[0:未知;1:男;2:女;]
+	Motto        string `gorm:"column:motto" json:"motto"`          // 用户座右铭
+	Avatar       string `grom:"column:avatar" json:"avatar" `       // 好友头像
+	Remark       string `gorm:"column:remark" json:"friend_remark"` // 好友的备注
+	IsOnline     int    `json:"is_online"`                          // 是否在线
+	EnglishIndex string `json:"english_index"`                      //英文序号
 }

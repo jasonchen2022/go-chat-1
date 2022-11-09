@@ -3,12 +3,15 @@ package contact
 import (
 	"errors"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/service/organize"
 
+	"github.com/mozillazg/go-pinyin"
 	"gorm.io/gorm"
 
 	"go-chat/internal/entity"
@@ -57,6 +60,25 @@ func (c *Contact) ListByPage(ctx *ichat.Context) error {
 	if err != nil {
 		return ctx.BusinessError(err)
 
+	}
+	var a = pinyin.NewArgs()
+	for _, item := range items {
+		_, size := utf8.DecodeRuneInString(item.Nickname)
+		word := item.Nickname[:size]
+
+		if item.Remark != "" {
+			_, size = utf8.DecodeRuneInString(item.Remark)
+			word = item.Remark[:size]
+		}
+		result := pinyin.Pinyin(string(word), a)
+		englishIndex := ""
+		if len(result) > 0 {
+			englishIndex = string(result[0][0][0])
+		}
+		if englishIndex == "" {
+			englishIndex = "#"
+		}
+		item.EnglishIndex = strings.ToUpper(englishIndex)
 	}
 	return ctx.Success(items)
 }
