@@ -2,7 +2,6 @@ package talk
 
 import (
 	"errors"
-	"strconv"
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
@@ -166,7 +165,7 @@ func (c *Message) RedPackets(ctx *ichat.Context) error {
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
-		Text:       strconv.Itoa(params.RecordId),
+		Text:       params.RecordId,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
