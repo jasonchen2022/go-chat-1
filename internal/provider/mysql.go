@@ -50,7 +50,7 @@ func NewMySQLClient(conf *config.Config) *gorm.DB {
 	//注意：指定实体查询另外一个库
 	err1 := db.Use(dbresolver.Register(dbresolver.Config{
 		Replicas: []gorm.Dialector{mysql.Open(dsn_ff)},
-	}, &model.Member{}, &model.DictData{}, &model.Fans{}, &model.Navigation{}))
+	}, &model.Member{}, &model.DictData{}, &model.Fans{}, &model.Navigation{}, &model.RedPackets{}, &model.RedPacketsRecord{}))
 	if err1 != nil {
 		panic(fmt.Errorf("mysql connect error :%v", err1))
 	}

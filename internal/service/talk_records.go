@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/jsonutil"
@@ -49,6 +50,7 @@ type TalkRecordsItem struct {
 	GroupName        string      `json:"group_name"`
 	GroupAvatar      string      `json:"group_avatar"`
 	GroupType        int         `json:"group_type"`
+	RedPacketsStadus int         `json:"red_packets_stadus"`
 }
 
 type TalkRecordsService struct {
@@ -202,7 +204,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 		}
 	}
 
-	return s.HandleTalkRecords(ctx, items)
+	return s.HandleTalkRecords(ctx, opts.UserId, items)
 }
 
 // SearchTalkRecords 对话搜索消息
@@ -291,7 +293,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 
 	}
 
-	list, err := s.HandleTalkRecords(ctx, []*model.QueryTalkRecordsItem{record})
+	list, err := s.HandleTalkRecords(ctx, record.UserId, []*model.QueryTalkRecordsItem{record})
 	if err != nil {
 		return nil, err
 	}
@@ -348,10 +350,10 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 		return nil, err
 	}
 
-	return s.HandleTalkRecords(ctx, items)
+	return s.HandleTalkRecords(ctx, uid, items)
 }
 
-func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*model.QueryTalkRecordsItem) ([]*TalkRecordsItem, error) {
+func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, items []*model.QueryTalkRecordsItem) ([]*TalkRecordsItem, error) {
 	var (
 		files         []int
 		codes         []int
@@ -368,6 +370,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 		voteItems     []*model.TalkRecordsVote
 		loginItems    []*model.TalkRecordsLogin
 		locationItems []*model.TalkRecordsLocation
+		recordIds     []string
 	)
 
 	for _, item := range items {
@@ -388,7 +391,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			invites = append(invites, item.Id)
 		case entity.MsgTypeLocation:
 			locations = append(locations, item.Id)
+		case entity.MsgTypeRedPackets:
+			recordIds = append(recordIds, item.Content)
 		}
+
 		//已撤回的消息不能显示
 		if item.IsRevoke == 1 {
 			item.Content = ""
@@ -485,6 +491,17 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			hashLocations[locationItems[i].RecordId] = locationItems[i]
 		}
 	}
+
+	red_packets := make(map[int]*model.RedPackets)
+	if len(recordIds) > 0 {
+		s.db.Model(&model.RedPackets{}).Where("record_id in ?", recordIds).Scan(&red_packets)
+	}
+
+	red_packets_record := make(map[int]*model.RedPacketsRecord)
+	if len(recordIds) > 0 {
+		s.db.Model(&model.RedPacketsRecord{}).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
+	}
+
 	senService := s.sensitiveMatchService.GetService()
 
 	newItems := make([]*TalkRecordsItem, 0, len(items))
@@ -651,6 +668,34 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 		case entity.MsgTypeLocation:
 			if value, ok := hashLocations[item.Id]; ok {
 				data.Location = value
+			}
+		case entity.MsgTypeRedPackets:
+			record_id := item.Content
+
+			//0未领取
+			data.RedPacketsStadus = 0
+			for _, rp_item := range red_packets_record {
+				if rp_item.RpId == record_id && rp_item.UserId == uid {
+					//1已领取
+					data.RedPacketsStadus = 1
+				}
+			}
+			//如果未领取  再判断是否过期  或  已经被领完
+			if data.RedPacketsStadus == 0 {
+				for _, r_item := range red_packets {
+					if record_id == r_item.RecordId {
+						d_time := time.Now().Unix()
+						val_time := r_item.ValTime.Unix()
+						//红包状态(0未领取 1已领取 2已过期 3已领完自己未领取)
+						if val_time < d_time {
+							//过期
+							data.RedPacketsStadus = 2
+						} else {
+							// 3已领完自己未领取
+							data.RedPacketsStadus = 3
+						}
+					}
+				}
 			}
 		}
 
