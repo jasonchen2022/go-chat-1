@@ -97,6 +97,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			userGroup.POST("/no-speak", ichat.HandlerFunc(handler.V1.Group.NoSpeak))         // 修改禁言状态
 			userGroup.POST("/all-no-speak", ichat.HandlerFunc(handler.V1.Group.AllNoSpeak))  // 全员禁言
 			userGroup.POST("/open", ichat.HandlerFunc(handler.V1.Group.Open))                // 公开/隐藏群
+			userGroup.POST("/avatar", ichat.HandlerFunc(handler.V1.Group.Avatar))            // 设置群头像
 
 			// 群成员相关
 			userGroup.GET("/member/list", ichat.HandlerFunc(handler.V1.Group.Members))             // 群成员列表

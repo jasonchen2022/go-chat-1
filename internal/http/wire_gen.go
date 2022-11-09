@@ -97,7 +97,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	groupMemberService := service.NewGroupMemberService(baseService, groupMemberDao)
 	message := talk.NewMessage(talkMessageService, talkService, talkRecordsVoteDao, talkMessageForwardService, splitUploadService, contactService, groupMemberService, organizeService)
 	talkRecordsDao := dao.NewTalkRecordsDao(baseDao)
-	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService)
+	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService, contactService)
 	records := talk.NewRecords(talkRecordsService, groupMemberService, filesystem, authPermissionService)
 	emoticonDao := dao.NewEmoticonDao(baseDao)
 	emoticonService := service.NewEmoticonService(baseService, emoticonDao, filesystem)

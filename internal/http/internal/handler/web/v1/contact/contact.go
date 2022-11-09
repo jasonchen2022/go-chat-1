@@ -162,23 +162,23 @@ func (c *Contact) Detail(ctx *ichat.Context) error {
 	}
 
 	resp := entity.H{
-		"avatar":          user.Avatar,
-		"friend_apply":    0,
-		"friend_status":   1, // 朋友关系[0:本人;1:陌生人;2:朋友;]
-		"gender":          user.Gender,
-		"id":              user.Id,
-		"mobile":          user.Mobile,
-		"motto":           user.Motto,
-		"nickname":        user.Nickname,
-		"nickname_remark": "",
-		"member_type":     user.Type, //用户类型(0会员 1主播 2专家 3超管)
-		"is_mute":         user.IsMute,
+		"avatar":        user.Avatar,
+		"friend_apply":  0,
+		"friend_status": 1, // 朋友关系[0:本人;1:陌生人;2:朋友;]
+		"gender":        user.Gender,
+		"id":            user.Id,
+		"mobile":        user.Mobile,
+		"motto":         user.Motto,
+		"nickname":      user.Nickname,
+		"remark_name":   "",
+		"member_type":   user.Type, //用户类型(0会员 1主播 2专家 3超管)
+		"is_mute":       user.IsMute,
 	}
 
 	if uid != params.UserId {
 		if c.service.Dao().IsFriend(ctx.RequestCtx(), uid, params.UserId, false) {
 			resp["friend_status"] = 2
-			resp["nickname_remark"] = c.service.Dao().GetFriendRemark(ctx.RequestCtx(), uid, params.UserId)
+			resp["remark_name"] = c.service.Dao().GetFriendRemark(ctx.RequestCtx(), uid, params.UserId)
 		} else {
 			isOk, _ := c.organizeService.Dao().IsQiyeMember(uid, params.UserId)
 			if isOk {

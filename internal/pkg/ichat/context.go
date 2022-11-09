@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/pkg/jwt"
 	"go-chat/internal/pkg/validation"
+
+	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )

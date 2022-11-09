@@ -33,6 +33,7 @@ type QueryTalkRecordsItem struct {
 	Content          string    `json:"content"`
 	CreatedAt        time.Time `json:"created_at"`
 	Nickname         string    `json:"nickname"`
+	Remarkname       string    `json:"remark_name"`
 	Avatar           string    `json:"avatar"`
 	FanLevel         int       `json:"fan_level"`
 	FanLabel         string    `json:"fan_label"`

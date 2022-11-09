@@ -57,8 +57,8 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	websocketServer := provider.NewWebsocketServer(conf, engine)
 	health := server.NewHealth(conf, sidServer)
 	talkRecordsDao := dao.NewTalkRecordsDao(baseDao)
-	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService)
 	contactService := service.NewContactService(baseService, contactDao)
+	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService, contactService)
 	subscribeConsume := handle.NewSubscribeConsume(conf, wsClientSession, roomStorage, talkRecordsService, contactService)
 	wsSubscribe := server.NewWsSubscribe(client, connection, conf, subscribeConsume)
 	subServers := &process.SubServers{

@@ -24,6 +24,7 @@ type TalkRecordsItem struct {
 	UserId           int         `json:"user_id"`
 	ReceiverId       int         `json:"receiver_id"`
 	Nickname         string      `json:"nickname"`
+	Remarkname       string      `json:"remark_name"`
 	Avatar           string      `json:"avatar"`
 	IsRevoke         int         `json:"is_revoke"`
 	IsMark           int         `json:"is_mark"`
@@ -57,10 +58,11 @@ type TalkRecordsService struct {
 	groupMemberDao        *dao.GroupMemberDao
 	dao                   *dao.TalkRecordsDao
 	sensitiveMatchService *SensitiveMatchService
+	contactService        *ContactService
 }
 
-func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService) *TalkRecordsService {
-	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService}
+func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService, contactService *ContactService) *TalkRecordsService {
+	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService, contactService: contactService}
 }
 
 func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
@@ -189,6 +191,14 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 				}
 			}
 
+		} else {
+			// 获取好友备注
+			remarks, _ := s.contactService.Dao().Remarks(ctx, opts.UserId, []int{opts.ReceiverId})
+			for _, item := range items {
+				if len(remarks) > 0 {
+					item.Remarkname = remarks[item.ReceiverId]
+				}
+			}
 		}
 	}
 
@@ -270,6 +280,13 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 					}
 				}
 			}
+		}
+
+	} else {
+		// 获取好友备注
+		remarks, _ := s.contactService.Dao().Remarks(ctx, record.UserId, []int{record.ReceiverId})
+		if len(remarks) > 0 {
+			record.Remarkname = remarks[record.ReceiverId]
 		}
 
 	}
@@ -484,6 +501,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, items []*mod
 			MemberLevelTitle: item.MemberLevelTitle,
 			ReceiverId:       item.ReceiverId,
 			Nickname:         item.Nickname,
+			Remarkname:       item.Remarkname,
 			Avatar:           item.Avatar,
 			IsRevoke:         item.IsRevoke,
 			IsMark:           item.IsMark,

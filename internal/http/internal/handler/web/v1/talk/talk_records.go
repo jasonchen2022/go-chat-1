@@ -41,7 +41,7 @@ func (c *Records) GetRecords(ctx *ichat.Context) error {
 		}) {
 			rows := make([]entity.H, 0)
 			rows = append(rows, entity.H{
-				"content":     "改群已解散或你已被踢出群组",
+				"content":     "该群已解散或你已被踢出群组",
 				"created_at":  timeutil.DateTime(),
 				"id":          1,
 				"msg_type":    0,
