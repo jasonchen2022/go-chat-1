@@ -94,6 +94,7 @@ func (c *Talk) List(ctx *ichat.Context) error {
 			// 查询缓存消息
 			if msg, err := c.lastMessage.Get(ctx.RequestCtx(), item.TalkType, uid, item.ReceiverId); err == nil {
 				value.MsgText = msg.Content
+				value.MsgType = msg.MsgType
 				value.UpdatedAt = msg.Datetime
 				value.UpdatedTime = timeutil.ParseDateTime(msg.Datetime).Unix()
 			}

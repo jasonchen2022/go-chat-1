@@ -814,6 +814,7 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
 		Content:  opts["text"],
 		Datetime: timeutil.DateTime(),
+		MsgType:  record.MsgType,
 	})
 
 	content := jsonutil.Encode(map[string]interface{}{
