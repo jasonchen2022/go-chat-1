@@ -2,6 +2,7 @@ package talk
 
 import (
 	"errors"
+	"strconv"
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
@@ -148,7 +149,7 @@ func (c *Message) SysMsg(ctx *ichat.Context) error {
 // RedPackets 发送红包消息
 func (c *Message) RedPackets(ctx *ichat.Context) error {
 
-	params := &web.TextMessageRequest{}
+	params := &web.RedpacketsMessageRequest{}
 	if err := ctx.Context.ShouldBind(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
@@ -165,7 +166,7 @@ func (c *Message) RedPackets(ctx *ichat.Context) error {
 		UserId:     uid,
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
-		Text:       params.Text,
+		Text:       strconv.Itoa(params.RecordId),
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())

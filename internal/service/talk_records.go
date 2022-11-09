@@ -196,7 +196,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			remarks, _ := s.contactService.Dao().Remarks(ctx, opts.UserId, []int{opts.ReceiverId})
 			for _, item := range items {
 				if len(remarks) > 0 {
-					item.Remarkname = remarks[item.ReceiverId]
+					item.Remarkname = remarks[item.UserId]
 				}
 			}
 		}
@@ -286,7 +286,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 		// 获取好友备注
 		remarks, _ := s.contactService.Dao().Remarks(ctx, record.UserId, []int{record.ReceiverId})
 		if len(remarks) > 0 {
-			record.Remarkname = remarks[record.ReceiverId]
+			record.Remarkname = remarks[record.UserId]
 		}
 
 	}
