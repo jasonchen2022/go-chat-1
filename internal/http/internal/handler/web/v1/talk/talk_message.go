@@ -217,7 +217,7 @@ func (c *Message) Image(ctx *ichat.Context) error {
 		return ctx.InvalidParams("image 字段必传")
 	}
 
-	if !sliceutil.InStr(strutil.FileSuffix(file.Filename), []string{"png", "jpg", "jpeg", "gif"}) {
+	if !sliceutil.InStr(strutil.FileSuffix(file.Filename), []string{"png", "PNG", "jpg", "JPG", "jpeg", "JPEG", "gif", "GIF"}) {
 		return ctx.InvalidParams("上传文件格式不正确,仅支持 png、jpg、jpeg 和 gif")
 	}
 

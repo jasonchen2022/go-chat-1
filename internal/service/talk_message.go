@@ -239,9 +239,9 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 		if err != nil {
 			return 0, err
 		}
-		ext := strutil.FileSuffix(opts.File.Filename)
+		ext := strings.TrimLeft(strutil.FileSuffix(opts.File.Filename), ".")
 		size = int(opts.File.Size)
-		fileName = fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
+		fileName = fmt.Sprintf("chat/image/%s/%s.%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 
 		if err := s.fileSystem.Oss.UploadByte(fileName, stream); err != nil {
 			return 0, err
@@ -250,8 +250,8 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 		filePath = s.fileSystem.Oss.PublicUrl(fileName)
 	} else {
 		filePath = opts.ImageUrl
-		ext = strutil.FileSuffix(opts.ImageUrl)
-		fileName = fmt.Sprintf("chat/image/%s/%s%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
+		ext = strings.TrimLeft(strutil.FileSuffix(opts.ImageUrl), ".")
+		fileName = fmt.Sprintf("chat/image/%s/%s.%s", time.Now().Format("20060102"), strconv.FormatInt(val, 10), ext)
 	}
 	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err = s.db.Create(record).Error; err != nil {
