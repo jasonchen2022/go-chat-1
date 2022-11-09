@@ -810,13 +810,13 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 		}()
 
 	}
-
-	_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
-		Content:  opts["text"],
-		Datetime: timeutil.DateTime(),
-		MsgType:  record.MsgType,
-	})
-
+	if record.MsgType != 0 && record.MsgType != 8 && record.MsgType != 9 {
+		_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
+			Content:  opts["text"],
+			Datetime: timeutil.DateTime(),
+			MsgType:  record.MsgType,
+		})
+	}
 	content := jsonutil.Encode(map[string]interface{}{
 		"event": entity.EventTalk,
 		"data": jsonutil.Encode(map[string]interface{}{
