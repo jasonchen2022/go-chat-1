@@ -7,9 +7,9 @@ type TextMessageRequest struct {
 }
 
 type RedpacketsMessageRequest struct {
-	TalkType   int `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
-	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
-	RecordId   int `form:"record_id" json:"record_id" binding:"required,numeric,gt=0" label:"record_id"`
+	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	RecordId   string `form:"record_id" json:"record_id" binding:"required,max=50" label:"record_id"`
 }
 
 type CodeMessageRequest struct {
