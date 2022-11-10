@@ -104,6 +104,7 @@ func (s *ContactService) List(ctx context.Context, uid int) ([]*model.ContactLis
 		"users.avatar",
 		"users.motto",
 		"users.gender",
+		"users.type",
 		"contact.remark",
 	})
 
@@ -155,6 +156,7 @@ func (s *ContactService) ListByPage(ctx context.Context, uid int, page int, keyw
 		"users.avatar",
 		"users.motto",
 		"users.gender",
+		"users.type",
 		"contact.remark",
 	})
 
