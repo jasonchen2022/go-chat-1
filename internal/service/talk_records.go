@@ -19,38 +19,39 @@ import (
 )
 
 type TalkRecordsItem struct {
-	Id               int         `json:"id"`
-	TalkType         int         `json:"talk_type"`
-	MsgType          int         `json:"msg_type"`
-	UserId           int         `json:"user_id"`
-	ReceiverId       int         `json:"receiver_id"`
-	Nickname         string      `json:"nickname"`
-	Remarkname       string      `json:"remark_name"`
-	Avatar           string      `json:"avatar"`
-	IsRevoke         int         `json:"is_revoke"`
-	IsMark           int         `json:"is_mark"`
-	IsRead           int         `json:"is_read"`
-	IsLeader         int         `json:"is_leader"`
-	FanLevel         int         `json:"fan_level"`
-	FanLabel         string      `json:"fan_label"`
-	MemberId         int         `json:"member_id"`
-	MemberLevel      int         `json:"member_level"`
-	MemberLevelTitle string      `json:"member_level_title"`
-	MemberType       int         `json:"member_type"`
-	IsMute           int         `json:"is_mute"`
-	Content          string      `json:"content,omitempty"`
-	File             interface{} `json:"file,omitempty"`
-	CodeBlock        interface{} `json:"code_block,omitempty"`
-	Forward          interface{} `json:"forward,omitempty"`
-	Invite           interface{} `json:"invite,omitempty"`
-	Vote             interface{} `json:"vote,omitempty"`
-	Login            interface{} `json:"login,omitempty"`
-	Location         interface{} `json:"location,omitempty"`
-	CreatedAt        string      `json:"created_at"`
-	GroupName        string      `json:"group_name"`
-	GroupAvatar      string      `json:"group_avatar"`
-	GroupType        int         `json:"group_type"`
-	RedPacketsStadus int         `json:"red_packets_stadus"`
+	Id                int         `json:"id"`
+	TalkType          int         `json:"talk_type"`
+	MsgType           int         `json:"msg_type"`
+	UserId            int         `json:"user_id"`
+	ReceiverId        int         `json:"receiver_id"`
+	Nickname          string      `json:"nickname"`
+	Remarkname        string      `json:"remark_name"`
+	Avatar            string      `json:"avatar"`
+	IsRevoke          int         `json:"is_revoke"`
+	IsMark            int         `json:"is_mark"`
+	IsRead            int         `json:"is_read"`
+	IsLeader          int         `json:"is_leader"`
+	FanLevel          int         `json:"fan_level"`
+	FanLabel          string      `json:"fan_label"`
+	MemberId          int         `json:"member_id"`
+	MemberLevel       int         `json:"member_level"`
+	MemberLevelTitle  string      `json:"member_level_title"`
+	MemberType        int         `json:"member_type"`
+	IsMute            int         `json:"is_mute"`
+	Content           string      `json:"content,omitempty"`
+	File              interface{} `json:"file,omitempty"`
+	CodeBlock         interface{} `json:"code_block,omitempty"`
+	Forward           interface{} `json:"forward,omitempty"`
+	Invite            interface{} `json:"invite,omitempty"`
+	Vote              interface{} `json:"vote,omitempty"`
+	Login             interface{} `json:"login,omitempty"`
+	Location          interface{} `json:"location,omitempty"`
+	CreatedAt         string      `json:"created_at"`
+	GroupName         string      `json:"group_name"`
+	GroupAvatar       string      `json:"group_avatar"`
+	GroupType         int         `json:"group_type"`
+	RedPacketsStadus  int         `json:"red_packets_stadus"`
+	RedPacketsRemarks string      `json:"red_packets_remarks"`
 }
 
 type TalkRecordsService struct {
@@ -680,6 +681,14 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					data.RedPacketsStadus = 1
 				}
 			}
+
+			for _, r_item := range red_packets {
+				if record_id == r_item.RecordId {
+					//红包备注
+					data.RedPacketsRemarks = r_item.Remark
+				}
+			}
+
 			//如果未领取  再判断是否过期  或  已经被领完
 			if data.RedPacketsStadus == 0 {
 				for _, r_item := range red_packets {
