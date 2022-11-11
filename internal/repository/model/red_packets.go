@@ -11,7 +11,7 @@ type RedPackets struct {
 	Count      int       `gorm:"column:count;default:0;" json:"count"`             // 实时剩余数量
 	RealCount  int       `gorm:"column:real_count;default:0;" json:"real_count"`   // 红包个数
 	ValTime    time.Time `gorm:"column:val_time;" json:"val_time"`                 // 过期时间
-	Remark     string    `gorm:"column:remark;" json:"remark"`                     // 注册时间
+	Remark     string    `gorm:"column:remark;" json:"remark"`                     // 备注
 }
 
 func (r *RedPackets) TableName() string {
