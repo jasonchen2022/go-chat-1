@@ -672,7 +672,6 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			}
 		case entity.MsgTypeRedPackets:
 
-			// fmt.Println(len(red_packets))
 			record_id := item.Content
 
 			//0未领取
@@ -689,11 +688,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					//红包备注
 					data.RedPacketsRemarks = r_item.Remark
 				}
-			}
-
-			//如果未领取  再判断是否过期  或  已经被领完
-			if data.RedPacketsStadus == 0 {
-				for _, r_item := range red_packets {
+				//如果未领取  再判断是否过期  或  已经被领完
+				if data.RedPacketsStadus == 0 {
 					if record_id == r_item.RecordId {
 						d_time := time.Now().Unix()
 						val_time := r_item.ValTime.Unix()
@@ -708,6 +704,24 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					}
 				}
 			}
+
+			//如果未领取  再判断是否过期  或  已经被领完
+			// if data.RedPacketsStadus == 0 {
+			// 	for _, r_item := range red_packets {
+			// 		if record_id == r_item.RecordId {
+			// 			d_time := time.Now().Unix()
+			// 			val_time := r_item.ValTime.Unix()
+			// 			//红包状态(0未领取 1已领取 2已过期 3已领完自己未领取)
+			// 			if val_time < d_time {
+			// 				//过期
+			// 				data.RedPacketsStadus = 2
+			// 			} else {
+			// 				// 3已领完自己未领取
+			// 				data.RedPacketsStadus = 3
+			// 			}
+			// 		}
+			// 	}
+			// }
 			// fmt.Println("---------------------")
 			// fmt.Println(data.RedPacketsStadus)
 			// fmt.Println(data.RedPacketsRemarks)
