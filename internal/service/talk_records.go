@@ -700,7 +700,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 						if val_time < cur_time {
 							//过期
 							data.RedPacketsStadus = 2
-						} else if r_item.Count <= 0 {
+						} else if val_time > cur_time && r_item.Count <= 0 {
 							// 3已领完自己未领取
 							data.RedPacketsStadus = 3
 						}
