@@ -692,7 +692,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					data.RedPacketsRemarks = r_item.Remark
 				}
 			}
-			fmt.Println(data.RedPacketsRemarks)
+
 			//如果未领取  再判断是否过期  或  已经被领完
 			if data.RedPacketsStadus == 0 {
 				for _, r_item := range red_packets {
@@ -710,6 +710,9 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					}
 				}
 			}
+			// fmt.Println("---------------------")
+			// fmt.Println(data.RedPacketsStadus)
+			// fmt.Println(data.RedPacketsRemarks)
 		}
 
 		newItems = append(newItems, data)
