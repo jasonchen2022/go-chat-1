@@ -15,5 +15,5 @@ type RedPackets struct {
 }
 
 func (r *RedPackets) TableName() string {
-	return "red_packets"
+	return "ff_red_packets"
 }

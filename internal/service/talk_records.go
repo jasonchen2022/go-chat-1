@@ -356,22 +356,24 @@ func (s *TalkRecordsService) GetForwardRecords(ctx context.Context, uid int, rec
 
 func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, items []*model.QueryTalkRecordsItem) ([]*TalkRecordsItem, error) {
 	var (
-		files         []int
-		codes         []int
-		forwards      []int
-		invites       []int
-		votes         []int
-		logins        []int
-		locations     []int
-		notices       []string
-		fileItems     []*model.TalkRecordsFile
-		codeItems     []*model.TalkRecordsCode
-		forwardItems  []*model.TalkRecordsForward
-		inviteItems   []*model.TalkRecordsInvite
-		voteItems     []*model.TalkRecordsVote
-		loginItems    []*model.TalkRecordsLogin
-		locationItems []*model.TalkRecordsLocation
-		recordIds     []string
+		files              []int
+		codes              []int
+		forwards           []int
+		invites            []int
+		votes              []int
+		logins             []int
+		locations          []int
+		notices            []string
+		fileItems          []*model.TalkRecordsFile
+		codeItems          []*model.TalkRecordsCode
+		forwardItems       []*model.TalkRecordsForward
+		inviteItems        []*model.TalkRecordsInvite
+		voteItems          []*model.TalkRecordsVote
+		loginItems         []*model.TalkRecordsLogin
+		locationItems      []*model.TalkRecordsLocation
+		recordIds          []string
+		red_packets        []*model.RedPackets
+		red_packets_record []*model.RedPacketsRecord
 	)
 
 	for _, item := range items {
@@ -493,12 +495,12 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 		}
 	}
 
-	red_packets := make(map[int]*model.RedPackets)
+	// red_packets := make(map[int]*model.RedPackets)
 	if len(recordIds) > 0 {
 		s.db.Model(&model.RedPackets{}).Where("record_id in ?", recordIds).Scan(&red_packets)
 	}
 
-	red_packets_record := make(map[int]*model.RedPacketsRecord)
+	// red_packets_record := make(map[int]*model.RedPacketsRecord)
 	if len(recordIds) > 0 {
 		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
 	}
@@ -671,6 +673,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 				data.Location = value
 			}
 		case entity.MsgTypeRedPackets:
+
+			// fmt.Println(len(red_packets))
 			record_id := item.Content
 
 			//0未领取
@@ -688,7 +692,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					data.RedPacketsRemarks = r_item.Remark
 				}
 			}
-
+			fmt.Println(data.RedPacketsRemarks)
 			//如果未领取  再判断是否过期  或  已经被领完
 			if data.RedPacketsStadus == 0 {
 				for _, r_item := range red_packets {

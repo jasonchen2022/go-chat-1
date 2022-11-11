@@ -9,5 +9,5 @@ type RedPacketsRecord struct {
 }
 
 func (r *RedPacketsRecord) TableName() string {
-	return "point_detail"
+	return "ff_point_detail"
 }
