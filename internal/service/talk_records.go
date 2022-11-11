@@ -495,12 +495,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 		}
 	}
 
-	// red_packets := make(map[int]*model.RedPackets)
 	if len(recordIds) > 0 {
 		s.db.Model(&model.RedPackets{}).Where("record_id in ?", recordIds).Scan(&red_packets)
 	}
 
-	// red_packets_record := make(map[int]*model.RedPacketsRecord)
 	if len(recordIds) > 0 {
 		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
 	}
