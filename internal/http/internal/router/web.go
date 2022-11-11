@@ -35,6 +35,8 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			auth.POST("/refresh", authorize, ichat.HandlerFunc(handler.V1.Auth.Refresh)) // 刷新 Token
 			auth.POST("/logout", authorize, ichat.HandlerFunc(handler.V1.Auth.Logout))   // 退出登录
 			auth.POST("/forget", ichat.HandlerFunc(handler.V1.Auth.Forget))              // 找回密码
+			auth.POST("/offline", ichat.HandlerFunc(handler.V1.Auth.Offline))            // 强制离线
+
 		}
 
 		// 用户相关分组

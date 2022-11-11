@@ -55,6 +55,11 @@ type SysTextMessageOpt struct {
 	Text       string
 }
 
+type SysOfflineMessageOpt struct {
+	UserId   int
+	ClientId string
+}
+
 // SendSysMessage 发送文本消息
 func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMessageOpt) error {
 	record := &model.TalkRecords{
@@ -73,6 +78,41 @@ func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMe
 		"text": strutil.MtSubstr(record.Content, 0, 30),
 	})
 
+	return nil
+}
+
+// SendSysMessage 发送文本消息
+func (s *TalkMessageService) SendOfflineMessage(ctx context.Context, opts *SysOfflineMessageOpt) error {
+
+	body := map[string]interface{}{
+		"event": entity.EventOffOnline,
+		"data": jsonutil.Encode(map[string]interface{}{
+			"user_id":   opts.UserId,
+			"client_id": opts.ClientId,
+		}),
+	}
+
+	// 创建一个Channel
+	channel, err := s.mq.Channel()
+	if err != nil {
+		log.Println("Failed to open a channel:", err.Error())
+
+	}
+	defer channel.Close()
+
+	// 声明exchange
+	if err := channel.ExchangeDeclare(
+		s.config.RabbitMQ.ExchangeName, //name
+		"fanout",                       //exchangeType
+		true,                           //durable
+		false,                          //auto-deleted
+		false,                          //internal
+		false,                          //noWait
+		nil,                            //arguments
+	); err != nil {
+		log.Println("Failed to declare a exchange:", err.Error())
+	}
+	s.SendAll(channel, jsonutil.Encode(body))
 	return nil
 }
 

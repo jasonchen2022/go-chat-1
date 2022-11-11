@@ -43,7 +43,7 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 	handler[entity.EventTalkMuteGroup] = s.onConsumeMuteGroup
 	handler[entity.EventTalkUpdateGroup] = s.onConsumeUpdateGroup
 	handler[entity.EventTalkKeyboard] = s.onConsumeTalkKeyboard
-	//handler[entity.EventOnlineStatus] = s.onConsumeLogin
+	handler[entity.EventOffOnline] = s.onConsumeOffOnline
 	handler[entity.EventTalkRevoke] = s.onConsumeTalkRevoke
 	handler[entity.EventTalkJoinGroup] = s.onConsumeTalkJoinGroup
 	handler[entity.EventContactApply] = s.onConsumeContactApply
@@ -56,6 +56,19 @@ func (s *SubscribeConsume) Handle(event string, data string) {
 	}
 }
 
+//强制离线消息
+func (s *SubscribeConsume) onConsumeOffOnline(body string) {
+	var msg struct {
+		UserId   int    `json:"user_id"`
+		ClientId string `json:"client_id"`
+	}
+	if err := json.Unmarshal([]byte(body), &msg); err != nil {
+		logrus.Error("[SubscribeConsume] onConsumeOffOnline Unmarshal err: ", err.Error())
+		return
+	}
+	s.onSendPrivate(msg.UserId, entity.EventOffOnline, msg)
+}
+
 // onConsumeMuteGroup 聊天消息事件
 func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
 	var msg struct {
@@ -66,7 +79,7 @@ func (s *SubscribeConsume) onConsumeMuteGroup(body string) {
 		logrus.Error("[SubscribeConsume] onConsumeTalk Unmarshal err: ", err.Error())
 		return
 	}
-	s.onSend(msg.GroupId, entity.EventTalkMuteGroup, msg)
+	s.onSendGroup(msg.GroupId, entity.EventTalkMuteGroup, msg)
 }
 
 // onConsumeUpdateGroup 聊天消息事件
@@ -78,10 +91,10 @@ func (s *SubscribeConsume) onConsumeUpdateGroup(body string) {
 		logrus.Error("[SubscribeConsume] onConsumeTalk Unmarshal err: ", err.Error())
 		return
 	}
-	s.onSend(msg.GroupId, entity.EventTalkUpdateGroup, msg)
+	s.onSendGroup(msg.GroupId, entity.EventTalkUpdateGroup, msg)
 }
 
-func (s *SubscribeConsume) onSend(receiverId int, messageType string, msg interface{}) {
+func (s *SubscribeConsume) onSendGroup(receiverId int, messageType string, msg interface{}) {
 	ctx := context.Background()
 	cids := make([]int64, 0)
 	ids := s.room.All(ctx, &cache.RoomOption{
@@ -96,6 +109,26 @@ func (s *SubscribeConsume) onSend(receiverId int, messageType string, msg interf
 		return
 	}
 
+	c := im.NewSenderContent()
+	c.SetReceive(cids...)
+	c.SetMessage(&im.Message{
+		Event: messageType,
+		Content: entity.MapStrAny{
+			"data": msg,
+		},
+	})
+
+	im.Session.Default.Write(c)
+}
+
+func (s *SubscribeConsume) onSendPrivate(receiverId int, messageType string, msg interface{}) {
+	ctx := context.Background()
+	cids := make([]int64, 0)
+	ids := s.ws.GetUidFromClientIds(ctx, s.conf.ServerId(), im.Session.Default.Name(), strconv.Itoa(receiverId))
+	cids = append(cids, ids...)
+	if len(cids) == 0 {
+		return
+	}
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
 	c.SetMessage(&im.Message{

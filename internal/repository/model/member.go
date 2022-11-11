@@ -12,6 +12,7 @@ type Member struct {
 	Gender           int    `gorm:"column:gender;default:0;NOT NULL" json:"gender"`             // 用户性别  0:未知  1:男   2:女
 	Password         string `gorm:"column:password;" json:"-"`                                  // 用户密码
 	Motto            string `gorm:"column:motto;" json:"motto"`                                 // 用户座右铭
+	ClientId         string `gorm:"column:client_id;NOT NULL" json:"client_id"`
 }
 
 func (m *Member) TableName() string {

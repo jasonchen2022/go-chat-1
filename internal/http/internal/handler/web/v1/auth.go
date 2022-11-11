@@ -128,6 +128,7 @@ func (c *Auth) Sync(ctx *ichat.Context) error {
 			Gender:           member.Gender,
 			Type:             member.Type,
 			Motto:            member.Motto,
+			ClientId:         member.ClientId,
 			Password:         password,
 			CreatedAt:        time.Now(),
 		})
@@ -149,12 +150,12 @@ func (c *Auth) Sync(ctx *ichat.Context) error {
 	//address, _ := c.ipAddressService.FindAddress(ip)
 
 	//登录提醒
-	_, _ = c.talkSessionService.Create(ctx.Context, &model.TalkSessionCreateOpt{
-		UserId:     params.UserId,
-		TalkType:   entity.ChatPrivateMode,
-		ReceiverId: 1,
-		IsBoot:     true,
-	})
+	// _, _ = c.talkSessionService.Create(ctx.Context, &model.TalkSessionCreateOpt{
+	// 	UserId:     params.UserId,
+	// 	TalkType:   entity.ChatPrivateMode,
+	// 	ReceiverId: 1,
+	// 	IsBoot:     true,
+	// })
 
 	// 推送登录消息
 	// _ = c.talkMessageService.SendLoginMessage(ctx.Request.Context(), &service.LoginMessageOpts{
@@ -263,6 +264,19 @@ func (c *Auth) Forget(ctx *ichat.Context) error {
 
 	c.smsService.DeleteSmsCode(ctx.RequestCtx(), entity.SmsForgetAccountChannel, params.Mobile)
 
+	return ctx.Success(nil)
+}
+
+//强制离线
+func (c *Auth) Offline(ctx *ichat.Context) error {
+	params := &web.OfflineRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	_ = c.talkMessageService.SendOfflineMessage(ctx.Context, &service.SysOfflineMessageOpt{
+		UserId:   params.UserId,
+		ClientId: params.ClientId,
+	})
 	return ctx.Success(nil)
 }
 

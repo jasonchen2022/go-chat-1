@@ -16,6 +16,7 @@ const (
 	EventTalkUpdateGroup = "event_talk_update_group" // 修改群资料通知
 	EventTalkRead        = "event_talk_read"         // 对话消息读事件
 	EventOnlineStatus    = "event_login"             // 用户在线状态通知
+	EventOffOnline       = "event_offline"           // 用户在线状态通知
 	EventContactApply    = "event_contact_apply"     // 好友申请消息通知
 )
 
