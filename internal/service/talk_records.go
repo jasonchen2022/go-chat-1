@@ -500,7 +500,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 
 	red_packets_record := make(map[int]*model.RedPacketsRecord)
 	if len(recordIds) > 0 {
-		s.db.Model(&model.RedPacketsRecord{}).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
+		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
 	}
 
 	senService := s.sensitiveMatchService.GetService()
