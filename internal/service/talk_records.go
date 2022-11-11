@@ -500,7 +500,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 	}
 
 	if len(recordIds) > 0 {
-		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("record_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
+		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("rp_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
 	}
 
 	senService := s.sensitiveMatchService.GetService()
@@ -677,9 +677,15 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			//0未领取
 			data.RedPacketsStadus = 0
 			for _, rp_item := range red_packets_record {
+				// fmt.Println("----------------")
+				// fmt.Println(record_id)
+				// fmt.Println(rp_item.RpId)
+				// fmt.Println(rp_item.UserId)
+				// fmt.Println(uid)
 				if rp_item.RpId == record_id && rp_item.UserId == uid {
 					//1已领取
 					data.RedPacketsStadus = 1
+
 				}
 			}
 
@@ -697,7 +703,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 						if val_time < d_time {
 							//过期
 							data.RedPacketsStadus = 2
-						} else {
+						} else if r_item.Count <= 0 {
 							// 3已领完自己未领取
 							data.RedPacketsStadus = 3
 						}
