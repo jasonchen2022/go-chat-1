@@ -81,6 +81,26 @@ func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMe
 	return nil
 }
 
+func (s *TalkMessageService) SendSysRedpacketsMessage(ctx context.Context, opts *SysTextMessageOpt) error {
+	record := &model.TalkRecords{
+		TalkType:   opts.TalkType,
+		MsgType:    entity.MsgTypeReceiveRedPackets,
+		UserId:     opts.UserId,
+		ReceiverId: opts.ReceiverId,
+		Content:    opts.Text,
+	}
+
+	if err := s.db.Debug().Create(record).Error; err != nil {
+		return err
+	}
+
+	s.afterHandle(ctx, record, map[string]string{
+		"text": strutil.MtSubstr(record.Content, 0, 30),
+	})
+
+	return nil
+}
+
 // SendSysMessage 发送文本消息
 func (s *TalkMessageService) SendOfflineMessage(ctx context.Context, opts *SysOfflineMessageOpt) error {
 
