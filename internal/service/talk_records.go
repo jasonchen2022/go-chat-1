@@ -401,13 +401,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 		case entity.MsgTypeRedPackets:
 			recordIds = append(recordIds, item.Content)
 		case entity.MsgTypeSysRedPackets:
-			if item.TalkType == 1 {
-				usersId = append(usersId, item.ReceiverId)
-			}
-			if item.TalkType == 2 {
-				u_id, _ := strconv.ParseInt(item.Content, 10, 32)
-				usersId = append(usersId, int(u_id))
-			}
+			u_id, _ := strconv.ParseInt(item.Content, 10, 32)
+			usersId = append(usersId, int(u_id))
 		}
 
 		//已撤回的消息不能显示
@@ -723,21 +718,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			}
 
 		case entity.MsgTypeSysRedPackets:
-			//私聊
-			if item.TalkType == 1 {
-				for _, u_item := range users {
-					if u_item.Id == item.ReceiverId {
-						data.ReceiverNickname = u_item.Nickname
-					}
-				}
-			}
-			//群聊
-			if item.TalkType == 2 {
-				for _, u_item := range users {
-					id := strconv.Itoa(u_item.Id)
-					if id == item.Content {
-						data.ReceiverNickname = u_item.Nickname
-					}
+			for _, u_item := range users {
+				id := strconv.Itoa(u_item.Id)
+				if id == item.Content {
+					data.ReceiverNickname = u_item.Nickname
 				}
 			}
 		}
