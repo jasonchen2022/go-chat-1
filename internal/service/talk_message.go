@@ -84,7 +84,7 @@ func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMe
 func (s *TalkMessageService) SendSysRedpacketsMessage(ctx context.Context, opts *SysTextMessageOpt) error {
 	record := &model.TalkRecords{
 		TalkType:   opts.TalkType,
-		MsgType:    entity.MsgTypeReceiveRedPackets,
+		MsgType:    entity.MsgTypeSysRedPackets,
 		UserId:     opts.UserId,
 		ReceiverId: opts.ReceiverId,
 		Content:    opts.Text,

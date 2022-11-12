@@ -399,7 +399,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			locations = append(locations, item.Id)
 		case entity.MsgTypeRedPackets:
 			recordIds = append(recordIds, item.Content)
-		case entity.MsgTypeReceiveRedPackets:
+		case entity.MsgTypeSysRedPackets:
 			usersId = append(usersId, item.ReceiverId)
 		}
 
@@ -714,7 +714,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					}
 				}
 			}
-		case entity.MsgTypeReceiveRedPackets:
+		case entity.MsgTypeSysRedPackets:
 			for _, u_item := range users {
 				if u_item.Id == item.ReceiverId {
 					data.ReceiverNickname = u_item.Nickname
