@@ -53,7 +53,6 @@ type TalkRecordsItem struct {
 	RedPacketsStadus  int         `json:"red_packets_stadus"`
 	RedPacketsRemarks string      `json:"red_packets_remarks"`
 	ReceiverNickname  string      `json:"receiver_nickname"`
-	IsRedPackets      int         `json:"is_red_packets"`
 }
 
 type TalkRecordsService struct {
@@ -679,7 +678,6 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 				data.Location = value
 			}
 		case entity.MsgTypeRedPackets:
-			data.IsRedPackets = 1
 			record_id := item.Content
 			//红包状态(0未领取 1已领取 2已过期 3已领完自己未领取)
 
