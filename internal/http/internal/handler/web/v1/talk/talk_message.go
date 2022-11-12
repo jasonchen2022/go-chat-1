@@ -56,7 +56,7 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 		// 	return nil
 		// }
 
-		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) {
+		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) || opt.UserId == opt.ReceiverId {
 			return nil
 		}
 
