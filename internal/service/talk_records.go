@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"go-chat/internal/entity"
@@ -53,7 +54,6 @@ type TalkRecordsItem struct {
 	RedPacketsStadus  int         `json:"red_packets_stadus"`
 	RedPacketsRemarks string      `json:"red_packets_remarks"`
 	ReceiverNickname  string      `json:"receiver_nickname"`
-	IsRedPackets      int         `json:"is_red_packets"`
 }
 
 type TalkRecordsService struct {
@@ -679,7 +679,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 				data.Location = value
 			}
 		case entity.MsgTypeRedPackets:
-			data.IsRedPackets = 1
+
 			record_id := item.Content
 			//红包状态(0未领取 1已领取 2已过期 3已领完自己未领取)
 
@@ -715,13 +715,25 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					}
 				}
 			}
+
 		case entity.MsgTypeSysRedPackets:
-			for _, u_item := range users {
-				if u_item.Id == item.ReceiverId {
-					data.ReceiverNickname = u_item.Nickname
+			//私聊
+			if item.TalkType == 1 {
+				for _, u_item := range users {
+					if u_item.Id == item.ReceiverId {
+						data.ReceiverNickname = u_item.Nickname
+					}
 				}
 			}
-
+			//群聊
+			if item.TalkType == 2 {
+				for _, u_item := range users {
+					id := strconv.Itoa(u_item.Id)
+					if id == item.Content {
+						data.ReceiverNickname = u_item.Nickname
+					}
+				}
+			}
 		}
 
 		newItems = append(newItems, data)
