@@ -401,7 +401,13 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 		case entity.MsgTypeRedPackets:
 			recordIds = append(recordIds, item.Content)
 		case entity.MsgTypeSysRedPackets:
-			usersId = append(usersId, item.ReceiverId)
+			if item.TalkType == 1 {
+				usersId = append(usersId, item.ReceiverId)
+			}
+			if item.TalkType == 2 {
+				u_id, _ := strconv.ParseInt(item.Content, 10, 32)
+				usersId = append(usersId, int(u_id))
+			}
 		}
 
 		//已撤回的消息不能显示
