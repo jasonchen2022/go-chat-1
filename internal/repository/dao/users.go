@@ -24,6 +24,12 @@ func (dao *UsersDao) Create(user *model.Users) (*model.Users, error) {
 	return user, nil
 }
 
+// SetAppStatus 创建数据
+func (dao *UsersDao) SetAppStatus(uid int, status int) error {
+	err := dao.db.Model(&model.Users{}).Where("id = ?", uid).Update("app_status", status).Error
+	return err
+}
+
 // FindById ID查询
 func (dao *UsersDao) FindById(userId int) (*model.Users, error) {
 	user := &model.Users{}
@@ -42,6 +48,15 @@ func (dao *UsersDao) GetNickName(userId int) (string, error) {
 		return "", err
 	}
 	return nickname, nil
+}
+
+// GetAppStatus ID查询
+func (dao *UsersDao) GetAppStatus(clientId string) (int, error) {
+	var appStatus int
+	if err := dao.Db().Table("users").Where(&model.Users{ClientId: clientId}).Select("app_status").Limit(1).Scan(&appStatus).Error; err != nil {
+		return 0, err
+	}
+	return appStatus, nil
 }
 
 // GetClientId ID查询

@@ -44,12 +44,14 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 		{
 			user.GET("/detail", ichat.HandlerFunc(handler.V1.User.Detail))                   // 获取个人信息
 			user.GET("/setting", ichat.HandlerFunc(handler.V1.User.Setting))                 // 获取个人信息
+			user.POST("/appstatus", ichat.HandlerFunc(handler.V1.User.AppStatus))            // 获取个人信息
 			user.POST("/mute", ichat.HandlerFunc(handler.V1.User.Mute))                      //   禁言
 			user.POST("/change/detail", ichat.HandlerFunc(handler.V1.User.ChangeDetail))     // 修改用户信息
 			user.POST("/change/password", ichat.HandlerFunc(handler.V1.User.ChangePassword)) // 修改用户密码
 			user.POST("/change/mobile", ichat.HandlerFunc(handler.V1.User.ChangeMobile))     // 修改用户手机号
 			user.POST("/change/email", ichat.HandlerFunc(handler.V1.User.ChangeEmail))       // 修改用户邮箱
 			user.POST("/find/friends", ichat.HandlerFunc(handler.V1.User.RandomUser))        // 发现用户列表
+
 		}
 
 		contact := v1.Group("/contact").Use(authorize)
@@ -79,7 +81,8 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 		//主动推送
 		pushGroup := v1.Group("/push")
 		{
-			pushGroup.GET("/jpush", ichat.HandlerFunc(handler.V1.Group.CreateJpush)) // 创建群组
+			pushGroup.GET("/appstatus", ichat.HandlerFunc(handler.V1.User.AppStatus)) // 获取个人信息
+			pushGroup.GET("/jpush", ichat.HandlerFunc(handler.V1.Group.CreateJpush))  // 创建群组
 		}
 
 		// 站点导航

@@ -18,6 +18,7 @@ type Users struct {
 	Motto            string    `gorm:"column:motto;NOT NULL" json:"motto"`                                   // 用户座右铭
 	Email            string    `gorm:"column:email;NOT NULL" json:"email"`                                   // 用户邮箱
 	ClientId         string    `gorm:"column:client_id;NOT NULL" json:"client_id"`                           // 客户端ID
+	AppStatus        int       `gorm:"column:app_status;NOT NULL" json:"app_status"`                         // App状态
 	IsRobot          int       `gorm:"column:is_robot;default:0;NOT NULL" json:"is_robot"`                   // 是否机器人[0:否;1:是;]
 	IsMute           int       `gorm:"column:is_mute;default:0;NOT NULL" json:"is_mute"`                     // 是否禁言 [0:否;1:是;]
 	CreatedAt        time.Time `gorm:"column:created_at;NOT NULL" json:"created_at"`                         // 注册时间
