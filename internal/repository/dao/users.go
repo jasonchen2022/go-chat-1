@@ -44,6 +44,15 @@ func (dao *UsersDao) GetNickName(userId int) (string, error) {
 	return nickname, nil
 }
 
+// GetClientId ID查询
+func (dao *UsersDao) GetClientId(userId int) (string, error) {
+	var clientId string
+	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Select("client_id").Limit(1).Scan(&clientId).Error; err != nil {
+		return "", err
+	}
+	return clientId, nil
+}
+
 // FindByIds ID查询
 func (dao *UsersDao) FindByIds(userIds []int) ([]*model.Users, error) {
 	user := make([]*model.Users, 0)

@@ -11,6 +11,7 @@ import (
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 
 	"go-chat/config"
@@ -18,20 +19,24 @@ import (
 	"go-chat/internal/pkg/im"
 	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/service"
+	"go-chat/internal/service/push"
 )
 
 type onConsumeFunc func(data string)
 
 type SubscribeConsume struct {
 	conf           *config.Config
+	rds            *redis.Client
 	ws             *cache.WsClientSession
 	room           *cache.RoomStorage
 	recordsService *service.TalkRecordsService
 	contactService *service.ContactService
+	userService    *service.UserService
+	getuiService   *push.GeTuiService
 }
 
-func NewSubscribeConsume(conf *config.Config, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService) *SubscribeConsume {
-	return &SubscribeConsume{conf: conf, ws: ws, room: room, recordsService: recordsService, contactService: contactService}
+func NewSubscribeConsume(conf *config.Config, rds *redis.Client, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService, userService *service.UserService, getuiService *push.GeTuiService) *SubscribeConsume {
+	return &SubscribeConsume{conf: conf, rds: rds, ws: ws, room: room, recordsService: recordsService, contactService: contactService, userService: userService, getuiService: getuiService}
 }
 
 func (s *SubscribeConsume) Handle(event string, data string) {
@@ -186,6 +191,38 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	if len(cids) == 0 {
 		return
 	}
+
+	// if data.MsgType == 1 {
+	// 	// MsgTypeSystemText  = 0  // 系统文本消息
+	// 	// MsgTypeText        = 1  // 文本消息
+	// 	// MsgTypeFile        = 2  // 文件消息
+	// 	// MsgTypeForward     = 3  // 会话消息
+	// 	// MsgTypeCode        = 4  // 代码消息
+	// 	// MsgTypeVote        = 5  // 投票消息
+	// 	// MsgTypeGroupNotice = 6  // 群组公告
+	// 	// MsgTypeFriendApply = 7  // 好友申请
+	// 	// MsgTypeLogin       = 8  // 登录通知
+	// 	// MsgTypeGroupInvite = 9  // 入群退群消息
+	// 	// MsgTypeLocation    = 10 // 位置消息
+	// 	// MsgTypeRedPackets  = 11 // 红包
+
+	// 	clientId := "4efe67a49be747d7770f997031329e2c"
+	// 	//私聊走单推通道
+	// 	if msg.TalkType == 1 {
+	// 		//clientId, err := s.userService.Dao().GetClientId(int(msg.ReceiverID))
+	// 		// if err != nil {
+	// 		// 	logrus.Error("[获取ClientId] 失败 err: ", err.Error())
+	// 		// }
+
+	// 		s.getuiService.PushSingleByCid(ctx, clientId, "私聊消息标题", "私聊消息body")
+	// 	}
+	// 	if msg.TalkType == 2 {
+
+	// 		s.getuiService.PushSingleByCids(ctx, []string{clientId}, "群聊消息标题", "群聊消息body")
+
+	// 	}
+
+	// }
 
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
