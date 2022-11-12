@@ -60,7 +60,7 @@ func (c *Talk) List(ctx *ichat.Context) error {
 
 	items := make([]*web.TalkListItem, 0)
 	for _, item := range data {
-		if item.Nickname != "" || item.GroupName != "" {
+		if (item.Nickname != "" || item.GroupName != "") && item.ReceiverId != uid {
 			value := &web.TalkListItem{
 				Id:          int32(item.Id),
 				TalkType:    int32(item.TalkType),
