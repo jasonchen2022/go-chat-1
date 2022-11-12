@@ -31,6 +31,16 @@ func (u *User) Detail(ctx *ichat.Context) error {
 	return ctx.Success(user)
 }
 
+//设置app状态
+func (u *User) AppStatus(ctx *ichat.Context) error {
+	params := &web.AppStatusRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	u.service.Dao().SetAppStatus(params.UserId, params.Status)
+	return ctx.Success(nil)
+}
+
 // Setting 用户设置
 func (u *User) Setting(ctx *ichat.Context) error {
 

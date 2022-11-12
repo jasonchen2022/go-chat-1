@@ -3,6 +3,7 @@ package group
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"go-chat/config"
@@ -164,11 +165,17 @@ func (c *Group) CreateJpush(ctx *ichat.Context) error {
 	if err := ctx.Context.ShouldBind(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
-	msgId, err := c.jpushService.PushMessageByCid(params.ClientId, params.Titile, params.Body)
-	if err != nil {
-		logrus.Error(err.Error())
+	appStatus, _ := c.userService.GetAppStatus(params.ClientId)
+	fmt.Print("appStatus：", strconv.Itoa(appStatus))
+	if appStatus == 1 {
+		msgId, err := c.jpushService.PushMessageByCid(params.ClientId, params.Titile, params.Body)
+		if err != nil {
+			logrus.Error(err.Error())
+		}
+		return ctx.Success(msgId)
 	}
-	return ctx.Success(msgId)
+	return ctx.BusinessError("用户在线无需推送")
+
 }
 
 // Dismiss 解散群组

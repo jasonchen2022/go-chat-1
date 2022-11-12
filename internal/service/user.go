@@ -150,3 +150,16 @@ func (s *UserService) RandomUser(userId, index int, userName string) ([]*model.U
 	}
 	return users, nil
 }
+
+/*
+*获取App状态  （除登录用户外）
+*userId:登录用户id
+*index:查询用户数
+ */
+func (s *UserService) GetAppStatus(clientId string) (int, error) {
+	appStatus, err := s.dao.GetAppStatus(clientId)
+	if err != nil {
+		return 0, err
+	}
+	return appStatus, nil
+}

@@ -52,3 +52,9 @@ type RandUserRequest struct {
 type ChangeMuteRequest struct {
 	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
 }
+
+// AppStatusRequest ...
+type AppStatusRequest struct {
+	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
+	Status int `form:"status" json:"status" binding:"" label:"status"`
+}
