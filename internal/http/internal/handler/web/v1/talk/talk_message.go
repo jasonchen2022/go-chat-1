@@ -145,6 +145,34 @@ func (c *Message) SysMsg(ctx *ichat.Context) error {
 	return ctx.Success(nil)
 }
 
+// SysMsg 发送系统消息
+func (c *Message) SysRedPacketMsg(ctx *ichat.Context) error {
+
+	params := &web.RedPacketSysMessageRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+
+	uid := ctx.UserId()
+	if err := c.authority(ctx, &AuthorityOpts{
+		TalkType:   params.TalkType,
+		UserId:     uid,
+		ReceiverId: params.ReceiverId,
+	}); err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+	err := c.service.SendSysRedpacketsMessage(ctx.RequestCtx(), &service.SysTextMessageOpt{
+		UserId:     uid,
+		TalkType:   params.TalkType,
+		ReceiverId: params.ReceiverId,
+		Text:       params.Text,
+	})
+	if err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+	return ctx.Success(nil)
+}
+
 // RedPackets 发送红包消息
 func (c *Message) RedPackets(ctx *ichat.Context) error {
 

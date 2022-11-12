@@ -135,22 +135,23 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 
 		talkMsg := v1.Group("/talk/message").Use(authorize)
 		{
-			talkMsg.POST("/redpackets", ichat.HandlerFunc(handler.V1.TalkMessage.RedPackets))  // 发送红包消息
-			talkMsg.POST("/sysmsg", ichat.HandlerFunc(handler.V1.TalkMessage.SysMsg))          // 发送系统消息
-			talkMsg.POST("/text", ichat.HandlerFunc(handler.V1.TalkMessage.Text))              // 发送文本消息
-			talkMsg.POST("/code", ichat.HandlerFunc(handler.V1.TalkMessage.Code))              // 发送代码消息
-			talkMsg.POST("/image", ichat.HandlerFunc(handler.V1.TalkMessage.Image))            // 发送图片消息
-			talkMsg.POST("/imagebyurl", ichat.HandlerFunc(handler.V1.TalkMessage.ImageByUrl))  // 发送图片消息
-			talkMsg.POST("/file", ichat.HandlerFunc(handler.V1.TalkMessage.File))              // 发送文件消息
-			talkMsg.POST("/emoticon", ichat.HandlerFunc(handler.V1.TalkMessage.Emoticon))      // 发送表情包消息
-			talkMsg.POST("/forward", ichat.HandlerFunc(handler.V1.TalkMessage.Forward))        // 发送转发消息
-			talkMsg.POST("/card", ichat.HandlerFunc(handler.V1.TalkMessage.Card))              // 发送用户名片
-			talkMsg.POST("/location", ichat.HandlerFunc(handler.V1.TalkMessage.Location))      // 发送位置消息
-			talkMsg.POST("/collect", ichat.HandlerFunc(handler.V1.TalkMessage.Collect))        // 收藏会话表情图片
-			talkMsg.POST("/revoke", ichat.HandlerFunc(handler.V1.TalkMessage.Revoke))          // 撤销聊天消息
-			talkMsg.POST("/delete", ichat.HandlerFunc(handler.V1.TalkMessage.Delete))          // 删除聊天消息
-			talkMsg.POST("/vote", ichat.HandlerFunc(handler.V1.TalkMessage.Vote))              // 发送投票消息
-			talkMsg.POST("/vote/handle", ichat.HandlerFunc(handler.V1.TalkMessage.HandleVote)) // 投票消息处理
+			talkMsg.POST("/redpackets", ichat.HandlerFunc(handler.V1.TalkMessage.RedPackets))             // 发送红包消息
+			talkMsg.POST("/red-packet-sysmsg", ichat.HandlerFunc(handler.V1.TalkMessage.SysRedPacketMsg)) // 发送系统消息
+			talkMsg.POST("/sysmsg", ichat.HandlerFunc(handler.V1.TalkMessage.SysMsg))                     // 发送系统消息
+			talkMsg.POST("/text", ichat.HandlerFunc(handler.V1.TalkMessage.Text))                         // 发送文本消息
+			talkMsg.POST("/code", ichat.HandlerFunc(handler.V1.TalkMessage.Code))                         // 发送代码消息
+			talkMsg.POST("/image", ichat.HandlerFunc(handler.V1.TalkMessage.Image))                       // 发送图片消息
+			talkMsg.POST("/imagebyurl", ichat.HandlerFunc(handler.V1.TalkMessage.ImageByUrl))             // 发送图片消息
+			talkMsg.POST("/file", ichat.HandlerFunc(handler.V1.TalkMessage.File))                         // 发送文件消息
+			talkMsg.POST("/emoticon", ichat.HandlerFunc(handler.V1.TalkMessage.Emoticon))                 // 发送表情包消息
+			talkMsg.POST("/forward", ichat.HandlerFunc(handler.V1.TalkMessage.Forward))                   // 发送转发消息
+			talkMsg.POST("/card", ichat.HandlerFunc(handler.V1.TalkMessage.Card))                         // 发送用户名片
+			talkMsg.POST("/location", ichat.HandlerFunc(handler.V1.TalkMessage.Location))                 // 发送位置消息
+			talkMsg.POST("/collect", ichat.HandlerFunc(handler.V1.TalkMessage.Collect))                   // 收藏会话表情图片
+			talkMsg.POST("/revoke", ichat.HandlerFunc(handler.V1.TalkMessage.Revoke))                     // 撤销聊天消息
+			talkMsg.POST("/delete", ichat.HandlerFunc(handler.V1.TalkMessage.Delete))                     // 删除聊天消息
+			talkMsg.POST("/vote", ichat.HandlerFunc(handler.V1.TalkMessage.Vote))                         // 发送投票消息
+			talkMsg.POST("/vote/handle", ichat.HandlerFunc(handler.V1.TalkMessage.HandleVote))            // 投票消息处理
 		}
 
 		emoticon := v1.Group("/emoticon").Use(authorize)

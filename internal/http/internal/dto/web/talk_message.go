@@ -5,7 +5,11 @@ type TextMessageRequest struct {
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
 }
-
+type RedPacketSysMessageRequest struct {
+	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
+}
 type RedpacketsMessageRequest struct {
 	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`

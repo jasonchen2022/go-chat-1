@@ -52,6 +52,7 @@ type TalkRecordsItem struct {
 	GroupType         int         `json:"group_type"`
 	RedPacketsStadus  int         `json:"red_packets_stadus"`
 	RedPacketsRemarks string      `json:"red_packets_remarks"`
+	ReceiverNickname  string      `json:"receiver_nickname"`
 	IsRedPackets      int         `json:"is_red_packets"`
 }
 
@@ -375,6 +376,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 		recordIds          []string
 		red_packets        []*model.RedPackets
 		red_packets_record []*model.RedPacketsRecord
+		users              []*model.Users
+		usersId            []int
 	)
 
 	for _, item := range items {
@@ -397,6 +400,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			locations = append(locations, item.Id)
 		case entity.MsgTypeRedPackets:
 			recordIds = append(recordIds, item.Content)
+		case entity.MsgTypeSysRedPackets:
+			usersId = append(usersId, item.ReceiverId)
 		}
 
 		//已撤回的消息不能显示
@@ -503,7 +508,9 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 	if len(recordIds) > 0 {
 		s.db.Model(&model.RedPacketsRecord{}).Where("point > ?", 0).Where("rp_id in ? and user_id = ?", recordIds, uid).Scan(&red_packets_record)
 	}
-
+	if len(usersId) > 0 {
+		s.db.Model(&model.Users{}).Where("id in ? ", usersId).Scan(&users)
+	}
 	senService := s.sensitiveMatchService.GetService()
 
 	newItems := make([]*TalkRecordsItem, 0, len(items))
@@ -708,6 +715,13 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					}
 				}
 			}
+		case entity.MsgTypeSysRedPackets:
+			for _, u_item := range users {
+				if u_item.Id == item.ReceiverId {
+					data.ReceiverNickname = u_item.Nickname
+				}
+			}
+
 		}
 
 		newItems = append(newItems, data)
