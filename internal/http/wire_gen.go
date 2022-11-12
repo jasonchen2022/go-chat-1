@@ -31,6 +31,7 @@ import (
 	"go-chat/internal/service"
 	note2 "go-chat/internal/service/note"
 	organize2 "go-chat/internal/service/organize"
+	"go-chat/internal/service/push"
 )
 
 import (
@@ -105,7 +106,8 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	upload := v1.NewUpload(conf, filesystem, splitUploadService)
 	groupNoticeDao := dao.NewGroupNoticeDao(baseDao)
 	groupNoticeService := service.NewGroupNoticeService(groupNoticeDao)
-	groupGroup := group.NewGroup(groupService, groupMemberService, talkSessionService, redisLock, contactService, userService, groupNoticeService, talkMessageService, memberService, connection, conf)
+	jpushService := push.NewJpushService(conf, client)
+	groupGroup := group.NewGroup(groupService, groupMemberService, talkSessionService, redisLock, contactService, userService, groupNoticeService, talkMessageService, memberService, jpushService, connection, conf)
 	notice := group.NewNotice(groupNoticeService, groupMemberService)
 	groupApplyDao := dao.NewGroupApply(baseDao)
 	groupApplyService := service.NewGroupApplyService(baseService, groupApplyDao)
@@ -188,4 +190,4 @@ var cacheProviderSet = wire.NewSet(cache.NewSessionStorage, cache.NewSid, cache.
 
 var daoProviderSet = wire.NewSet(dao.NewBaseDao, dao.NewContactDao, dao.NewGroupMemberDao, dao.NewUserDao, dao.NewMemberDao, dao.NewGroupDao, dao.NewGroupApply, dao.NewTalkRecordsDao, dao.NewGroupNoticeDao, dao.NewTalkSessionDao, dao.NewEmoticonDao, dao.NewTalkRecordsVoteDao, dao.NewFileSplitUploadDao, note.NewArticleClassDao, note.NewArticleAnnexDao, organize.NewDepartmentDao, organize.NewOrganizeDao, organize.NewPositionDao, dao.NewRobotDao, dao.NewNavigationDao)
 
-var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewSensitiveMatchService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, service.NewMemberService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService, service.NewTemplateService, service.NewNavigationService)
+var serviceProviderSet = wire.NewSet(service.NewBaseService, service.NewUserService, service.NewSmsService, service.NewTalkService, service.NewTalkMessageService, service.NewClientService, service.NewGroupService, service.NewGroupMemberService, service.NewGroupNoticeService, service.NewGroupApplyService, service.NewTalkSessionService, service.NewTalkMessageForwardService, service.NewEmoticonService, service.NewTalkRecordsService, service.NewContactService, service.NewSensitiveMatchService, service.NewContactsApplyService, service.NewSplitUploadService, service.NewIpAddressService, service.NewAuthPermissionService, service.NewMemberService, note2.NewArticleService, note2.NewArticleTagService, note2.NewArticleClassService, note2.NewArticleAnnexService, organize2.NewOrganizeDeptService, organize2.NewOrganizeService, organize2.NewPositionService, service.NewTemplateService, service.NewNavigationService, push.NewJpushService)

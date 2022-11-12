@@ -60,6 +60,12 @@ type GroupEditNoticeRequest struct {
 	IsConfirm string `form:"is_confirm" json:"is_confirm" binding:"required"`
 }
 
+type GroupPushRequest struct {
+	ClientId string `form:"client_id" json:"client_id" binding:"required"`
+	Body     string `form:"body" json:"body" binding:"required"`
+	Titile   string `form:"title" json:"title" binding:"required"`
+}
+
 type GroupDeleteNoticeRequest struct {
 	GroupCommonRequest
 	NoticeId int `form:"notice_id" json:"notice_id" binding:"required"`

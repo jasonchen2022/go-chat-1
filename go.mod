@@ -32,6 +32,7 @@ require (
 require (
 	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/levigross/grequests v0.0.0-20190908174114-253788527a1a // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 )
 
@@ -50,6 +51,7 @@ require (
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/uuid v1.1.2 // indirect
+	github.com/ilam01/jpush-go v1.0.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
@@ -69,6 +71,7 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/wxnacy/wgo v1.0.4
 	github.com/yuin/gopher-lua v0.0.0-20200816102855-ee81675732da // indirect
+	github.com/zwczou/jpush v0.1.2
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
 	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
 	golang.org/x/text v0.3.7 // indirect

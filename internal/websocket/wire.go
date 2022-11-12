@@ -71,6 +71,7 @@ var providerSet = wire.NewSet(
 	service.NewUserService,
 
 	push.NewGeTuiService,
+	push.NewJpushService,
 
 	// handle
 	handler.NewDefaultWebSocket,

@@ -33,10 +33,11 @@ type SubscribeConsume struct {
 	contactService *service.ContactService
 	userService    *service.UserService
 	getuiService   *push.GeTuiService
+	jpushService   *push.JpushService
 }
 
-func NewSubscribeConsume(conf *config.Config, rds *redis.Client, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService, userService *service.UserService, getuiService *push.GeTuiService) *SubscribeConsume {
-	return &SubscribeConsume{conf: conf, rds: rds, ws: ws, room: room, recordsService: recordsService, contactService: contactService, userService: userService, getuiService: getuiService}
+func NewSubscribeConsume(conf *config.Config, rds *redis.Client, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService, userService *service.UserService, getuiService *push.GeTuiService, jpushService *push.JpushService) *SubscribeConsume {
+	return &SubscribeConsume{conf: conf, rds: rds, ws: ws, room: room, recordsService: recordsService, contactService: contactService, userService: userService, getuiService: getuiService, jpushService: jpushService}
 }
 
 func (s *SubscribeConsume) Handle(event string, data string) {
@@ -206,7 +207,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	// 	// MsgTypeLocation    = 10 // 位置消息
 	// 	// MsgTypeRedPackets  = 11 // 红包
 
-	// 	clientId := "4efe67a49be747d7770f997031329e2c"
+	// 	clientId := "1104a8979242bd18465"
 	// 	//私聊走单推通道
 	// 	if msg.TalkType == 1 {
 	// 		//clientId, err := s.userService.Dao().GetClientId(int(msg.ReceiverID))
@@ -214,11 +215,11 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	// 		// 	logrus.Error("[获取ClientId] 失败 err: ", err.Error())
 	// 		// }
 
-	// 		s.getuiService.PushSingleByCid(ctx, clientId, "私聊消息标题", "私聊消息body")
+	// 		s.jpushService.PushMessageByCid(clientId)
 	// 	}
 	// 	if msg.TalkType == 2 {
 
-	// 		s.getuiService.PushSingleByCids(ctx, []string{clientId}, "群聊消息标题", "群聊消息body")
+	// 		s.jpushService.PushMessageByCid(clientId)
 
 	// 	}
 

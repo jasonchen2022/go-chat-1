@@ -17,6 +17,7 @@ import (
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
+	"go-chat/internal/service/push"
 
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -32,6 +33,7 @@ type Group struct {
 	groupNoticeService *service.GroupNoticeService
 	messageService     *service.TalkMessageService
 	memberService      *service.MemberService
+	jpushService       *push.JpushService
 	mq                 *amqp.Connection
 	config             *config.Config
 }
@@ -46,6 +48,7 @@ func NewGroup(
 	groupNoticeService *service.GroupNoticeService,
 	messageService *service.TalkMessageService,
 	memberService *service.MemberService,
+	jpushService *push.JpushService,
 	mq *amqp.Connection,
 	config *config.Config,
 ) *Group {
@@ -59,6 +62,7 @@ func NewGroup(
 		groupNoticeService: groupNoticeService,
 		messageService:     messageService,
 		memberService:      memberService,
+		jpushService:       jpushService,
 		mq:                 mq,
 		config:             config,
 	}
@@ -152,6 +156,19 @@ func (c *Group) CreateChat(ctx *ichat.Context) error {
 	return ctx.Success(entity.H{
 		"group_id": gid,
 	})
+}
+
+//推送测试
+func (c *Group) CreateJpush(ctx *ichat.Context) error {
+	params := &web.GroupPushRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	msgId, err := c.jpushService.PushMessageByCid(params.ClientId, params.Titile, params.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+	}
+	return ctx.Success(msgId)
 }
 
 // Dismiss 解散群组

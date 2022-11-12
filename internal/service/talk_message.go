@@ -963,6 +963,7 @@ func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
 	); err != nil {
 		log.Println("Failed to publish a message:", err.Error())
 	}
+	log.Println("SendAll：", content)
 }
 
 func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, content string) {
@@ -1001,4 +1002,5 @@ func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, conte
 	); err != nil {
 		log.Println("Failed to publish a message:", err.Error())
 	}
+	log.Println("SendSingle", content)
 }

@@ -20,6 +20,7 @@ type Config struct {
 	MySQLFF    *MySQL      `json:"mysqlFF" yaml:"mysql_ff"`
 	RabbitMQ   *RabbitMQ   `json:"rabbitmq" yaml:"rabbitmq"`
 	GeTui      *GeTui      `json:"getui" yaml:"getui"`
+	JPush      *JPush      `json:"jpush" yaml:"jpush"`
 	Jwt        *Jwt        `json:"jwt" yaml:"jwt"`
 	Cors       *Cors       `json:"cors" yaml:"cors"`
 	Log        *Log        `json:"log" yaml:"log"`

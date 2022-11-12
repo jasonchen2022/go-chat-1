@@ -63,7 +63,8 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	usersDao := dao.NewUserDao(baseDao)
 	userService := service.NewUserService(usersDao)
 	geTuiService := push.NewGeTuiService(conf, client)
-	subscribeConsume := handle.NewSubscribeConsume(conf, client, wsClientSession, roomStorage, talkRecordsService, contactService, userService, geTuiService)
+	jpushService := push.NewJpushService(conf, client)
+	subscribeConsume := handle.NewSubscribeConsume(conf, client, wsClientSession, roomStorage, talkRecordsService, contactService, userService, geTuiService, jpushService)
 	wsSubscribe := server.NewWsSubscribe(client, connection, conf, subscribeConsume)
 	subServers := &process.SubServers{
 		Health:    health,
@@ -80,4 +81,4 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRabbitMQClient, provider.NewWebsocketServer, provider.NewFilesystem, router.NewRouter, wire.Struct(new(process.SubServers), "*"), process.NewServer, server.NewHealth, server.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSessionStorage, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoomStorage, cache.NewTalkVote, cache.NewRelation, cache.NewContactRemark, cache.NewUnreadStorage, cache.NewMessageStorage, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, dao.NewFileSplitUploadDao, dao.NewUserDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, service.NewTalkMessageService, service.NewUserService, push.NewGeTuiService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRabbitMQClient, provider.NewWebsocketServer, provider.NewFilesystem, router.NewRouter, wire.Struct(new(process.SubServers), "*"), process.NewServer, server.NewHealth, server.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSessionStorage, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoomStorage, cache.NewTalkVote, cache.NewRelation, cache.NewContactRemark, cache.NewUnreadStorage, cache.NewMessageStorage, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, dao.NewFileSplitUploadDao, dao.NewUserDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, service.NewTalkMessageService, service.NewUserService, push.NewGeTuiService, push.NewJpushService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))

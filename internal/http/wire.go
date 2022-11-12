@@ -22,6 +22,7 @@ import (
 	"go-chat/internal/http/internal/handler"
 	"go-chat/internal/http/internal/router"
 	"go-chat/internal/service"
+	"go-chat/internal/service/push"
 )
 
 var providerSet = wire.NewSet(
@@ -114,6 +115,7 @@ var serviceProviderSet = wire.NewSet(
 	organize.NewPositionService,
 	service.NewTemplateService,
 	service.NewNavigationService,
+	push.NewJpushService,
 )
 
 func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
