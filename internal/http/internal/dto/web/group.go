@@ -64,6 +64,7 @@ type GroupPushRequest struct {
 	ClientId string `form:"client_id" json:"client_id" binding:"required"`
 	Body     string `form:"body" json:"body" binding:"required"`
 	Titile   string `form:"title" json:"title" binding:"required"`
+	Status   string `form:"status" json:"status" binding:"required"`
 }
 
 type GroupDeleteNoticeRequest struct {

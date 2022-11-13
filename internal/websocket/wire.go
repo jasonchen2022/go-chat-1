@@ -59,6 +59,7 @@ var providerSet = wire.NewSet(
 	dao.NewContactDao,
 	dao.NewFileSplitUploadDao,
 	dao.NewUserDao,
+	dao.NewTalkSessionDao,
 
 	// 服务
 	service.NewBaseService,
@@ -69,6 +70,7 @@ var providerSet = wire.NewSet(
 	service.NewSensitiveMatchService,
 	service.NewTalkMessageService,
 	service.NewUserService,
+	service.NewTalkSessionService,
 
 	push.NewGeTuiService,
 	push.NewJpushService,

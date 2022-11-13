@@ -9,6 +9,7 @@ import (
 
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/cache"
+	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
 
 	"github.com/go-redis/redis/v8"
@@ -25,19 +26,22 @@ import (
 type onConsumeFunc func(data string)
 
 type SubscribeConsume struct {
-	conf           *config.Config
-	rds            *redis.Client
-	ws             *cache.WsClientSession
-	room           *cache.RoomStorage
-	recordsService *service.TalkRecordsService
-	contactService *service.ContactService
-	userService    *service.UserService
-	getuiService   *push.GeTuiService
-	jpushService   *push.JpushService
+	conf               *config.Config
+	rds                *redis.Client
+	ws                 *cache.WsClientSession
+	room               *cache.RoomStorage
+	sidServer          *cache.SidServer
+	groupMemberDao     *dao.GroupMemberDao
+	recordsService     *service.TalkRecordsService
+	contactService     *service.ContactService
+	userService        *service.UserService
+	talkSessionService *service.TalkSessionService
+	getuiService       *push.GeTuiService
+	jpushService       *push.JpushService
 }
 
-func NewSubscribeConsume(conf *config.Config, rds *redis.Client, ws *cache.WsClientSession, room *cache.RoomStorage, recordsService *service.TalkRecordsService, contactService *service.ContactService, userService *service.UserService, getuiService *push.GeTuiService, jpushService *push.JpushService) *SubscribeConsume {
-	return &SubscribeConsume{conf: conf, rds: rds, ws: ws, room: room, recordsService: recordsService, contactService: contactService, userService: userService, getuiService: getuiService, jpushService: jpushService}
+func NewSubscribeConsume(conf *config.Config, rds *redis.Client, ws *cache.WsClientSession, room *cache.RoomStorage, sidServer *cache.SidServer, groupMemberDao *dao.GroupMemberDao, recordsService *service.TalkRecordsService, contactService *service.ContactService, userService *service.UserService, talkSessionService *service.TalkSessionService, getuiService *push.GeTuiService, jpushService *push.JpushService) *SubscribeConsume {
+	return &SubscribeConsume{conf: conf, rds: rds, ws: ws, room: room, sidServer: sidServer, groupMemberDao: groupMemberDao, recordsService: recordsService, contactService: contactService, userService: userService, talkSessionService: talkSessionService, getuiService: getuiService, jpushService: jpushService}
 }
 
 func (s *SubscribeConsume) Handle(event string, data string) {
@@ -150,7 +154,6 @@ func (s *SubscribeConsume) onSendPrivate(receiverId int, messageType string, msg
 // onConsumeTalk 聊天消息事件
 func (s *SubscribeConsume) onConsumeTalk(body string) {
 
-	logrus.Info("收到订阅消息：", time.Now().Unix(), body)
 	var msg struct {
 		TalkType   int   `json:"talk_type"`
 		SenderID   int64 `json:"sender_id"`
@@ -172,6 +175,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 
 			cids = append(cids, ids...)
 		}
+
 	} else if msg.TalkType == entity.ChatGroupMode {
 		ids := s.room.All(ctx, &cache.RoomOption{
 			Channel:  im.Session.Default.Name(),
@@ -179,7 +183,6 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 			Number:   strconv.Itoa(int(msg.ReceiverID)),
 			Sid:      s.conf.ServerId(),
 		})
-		logrus.Info("获取群ID：", jsonutil.Encode(ids))
 		cids = append(cids, ids...)
 	}
 
@@ -193,37 +196,49 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 		return
 	}
 
-	// if data.MsgType == 1 {
-	// 	// MsgTypeSystemText  = 0  // 系统文本消息
-	// 	// MsgTypeText        = 1  // 文本消息
-	// 	// MsgTypeFile        = 2  // 文件消息
-	// 	// MsgTypeForward     = 3  // 会话消息
-	// 	// MsgTypeCode        = 4  // 代码消息
-	// 	// MsgTypeVote        = 5  // 投票消息
-	// 	// MsgTypeGroupNotice = 6  // 群组公告
-	// 	// MsgTypeFriendApply = 7  // 好友申请
-	// 	// MsgTypeLogin       = 8  // 登录通知
-	// 	// MsgTypeGroupInvite = 9  // 入群退群消息
-	// 	// MsgTypeLocation    = 10 // 位置消息
-	// 	// MsgTypeRedPackets  = 11 // 红包
+	//异步推送 文本消息、转发消息、文件消息、红包消息
+	if data.MsgType == 1 || data.MsgType == 2 || data.MsgType == 3 || data.MsgType == 11 {
+		//判断当前会话是否免打扰
+		if !s.talkSessionService.Dao().IsDisturb(data.UserId, data.ReceiverId, data.TalkType) {
+			go func() {
+				clientIds := make([]string, 0)
+				if msg.TalkType == 1 {
+					clientId, _ := s.userService.Dao().GetClientId(data.ReceiverId)
+					if clientId != "" {
+						clientIds = append(clientIds, clientId)
+					}
+				}
+				if msg.TalkType == 2 {
+					offlineIds := make([]int, 0)
+					userIds := s.groupMemberDao.GetMemberIds(data.ReceiverId)
+					for _, userId := range userIds {
+						is_online := s.isOnline(ctx, userId)
+						if !is_online {
+							offlineIds = append(offlineIds, userId)
+						}
+					}
+					clientIds, _ = s.userService.Dao().GetClientIds(offlineIds)
 
-	// 	clientId := "1104a8979242bd18465"
-	// 	//私聊走单推通道
-	// 	if msg.TalkType == 1 {
-	// 		//clientId, err := s.userService.Dao().GetClientId(int(msg.ReceiverID))
-	// 		// if err != nil {
-	// 		// 	logrus.Error("[获取ClientId] 失败 err: ", err.Error())
-	// 		// }
+				}
+				//推送离线消息
+				if len(clientIds) > 0 {
+					//文本消息、转发消息
+					if data.MsgType == 1 || data.MsgType == 3 {
+						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, data.Content)
+					}
+					//文件消息
+					if data.MsgType == 2 {
+						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "图文消息")
+					}
+					//红包消息
+					if data.MsgType == 11 {
+						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "红包消息")
+					}
+				}
+			}()
+		}
 
-	// 		s.jpushService.PushMessageByCid(clientId)
-	// 	}
-	// 	if msg.TalkType == 2 {
-
-	// 		s.jpushService.PushMessageByCid(clientId)
-
-	// 	}
-
-	// }
+	}
 
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
@@ -239,6 +254,36 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 
 	im.Session.Default.Write(c)
 	logrus.Info("结束订阅消息：", time.Now().Unix())
+}
+
+//判断目标用户是否在线
+func (s *SubscribeConsume) isOnline(ctx context.Context, receiverId int) bool {
+	sids := s.sidServer.All(ctx, 1)
+	is_online := false
+	for _, sid := range sids {
+		if s.ws.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
+			is_online = true
+		}
+	}
+	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
+	return is_online
+}
+
+//推送离线消息
+func (s *SubscribeConsume) pushMessage(ctx context.Context, talkType int, receiverId int, clientIds []string, userName string, groupName, body string) {
+	if talkType == 1 {
+		is_online := s.isOnline(ctx, receiverId)
+		if !is_online {
+			msgId, _ := s.jpushService.PushMessageByCid(clientIds, userName, body)
+			logrus.Info("私聊推送结果：", msgId)
+		}
+	}
+	if talkType == 2 {
+		if len(clientIds) > 0 {
+			msgId, _ := s.jpushService.PushMessageByCid(clientIds, groupName, fmt.Sprintf("%s：%s", userName, body))
+			logrus.Info("群聊推送结果：", msgId)
+		}
+	}
 }
 
 // onConsumeTalkKeyboard 键盘输入事件消息

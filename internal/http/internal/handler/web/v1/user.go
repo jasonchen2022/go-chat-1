@@ -8,16 +8,19 @@ import (
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 	"go-chat/internal/service/organize"
+
+	"github.com/sirupsen/logrus"
 )
 
 type User struct {
-	service      *service.UserService
-	smsService   *service.SmsService
-	organizeServ *organize.OrganizeService
+	service            *service.UserService
+	smsService         *service.SmsService
+	organizeServ       *organize.OrganizeService
+	talkMessageService *service.TalkMessageService
 }
 
-func NewUser(service *service.UserService, smsService *service.SmsService, organizeServ *organize.OrganizeService) *User {
-	return &User{service: service, smsService: smsService, organizeServ: organizeServ}
+func NewUser(service *service.UserService, smsService *service.SmsService, organizeServ *organize.OrganizeService, talkMessageService *service.TalkMessageService) *User {
+	return &User{service: service, smsService: smsService, organizeServ: organizeServ, talkMessageService: talkMessageService}
 }
 
 // Detail 个人用户信息
@@ -37,7 +40,13 @@ func (u *User) AppStatus(ctx *ichat.Context) error {
 	if err := ctx.Context.ShouldBind(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
-	u.service.Dao().SetAppStatus(params.UserId, params.Status)
+	err := u.service.Dao().SetAppStatus(params.UserId, params.ClientId)
+	if err != nil {
+		err := u.talkMessageService.SendOfflineMessage(ctx.Context, &service.SysOfflineMessageOpt{UserId: params.UserId, ClientId: params.ClientId})
+		if err != nil {
+			logrus.Error("单点登录错误：", err.Error())
+		}
+	}
 	return ctx.Success(nil)
 }
 

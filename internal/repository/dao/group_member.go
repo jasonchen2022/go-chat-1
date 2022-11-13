@@ -60,6 +60,13 @@ func (dao *GroupMemberDao) GetMemberIds(groupId int) []int {
 	return ids
 }
 
+// GetMemberClientIds 获取所有群成员用户ID
+func (dao *GroupMemberDao) GetMemberClientIds(groupId int) []string {
+	ids := make([]string, 0)
+	_ = dao.Db().Exec("select u.client_id from group_member as m JOIN users as u where m.group_id = ? and m.is_quit = 0 and u.app_status =1", groupId).Scan(&ids)
+	return ids
+}
+
 // GetUserGroupIds 获取所有群成员ID
 func (dao *GroupMemberDao) GetUserGroupIds(uid int) []int {
 	ids := make([]int, 0)

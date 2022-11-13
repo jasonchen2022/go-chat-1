@@ -37,6 +37,8 @@ type Group struct {
 	jpushService       *push.JpushService
 	mq                 *amqp.Connection
 	config             *config.Config
+	ws                 *cache.WsClientSession
+	sidServer          *cache.SidServer
 }
 
 func NewGroup(
@@ -52,6 +54,8 @@ func NewGroup(
 	jpushService *push.JpushService,
 	mq *amqp.Connection,
 	config *config.Config,
+	ws *cache.WsClientSession,
+	sidServer *cache.SidServer,
 ) *Group {
 	return &Group{
 		service:            service,
@@ -66,6 +70,8 @@ func NewGroup(
 		jpushService:       jpushService,
 		mq:                 mq,
 		config:             config,
+		ws:                 ws,
+		sidServer:          sidServer,
 	}
 }
 
@@ -165,17 +171,31 @@ func (c *Group) CreateJpush(ctx *ichat.Context) error {
 	if err := ctx.Context.ShouldBind(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
-	appStatus, _ := c.userService.GetAppStatus(params.ClientId)
-	fmt.Print("appStatus：", strconv.Itoa(appStatus))
-	if appStatus == 1 {
-		msgId, err := c.jpushService.PushMessageByCid(params.ClientId, params.Titile, params.Body)
-		if err != nil {
-			logrus.Error(err.Error())
+	if params.Status != "1" {
+		userId, _ := c.userService.Dao().GetUserIdByClientId(params.ClientId)
+		if c.isOnline(ctx, userId) {
+			return ctx.BusinessError("用户在线无需推送")
 		}
-		return ctx.Success(msgId)
 	}
-	return ctx.BusinessError("用户在线无需推送")
+	msgId, err := c.jpushService.PushMessageByCid([]string{params.ClientId}, params.Titile, params.Body)
+	if err != nil {
+		logrus.Error(err.Error())
+	}
+	return ctx.Success(msgId)
 
+}
+
+//判断目标用户是否在线
+func (s *Group) isOnline(ctx *ichat.Context, receiverId int) bool {
+	sids := s.sidServer.All(ctx.Context, 1)
+	is_online := false
+	for _, sid := range sids {
+		if s.ws.IsCurrentServerOnline(ctx.Context, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
+			is_online = true
+		}
+	}
+	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
+	return is_online
 }
 
 // Dismiss 解散群组

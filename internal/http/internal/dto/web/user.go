@@ -55,6 +55,6 @@ type ChangeMuteRequest struct {
 
 // AppStatusRequest ...
 type AppStatusRequest struct {
-	UserId int `form:"user_id" json:"user_id" binding:"" label:"user_id"`
-	Status int `form:"status" json:"status" binding:"" label:"status"`
+	UserId   int    `form:"user_id" json:"user_id" binding:"" label:"user_id"`
+	ClientId string `form:"client_id" json:"client_id" binding:"" label:"client_id"`
 }
