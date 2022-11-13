@@ -11,6 +11,7 @@ import (
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/worker"
+	"go-chat/internal/provider"
 	"go-chat/internal/websocket/internal/process/handle"
 
 	"github.com/go-redis/redis/v8"
@@ -40,6 +41,11 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 
 	gateway := fmt.Sprintf(entity.IMGatewayPrivate, w.conf.ServerId())
 
+	if w.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		w.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	ch, err := w.mq.Channel()
 	if err != nil {
 		log.Println("Failed to open a channel:", err.Error())

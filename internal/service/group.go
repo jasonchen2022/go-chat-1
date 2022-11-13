@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	"go-chat/config"
+	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
@@ -116,7 +118,11 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 			"uids":     mids,
 		}),
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {
@@ -267,7 +273,11 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 			"record_id":   record.Id,
 		}),
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {
@@ -395,7 +405,11 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 	if err != nil {
 		return err
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {
@@ -500,6 +514,12 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 	}
 
 	s.relation.BatchDelGroupRelation(ctx, opts.MemberIds, opts.GroupId)
+
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 
 	// 创建一个Channel
 	channel, err := s.mq.Channel()

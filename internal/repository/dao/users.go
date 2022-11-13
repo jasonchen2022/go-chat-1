@@ -73,7 +73,7 @@ func (dao *UsersDao) GetAppStatus(clientId string) (int, error) {
 // GetClientId ID查询
 func (dao *UsersDao) GetClientId(userId int) (string, error) {
 	var clientId string
-	if err := dao.Db().Table("users").Where("id = ? and app_status = ?", userId, 1).Select("client_id").Limit(1).Scan(&clientId).Error; err != nil {
+	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Select("client_id").Limit(1).Scan(&clientId).Error; err != nil {
 		return "", err
 	}
 	return clientId, nil

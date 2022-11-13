@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"strconv"
@@ -107,7 +106,7 @@ func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, messag
 
 	// 创建一个Channel
 	if c.mq == nil {
-		conf := config.ReadConfig(parseConfigArg())
+		conf := config.ReadConfig(config.ParseConfigArg())
 		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
 		log.Println("Failed to open a channel:", "并重新初始化")
 	}
@@ -167,14 +166,6 @@ func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, messag
 	default:
 		fmt.Printf("消息事件未定义%s", event)
 	}
-}
-
-func parseConfigArg() string {
-	var conf string
-	flag.StringVar(&conf, "config", "./config.yaml", "配置文件路径")
-	flag.StringVar(&conf, "c", "./config.yaml", "配置文件路径")
-	flag.Parse()
-	return conf
 }
 
 // 客户端关闭回调事件

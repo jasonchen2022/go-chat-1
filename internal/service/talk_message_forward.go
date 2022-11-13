@@ -6,6 +6,8 @@ import (
 	"log"
 	"strings"
 
+	"go-chat/config"
+	"go-chat/internal/provider"
 	"go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
@@ -144,7 +146,11 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 	if err != nil {
 		return err
 	}
-
+	if t.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		t.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := t.mq.Channel()
 	if err != nil {

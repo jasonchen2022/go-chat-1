@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
@@ -111,7 +112,11 @@ func (s *TalkMessageService) SendOfflineMessage(ctx context.Context, opts *SysOf
 			"client_id": opts.ClientId,
 		}),
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {
@@ -637,7 +642,11 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 			"record_id": record.Id,
 		}),
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {
@@ -886,7 +895,12 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 			"record_id":   record.Id,
 		}),
 	})
-
+	// 创建一个Channel
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {

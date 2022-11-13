@@ -196,50 +196,54 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 		return
 	}
 
-	//异步推送 文本消息、转发消息、文件消息、红包消息
-	if data.MsgType == 1 || data.MsgType == 2 || data.MsgType == 3 || data.MsgType == 11 {
-		//判断当前会话是否免打扰
-		if !s.talkSessionService.Dao().IsDisturb(data.UserId, data.ReceiverId, data.TalkType) {
-			go func() {
-				clientIds := make([]string, 0)
-				if msg.TalkType == 1 {
-					clientId, _ := s.userService.Dao().GetClientId(data.ReceiverId)
-					if clientId != "" {
-						clientIds = append(clientIds, clientId)
-					}
-				}
-				if msg.TalkType == 2 {
-					offlineIds := make([]int, 0)
-					userIds := s.groupMemberDao.GetMemberIds(data.ReceiverId)
-					for _, userId := range userIds {
-						is_online := s.isOnline(ctx, userId)
-						if !is_online {
-							offlineIds = append(offlineIds, userId)
+	if s.conf.GetEnv() == "alone" {
+		//异步推送 文本消息、转发消息、文件消息、红包消息
+		if data.MsgType == 1 || data.MsgType == 2 || data.MsgType == 3 || data.MsgType == 11 {
+			//判断当前会话是否免打扰
+			if !s.talkSessionService.Dao().IsDisturb(data.UserId, data.ReceiverId, data.TalkType) {
+				go func() {
+					clientIds := make([]string, 0)
+					if msg.TalkType == 1 {
+						clientId, _ := s.userService.Dao().GetClientId(data.ReceiverId)
+						if clientId != "" {
+							clientIds = append(clientIds, clientId)
 						}
 					}
-					clientIds, _ = s.userService.Dao().GetClientIds(offlineIds)
+					if msg.TalkType == 2 {
+						//offlineIds := make([]int, 0)
+						userIds := s.groupMemberDao.GetMemberIds(data.ReceiverId)
+						// for _, userId := range userIds {
+						// 	is_online := s.isOnline(ctx, userId)
+						// 	if !is_online {
+						// 		offlineIds = append(offlineIds, userId)
+						// 	}
+						// }
+						//clientIds, _ = s.userService.Dao().GetClientIds(offlineIds)
+						clientIds, _ = s.userService.Dao().GetClientIds(userIds)
 
-				}
-				//推送离线消息
-				if len(clientIds) > 0 {
-					//文本消息、转发消息
-					if data.MsgType == 1 || data.MsgType == 3 {
-						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, data.Content)
 					}
-					//文件消息
-					if data.MsgType == 2 {
-						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "图文消息")
+					logrus.Info("clientIds：", jsonutil.Encode(clientIds))
+					//推送离线消息
+					if len(clientIds) > 0 {
+						//文本消息、转发消息
+						if data.MsgType == 1 || data.MsgType == 3 {
+							s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, data.Content)
+						}
+						//文件消息
+						if data.MsgType == 2 {
+							s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "图文消息")
+						}
+						//红包消息
+						if data.MsgType == 11 {
+							s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "红包消息")
+						}
 					}
-					//红包消息
-					if data.MsgType == 11 {
-						s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "红包消息")
-					}
-				}
-			}()
+				}()
+			}
+
 		}
-
 	}
-
+	logrus.Info("开始推送cids：", jsonutil.Encode(cids))
 	c := im.NewSenderContent()
 	c.SetReceive(cids...)
 	c.SetMessage(&im.Message{
@@ -251,32 +255,31 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 			"data":        data,
 		},
 	})
-
 	im.Session.Default.Write(c)
-	logrus.Info("结束订阅消息：", time.Now().Unix())
+	logrus.Info("结束推送消息：", time.Now().Unix())
 }
 
 //判断目标用户是否在线
-func (s *SubscribeConsume) isOnline(ctx context.Context, receiverId int) bool {
-	sids := s.sidServer.All(ctx, 1)
-	is_online := false
-	for _, sid := range sids {
-		if s.ws.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
-			is_online = true
-		}
-	}
-	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
-	return is_online
-}
+// func (s *SubscribeConsume) isOnline(ctx context.Context, receiverId int) bool {
+// 	sids := s.sidServer.All(ctx, 1)
+// 	is_online := false
+// 	for _, sid := range sids {
+// 		if s.ws.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
+// 			is_online = true
+// 		}
+// 	}
+// 	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
+// 	return is_online
+// }
 
 //推送离线消息
 func (s *SubscribeConsume) pushMessage(ctx context.Context, talkType int, receiverId int, clientIds []string, userName string, groupName, body string) {
 	if talkType == 1 {
-		is_online := s.isOnline(ctx, receiverId)
-		if !is_online {
-			msgId, _ := s.jpushService.PushMessageByCid(clientIds, userName, body)
-			logrus.Info("私聊推送结果：", msgId)
-		}
+		// is_online := s.isOnline(ctx, receiverId)
+		// if !is_online {
+		msgId, _ := s.jpushService.PushMessageByCid(clientIds, userName, body)
+		logrus.Info("私聊推送结果：", msgId)
+		//}
 	}
 	if talkType == 2 {
 		if len(clientIds) > 0 {

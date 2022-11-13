@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -43,6 +44,14 @@ func ReadConfig(filename string) *Config {
 	// 生成服务运行ID
 	conf.sid = encrypt.Md5(fmt.Sprintf("%d%s", time.Now().UnixNano(), strutil.Random(6)))
 
+	return conf
+}
+
+func ParseConfigArg() string {
+	var conf string
+	flag.StringVar(&conf, "config", "./config.yaml", "配置文件路径")
+	flag.StringVar(&conf, "c", "./config.yaml", "配置文件路径")
+	flag.Parse()
 	return conf
 }
 

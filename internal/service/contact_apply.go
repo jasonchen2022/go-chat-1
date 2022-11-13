@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	"go-chat/config"
+	"go-chat/internal/provider"
 	model2 "go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
@@ -60,7 +62,11 @@ func (s *ContactApplyService) Create(ctx context.Context, opts *ContactApplyCrea
 			"type":     1,
 		}),
 	}
-
+	if s.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := s.mq.Channel()
 	if err != nil {

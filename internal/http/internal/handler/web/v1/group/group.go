@@ -15,6 +15,7 @@ import (
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
+	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
@@ -346,7 +347,11 @@ func (c *Group) Setting(ctx *ichat.Context) error {
 			"group_id": params.GroupId,
 		}),
 	})
-
+	if c.mq == nil {
+		conf := config.ReadConfig(config.ParseConfigArg())
+		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
+		log.Println("Failed to open a channel:", "并重新初始化")
+	}
 	// 创建一个Channel
 	channel, err := c.mq.Channel()
 	if err != nil {
