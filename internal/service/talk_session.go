@@ -144,7 +144,7 @@ type TalkSessionDisturbOpt struct {
 // Top 会话是否置顶
 func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, uid int) (*model.TalkSession, error) {
 	talkSession := &model.TalkSession{}
-	if err := s.db.Model(&model.TalkSession{}).Where("id = ? and user_id = ?", groupId, uid).Limit(1).Scan(talkSession).Error; err != nil {
+	if err := s.db.Model(&model.TalkSession{}).Where("receiver_id = ? and user_id = ? and talk_type = 2", groupId, uid).Limit(1).Scan(talkSession).Error; err != nil {
 		return talkSession, err
 	}
 	return talkSession, nil
