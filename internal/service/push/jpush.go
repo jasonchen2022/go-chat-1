@@ -26,8 +26,9 @@ func (p *JpushService) PushMessageByCid(cid []string, title string, body string)
 		Notification: &jpush.Notification{
 			Alert: title,
 			Android: &jpush.AndroidNotification{
-				Alert: body,
-				Title: title,
+				Alert:     body,
+				Title:     title,
+				AlertType: 1,
 			},
 			Ios: &jpush.IosNotification{
 				Alert: map[string]string{

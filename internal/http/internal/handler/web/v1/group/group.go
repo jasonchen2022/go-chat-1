@@ -182,19 +182,18 @@ func (c *Group) CreateJpush(ctx *ichat.Context) error {
 	if err != nil {
 		logrus.Error(err.Error())
 	}
+	logrus.Info("推送结果：", msgId)
 	return ctx.Success(msgId)
 
 }
 
 //判断目标用户是否在线
 func (s *Group) isOnline(ctx *ichat.Context, receiverId int) bool {
-	sids := s.sidServer.All(ctx.Context, 1)
 	is_online := false
-	for _, sid := range sids {
-		if s.ws.IsCurrentServerOnline(ctx.Context, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
-			is_online = true
-		}
+	if s.ws.IsOnline(ctx.Context, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
+		is_online = true
 	}
+
 	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
 	return is_online
 }

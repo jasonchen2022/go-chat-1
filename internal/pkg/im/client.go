@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"go-chat/internal/pkg/jsonutil"
+
 	"github.com/gorilla/websocket"
 	"github.com/tidwall/gjson"
-	"go-chat/internal/pkg/jsonutil"
 )
 
 type IConn struct {

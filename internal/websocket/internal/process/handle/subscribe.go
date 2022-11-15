@@ -210,16 +210,16 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 						}
 					}
 					if msg.TalkType == 2 {
-						//offlineIds := make([]int, 0)
+						offlineIds := make([]int, 0)
 						userIds := s.groupMemberDao.GetMemberIds(data.ReceiverId)
-						// for _, userId := range userIds {
-						// 	is_online := s.isOnline(ctx, userId)
-						// 	if !is_online {
-						// 		offlineIds = append(offlineIds, userId)
-						// 	}
-						// }
-						//clientIds, _ = s.userService.Dao().GetClientIds(offlineIds)
-						clientIds, _ = s.userService.Dao().GetClientIds(userIds)
+						for _, userId := range userIds {
+							is_online := s.isOnline(ctx, userId)
+							if !is_online {
+								offlineIds = append(offlineIds, userId)
+							}
+						}
+						clientIds, _ = s.userService.Dao().GetClientIds(offlineIds)
+						//clientIds, _ = s.userService.Dao().GetClientIds(userIds)
 
 					}
 					logrus.Info("clientIds：", jsonutil.Encode(clientIds))
@@ -260,26 +260,23 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 }
 
 //判断目标用户是否在线
-// func (s *SubscribeConsume) isOnline(ctx context.Context, receiverId int) bool {
-// 	sids := s.sidServer.All(ctx, 1)
-// 	is_online := false
-// 	for _, sid := range sids {
-// 		if s.ws.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
-// 			is_online = true
-// 		}
-// 	}
-// 	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
-// 	return is_online
-// }
+func (s *SubscribeConsume) isOnline(ctx context.Context, receiverId int) bool {
+	is_online := false
+	if s.ws.IsOnline(ctx, entity.ImChannelDefault, strconv.Itoa(receiverId)) {
+		is_online = true
+	}
+	logrus.Info(strconv.Itoa(receiverId), "：用户在线状态：", strconv.FormatBool(is_online))
+	return is_online
+}
 
 //推送离线消息
 func (s *SubscribeConsume) pushMessage(ctx context.Context, talkType int, receiverId int, clientIds []string, userName string, groupName, body string) {
 	if talkType == 1 {
-		// is_online := s.isOnline(ctx, receiverId)
-		// if !is_online {
-		msgId, _ := s.jpushService.PushMessageByCid(clientIds, userName, body)
-		logrus.Info("私聊推送结果：", msgId)
-		//}
+		is_online := s.isOnline(ctx, receiverId)
+		if !is_online {
+			msgId, _ := s.jpushService.PushMessageByCid(clientIds, userName, body)
+			logrus.Info("私聊推送结果：", msgId)
+		}
 	}
 	if talkType == 2 {
 		if len(clientIds) > 0 {

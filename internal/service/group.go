@@ -334,10 +334,19 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 
 	for _, value := range opts.MemberIds {
 		if _, ok := m[value]; !ok {
-			addMembers = append(addMembers, &model.GroupMember{
-				GroupId: opts.GroupId,
-				UserId:  value,
-			})
+			isExit := false
+			for _, member := range talkList {
+				if member.UserId == value {
+					isExit = true
+				}
+			}
+			if !isExit {
+				addMembers = append(addMembers, &model.GroupMember{
+					GroupId: opts.GroupId,
+					UserId:  value,
+				})
+			}
+
 		}
 
 		if item, ok := listHash[value]; !ok {
