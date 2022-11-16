@@ -54,14 +54,14 @@ func (dao *GroupMemberDao) IsMember(gid, uid int, cache bool) bool {
 // GetMemberIds 获取所有群成员用户ID
 func (dao *GroupMemberDao) GetMemberIds(groupId int) []int {
 	ids := make([]int, 0)
-	_ = dao.Db().Exec("select u.id from group_member as m JOIN users as u where m.group_id = ? and m.is_quit = 0 and u.client_id is not null ", groupId).Scan(&ids)
+	_ = dao.Db().Raw("select u.id from group_member as m JOIN users as u on m.user_id=u.id where m.group_id = ? and m.is_quit = 0 and u.client_id is not null", groupId).Scan(&ids)
 	return ids
 }
 
 // GetMemberClientIds 获取所有群成员用户ID
 func (dao *GroupMemberDao) GetMemberClientIds(groupId int) []string {
 	ids := make([]string, 0)
-	_ = dao.Db().Exec("select u.client_id from group_member as m JOIN users as u where m.group_id = ? and m.is_quit = 0 and u.client_id is not null ", groupId).Scan(&ids)
+	_ = dao.Db().Raw("select u.client_id from group_member as m JOIN users as u on m.user_id=u.id where m.group_id = ? and m.is_quit = 0 and u.client_id is not null ", groupId).Scan(&ids)
 	return ids
 }
 

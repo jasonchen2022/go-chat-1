@@ -64,10 +64,11 @@ type TalkRecordsService struct {
 	dao                   *dao.TalkRecordsDao
 	sensitiveMatchService *SensitiveMatchService
 	contactService        *ContactService
+	talkSessionService    *TalkSessionService
 }
 
-func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService, contactService *ContactService) *TalkRecordsService {
-	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService, contactService: contactService}
+func NewTalkRecordsService(baseService *BaseService, talkVoteCache *cache.TalkVote, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, dao *dao.TalkRecordsDao, sensitiveMatchService *SensitiveMatchService, contactService *ContactService, talkSessionService *TalkSessionService) *TalkRecordsService {
+	return &TalkRecordsService{BaseService: baseService, talkVoteCache: talkVoteCache, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, dao: dao, sensitiveMatchService: sensitiveMatchService, contactService: contactService, talkSessionService: talkSessionService}
 }
 
 func (s *TalkRecordsService) Dao() *dao.TalkRecordsDao {
@@ -285,6 +286,10 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 					}
 				}
 			}
+			talkSesstion, err := s.talkSessionService.FindTalkSession(ctx, record.ReceiverId, record.UserId, 2)
+			if err == nil && talkSesstion != nil {
+				record.IsTop = talkSesstion.IsTop
+			}
 		}
 
 	} else {
@@ -292,6 +297,10 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 		remarks, _ := s.contactService.Dao().Remarks(ctx, record.UserId, []int{record.ReceiverId})
 		if len(remarks) > 0 {
 			record.Remarkname = remarks[record.UserId]
+		}
+		talkSesstion, err := s.talkSessionService.FindTalkSession(ctx, record.ReceiverId, record.UserId, 1)
+		if err == nil && talkSesstion != nil {
+			record.IsTop = talkSesstion.IsTop
 		}
 
 	}

@@ -457,7 +457,7 @@ func (c *Group) Detail(ctx *ichat.Context) error {
 	info["members"] = members
 
 	//会话
-	talkSesstion, err := c.talkSessionService.FindTalkSession(ctx.Context, params.GroupId, uid)
+	talkSesstion, err := c.talkSessionService.FindTalkSession(ctx.Context, params.GroupId, uid, 2)
 	if err == nil {
 		info["is_top"] = talkSesstion.IsTop
 		info["is_disturb"] = talkSesstion.IsDisturb

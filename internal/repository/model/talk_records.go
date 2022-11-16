@@ -25,6 +25,7 @@ type QueryTalkRecordsItem struct {
 	UserId           int       `json:"user_id"`
 	ReceiverId       int       `json:"receiver_id"`
 	IsRevoke         int       `json:"is_revoke"`
+	IsTop            int       `json:"is_top"`
 	IsMark           int       `json:"is_mark"`
 	IsRead           int       `json:"is_read"`
 	IsLeader         int       `json:"is_leader"`

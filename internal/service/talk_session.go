@@ -141,10 +141,10 @@ type TalkSessionDisturbOpt struct {
 	IsDisturb  int
 }
 
-// Top 会话是否置顶
-func (s *TalkSessionService) FindTalkSession(ctx context.Context, groupId int, uid int) (*model.TalkSession, error) {
+// Top 查询会话
+func (s *TalkSessionService) FindTalkSession(ctx context.Context, receiverId int, uid int, talkType int) (*model.TalkSession, error) {
 	talkSession := &model.TalkSession{}
-	if err := s.db.Model(&model.TalkSession{}).Where("receiver_id = ? and user_id = ? and talk_type = 2", groupId, uid).Limit(1).Scan(talkSession).Error; err != nil {
+	if err := s.db.Model(&model.TalkSession{}).Where("receiver_id = ? and user_id = ? and talk_type = ?", receiverId, uid, talkType).Limit(1).Scan(talkSession).Error; err != nil {
 		return talkSession, err
 	}
 	return talkSession, nil

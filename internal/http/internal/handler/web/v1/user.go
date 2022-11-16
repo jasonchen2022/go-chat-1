@@ -42,10 +42,11 @@ func (u *User) AppStatus(ctx *ichat.Context) error {
 	}
 	err := u.service.Dao().SetAppStatus(params.UserId, params.ClientId)
 	if err != nil {
-		err := u.talkMessageService.SendOfflineMessage(ctx.Context, &service.SysOfflineMessageOpt{UserId: params.UserId, ClientId: params.ClientId})
-		if err != nil {
-			logrus.Error("单点登录错误：", err.Error())
-		}
+		// err := u.talkMessageService.SendOfflineMessage(ctx.Context, &service.SysOfflineMessageOpt{UserId: params.UserId, ClientId: params.ClientId})
+		// if err != nil {
+		// 	logrus.Error("单点登录错误：", err.Error())
+		// }
+		logrus.Error("绑定用户client_id错误：", err.Error())
 	}
 	return ctx.Success(nil)
 }
