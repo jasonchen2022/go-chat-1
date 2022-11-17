@@ -137,6 +137,7 @@ func (c *Message) Answer(ctx *ichat.Context) error {
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		RecordId:   params.RecordId,
+		Text:       params.Text,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
