@@ -57,6 +57,8 @@ type TalkRecordsItem struct {
 	OldAvatar         string      `json:"old_avatar"`
 	OldUserName       string      `json:"old_username"`
 	OldContent        string      `json:"old_content,omitempty"`
+	RecordId          int         `json:"record_id"`
+	Answer            interface{} `json:"answer,omitempty"`
 }
 
 type TalkRecordsService struct {
@@ -116,6 +118,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"talk_records.old_content",
 			"talk_records.old_avatar",
 			"talk_records.old_user_name",
+			"talk_records.record_id",
 		}
 	)
 
@@ -248,6 +251,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"talk_records.old_content",
 			"talk_records.old_avatar",
 			"talk_records.old_user_name",
+			"talk_records.record_id",
 		}
 	)
 
@@ -745,6 +749,8 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 					data.ReceiverNickname = u_item.Nickname
 				}
 			}
+		case entity.MsgTypeAnswerText:
+			data.Answer, _ = s.GetTalkRecord(ctx, int64(item.RecordId))
 		}
 
 		newItems = append(newItems, data)

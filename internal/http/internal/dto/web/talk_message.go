@@ -55,12 +55,9 @@ type EmoticonMessageRequest struct {
 }
 
 type AnswerMessageRequest struct {
-	TalkType    int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
-	ReceiverId  int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
-	OldAvatar   string `form:"old_avatar" json:"old_avatar" binding:"required" label:"old_avatar"`
-	OldContent  string `form:"old_content" json:"old_content" binding:"required" label:"old_content"`
-	OldUserName string `form:"old_username" json:"old_username" binding:"required" label:"old_username"`
-	NewContent  string `form:"new_content" json:"new_content" binding:"required" label:"new_content"`
+	TalkType   int `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId int `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	RecordId   int `form:"record_id" json:"record_id" binding:"required" label:"record_id"`
 }
 
 type ForwardMessageRequest struct {

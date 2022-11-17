@@ -149,13 +149,14 @@ type TextMessageOpt struct {
 }
 
 type AnswerTextMessageOpt struct {
-	UserId      int
-	TalkType    int
-	ReceiverId  int
-	OldAvatar   string
-	OldText     string
-	OldUserName string
-	NewText     string
+	UserId     int
+	TalkType   int
+	ReceiverId int
+	RecordId   int
+	// OldAvatar   string
+	// OldText     string
+	// OldUserName string
+	// NewText     string
 }
 
 // SendTextMessage 发送文本消息
@@ -199,14 +200,11 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 // SendTextMessage 发送文本消息
 func (s *TalkMessageService) SendAnswerTextMessage(ctx context.Context, opts *AnswerTextMessageOpt) (int, error) {
 	record := &model.TalkRecords{
-		TalkType:    opts.TalkType,
-		MsgType:     entity.MsgTypeAnswerText,
-		UserId:      opts.UserId,
-		ReceiverId:  opts.ReceiverId,
-		Content:     opts.NewText,
-		OldContent:  opts.OldText,
-		OldAvatar:   opts.OldAvatar,
-		OldUserName: opts.OldUserName,
+		TalkType:   opts.TalkType,
+		MsgType:    entity.MsgTypeAnswerText,
+		UserId:     opts.UserId,
+		ReceiverId: opts.ReceiverId,
+		RecordId:   opts.RecordId,
 	}
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
@@ -231,10 +229,7 @@ func (s *TalkMessageService) SendAnswerTextMessage(ctx context.Context, opts *An
 		return 0, err
 	}
 	s.afterHandle(ctx, record, map[string]string{
-		"new_text": strutil.MtSubstr(record.Content, 0, 30),
-		"old_text": strutil.MtSubstr(record.OldContent, 0, 30),
-		"avatar":   strutil.MtSubstr(record.OldAvatar, 0, 30),
-		"username": strutil.MtSubstr(record.OldUserName, 0, 30),
+		"text": strutil.MtSubstr(record.Content, 0, 30),
 	})
 
 	return record.Id, nil
@@ -953,12 +948,10 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	if record.MsgType != 0 && record.MsgType != 8 && record.MsgType != 9 {
 		///
 		_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
-			Content:     opts["new_text"],
-			OldContent:  opts["old_text"],
-			OldAvatar:   opts["avatar"],
-			OldUserName: opts["username"],
-			Datetime:    timeutil.DateTime(),
-			MsgType:     record.MsgType,
+			Content:  opts["text"],
+			Datetime: timeutil.DateTime(),
+			MsgType:  record.MsgType,
+			RecordId: record.RecordId,
 		})
 	}
 	content := jsonutil.Encode(map[string]interface{}{

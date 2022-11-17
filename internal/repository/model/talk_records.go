@@ -19,6 +19,7 @@ type TalkRecords struct {
 	OldUserName string    `gorm:"column:old_user_name" json:"old_user_name"`                // 旧用户名称 （回复）
 	OldAvatar   string    `gorm:"column:old_avatar" json:"old_avatar"`                      // 旧头像 （回复）
 	OldContent  string    `gorm:"column:old_content" json:"old_content"`                    // 旧文本消息 （回复）
+	RecordId    int       `gorm:"column:record_id;default:0;NOT NULL" json:"record_id"`     // 回复记录id
 }
 
 type QueryTalkRecordsItem struct {
@@ -52,6 +53,7 @@ type QueryTalkRecordsItem struct {
 	OldAvatar        string    `json:"old_avatar"`    // 旧头像 （回复）
 	OldContent       string    `json:"old_content"`   // 旧文本消息 （回复）
 	OldUserName      string    `json:"old_user_name"` // 旧用户名称 （回复）
+	RecordId         int       `json:"record_id"`     // 回复记录id
 }
 
 type QueryGroupMemberItem struct {

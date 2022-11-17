@@ -22,6 +22,7 @@ type LastCacheMessage struct {
 	OldUserName string `json:"old_username"`
 	Datetime    string `json:"datetime"`
 	MsgType     int    `json:"msg_type"`
+	RecordId    int    `json:"record_id"`
 }
 
 func NewMessageStorage(rds *redis.Client) *MessageStorage {
