@@ -153,6 +153,7 @@ type AnswerTextMessageOpt struct {
 	TalkType   int
 	ReceiverId int
 	RecordId   int
+	Text       string
 	// OldAvatar   string
 	// OldText     string
 	// OldUserName string
@@ -205,6 +206,7 @@ func (s *TalkMessageService) SendAnswerTextMessage(ctx context.Context, opts *An
 		UserId:     opts.UserId,
 		ReceiverId: opts.ReceiverId,
 		RecordId:   opts.RecordId,
+		Content:    opts.Text,
 	}
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
