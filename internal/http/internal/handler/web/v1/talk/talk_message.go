@@ -138,7 +138,7 @@ func (c *Message) Answer(ctx *ichat.Context) error {
 		ReceiverId:  params.ReceiverId,
 		NewText:     params.NewContent,
 		OldText:     params.OldContent,
-		OldAvatar:   params.Avatar,
+		OldAvatar:   params.OldAvatar,
 		OldUserName: params.OldUserName,
 	})
 	if err != nil {
