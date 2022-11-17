@@ -54,6 +54,15 @@ type EmoticonMessageRequest struct {
 	EmoticonId int `form:"emoticon_id" json:"emoticon_id" binding:"required,numeric,gt=0"`
 }
 
+type AnswerMessageRequest struct {
+	TalkType    int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId  int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	Avatar      string `form:"avatar" json:"avatar" binding:"required"`
+	OldContent  string `form:"old_content" json:"old_content" binding:"required"`
+	OldUserName string `form:"old_username" json:"old_username" binding:"required"`
+	NewContent  string `form:"new_content" json:"new_content" binding:"required"`
+}
+
 type ForwardMessageRequest struct {
 	TalkType        int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
 	ReceiverId      int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`

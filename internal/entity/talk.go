@@ -35,4 +35,5 @@ const (
 	MsgTypeLocation      = 10 // 位置消息
 	MsgTypeRedPackets    = 11 // 红包
 	MsgTypeSysRedPackets = 12 // 领取红包提示消息
+	MsgTypeAnswerText    = 13 // 回复消息
 )

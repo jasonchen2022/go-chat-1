@@ -148,6 +148,16 @@ type TextMessageOpt struct {
 	Text       string
 }
 
+type AnswerTextMessageOpt struct {
+	UserId      int
+	TalkType    int
+	ReceiverId  int
+	OldAvatar   string
+	OldText     string
+	OldUserName string
+	NewText     string
+}
+
 // SendTextMessage 发送文本消息
 func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMessageOpt) (int, error) {
 	record := &model.TalkRecords{
@@ -181,6 +191,50 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 	}
 	s.afterHandle(ctx, record, map[string]string{
 		"text": strutil.MtSubstr(record.Content, 0, 30),
+	})
+
+	return record.Id, nil
+}
+
+// SendTextMessage 发送文本消息
+func (s *TalkMessageService) SendAnswerTextMessage(ctx context.Context, opts *AnswerTextMessageOpt) (int, error) {
+	record := &model.TalkRecords{
+		TalkType:    opts.TalkType,
+		MsgType:     entity.MsgTypeAnswerText,
+		UserId:      opts.UserId,
+		ReceiverId:  opts.ReceiverId,
+		Content:     opts.NewText,
+		OldContent:  opts.OldText,
+		OldAvatar:   opts.OldAvatar,
+		OldUserName: opts.OldUserName,
+	}
+	//校验权限
+	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
+	if c != nil {
+		return 0, c
+	}
+	if record.Content != "" {
+		//检测敏感词
+		member_type := s.contactDao.GetMemberType(ctx, opts.UserId)
+		//游客或普通会员不能发送敏感消息
+		if member_type <= 0 {
+			senService := s.sensitiveMatchService.GetService()
+			_, content := senService.Match(record.Content, '*')
+			if content != "" {
+				record.Content = content
+			}
+
+		}
+	}
+
+	if err := s.db.Create(record).Error; err != nil {
+		return 0, err
+	}
+	s.afterHandle(ctx, record, map[string]string{
+		"new_text": strutil.MtSubstr(record.Content, 0, 30),
+		"old_text": strutil.MtSubstr(record.OldContent, 0, 30),
+		"avatar":   strutil.MtSubstr(record.OldAvatar, 0, 30),
+		"username": strutil.MtSubstr(record.OldUserName, 0, 30),
 	})
 
 	return record.Id, nil
@@ -897,10 +951,14 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 
 	}
 	if record.MsgType != 0 && record.MsgType != 8 && record.MsgType != 9 {
+		///
 		_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
-			Content:  opts["text"],
-			Datetime: timeutil.DateTime(),
-			MsgType:  record.MsgType,
+			Content:     opts["new_text"],
+			OldContent:  opts["old_text"],
+			OldAvatar:   opts["avatar"],
+			OldUserName: opts["username"],
+			Datetime:    timeutil.DateTime(),
+			MsgType:     record.MsgType,
 		})
 	}
 	content := jsonutil.Encode(map[string]interface{}{

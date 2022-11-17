@@ -117,6 +117,36 @@ func (c *Message) Text(ctx *ichat.Context) error {
 	return ctx.Success(id)
 }
 
+//回复
+func (c *Message) Answer(ctx *ichat.Context) error {
+	params := &web.AnswerMessageRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+	uid := ctx.UserId()
+	if err := c.authority(ctx, &AuthorityOpts{
+		TalkType:   params.TalkType,
+		UserId:     uid,
+		ReceiverId: params.ReceiverId,
+	}); err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+
+	id, err := c.service.SendAnswerTextMessage(ctx.RequestCtx(), &service.AnswerTextMessageOpt{
+		UserId:      uid,
+		TalkType:    params.TalkType,
+		ReceiverId:  params.ReceiverId,
+		NewText:     params.NewContent,
+		OldText:     params.OldContent,
+		OldAvatar:   params.Avatar,
+		OldUserName: params.OldUserName,
+	})
+	if err != nil {
+		return ctx.BusinessError(err.Error())
+	}
+	return ctx.Success(id)
+}
+
 // SysMsg 发送系统消息
 func (c *Message) SysMsg(ctx *ichat.Context) error {
 

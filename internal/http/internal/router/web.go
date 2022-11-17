@@ -161,6 +161,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			talkMsg.POST("/delete", ichat.HandlerFunc(handler.V1.TalkMessage.Delete))                     // 删除聊天消息
 			talkMsg.POST("/vote", ichat.HandlerFunc(handler.V1.TalkMessage.Vote))                         // 发送投票消息
 			talkMsg.POST("/vote/handle", ichat.HandlerFunc(handler.V1.TalkMessage.HandleVote))            // 投票消息处理
+			talkMsg.POST("/answer", ichat.HandlerFunc(handler.V1.TalkMessage.Answer))
 		}
 
 		emoticon := v1.Group("/emoticon").Use(authorize)
