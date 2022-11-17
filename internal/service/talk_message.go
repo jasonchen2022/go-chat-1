@@ -679,7 +679,7 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 			return errors.New("无权撤回消息")
 		}
 		flag := s.IsLeader(record.UserId)
-		if !flag {
+		if flag == false {
 			//时间限制
 			if time.Now().Unix() > record.CreatedAt.Add(5*time.Minute).Unix() {
 				return errors.New("超出有效撤回时间范围，无法进行撤销")
