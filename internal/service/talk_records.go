@@ -54,9 +54,6 @@ type TalkRecordsItem struct {
 	RedPacketsStadus  int         `json:"red_packets_stadus"`
 	RedPacketsRemarks string      `json:"red_packets_remarks"`
 	ReceiverNickname  string      `json:"receiver_nickname"`
-	OldAvatar         string      `json:"old_avatar"`
-	OldUserName       string      `json:"old_username"`
-	OldContent        string      `json:"old_content,omitempty"`
 	RecordId          int         `json:"record_id"`
 	Answer            interface{} `json:"answer,omitempty"`
 }
@@ -115,9 +112,6 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"users.type as member_type",
 			"users.is_mute",
 			"0 as is_leader",
-			"talk_records.old_content",
-			"talk_records.old_avatar",
-			"talk_records.old_user_name",
 			"talk_records.record_id",
 		}
 	)
@@ -248,9 +242,6 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"users.type as member_type",
 			"users.is_mute",
 			"0 as is_leader",
-			"talk_records.old_content",
-			"talk_records.old_avatar",
-			"talk_records.old_user_name",
 			"talk_records.record_id",
 		}
 	)
@@ -562,9 +553,6 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			GroupName:        item.GroupName,
 			GroupAvatar:      item.GroupAvatar,
 			GroupType:        item.GroupType,
-			OldAvatar:        item.OldAvatar,
-			OldContent:       item.OldContent,
-			OldUserName:      item.OldUserName,
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')
