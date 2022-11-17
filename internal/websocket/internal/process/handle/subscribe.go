@@ -362,6 +362,7 @@ func (s *SubscribeConsume) onConsumeTalkRevoke(body string) {
 		}
 		record *model.TalkRecords
 		ctx    = context.Background()
+		// user *model.Users
 	)
 
 	if err := jsonutil.Decode(body, &msg); err != nil {
@@ -372,6 +373,10 @@ func (s *SubscribeConsume) onConsumeTalkRevoke(body string) {
 	if err := s.recordsService.Db().First(&record, msg.RecordId).Error; err != nil {
 		return
 	}
+
+	// if err := s.recordsService.Db().Table("users").First(&user, record.UserId).Error; err != nil {
+	// 	return
+	// }
 
 	cids := make([]int64, 0)
 	if record.TalkType == entity.ChatPrivateMode {
@@ -401,6 +406,7 @@ func (s *SubscribeConsume) onConsumeTalkRevoke(body string) {
 			"sender_id":   record.UserId,
 			"receiver_id": record.ReceiverId,
 			"record_id":   record.Id,
+			// "sender_user_name":user.Nickname,
 		},
 	})
 
