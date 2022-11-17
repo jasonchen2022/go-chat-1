@@ -31,7 +31,11 @@ func (dao *UsersDao) Create(user *model.Users) (*model.Users, error) {
 func (dao *UsersDao) SetAppStatus(uid int, client_id string) error {
 	_client_id, _ := dao.GetClientId(uid)
 	if client_id != _client_id {
-		err := dao.db.Model(&model.Users{}).Where("id = ?", uid).Update("client_id", client_id).Error
+		err := dao.db.Model(&model.Users{}).Where("client_id = ?", client_id).Update("client_id", nil).Error
+		if err != nil {
+			logrus.Info("触发单点登录：", client_id)
+		}
+		err = dao.db.Model(&model.Users{}).Where("id = ?", uid).Update("client_id", client_id).Error
 		//如果两个ID不相同，则触发单点登录
 		if err == nil && _client_id != "" {
 			logrus.Info("触发单点登录：", client_id)
@@ -73,7 +77,7 @@ func (dao *UsersDao) GetAppStatus(clientId string) (int, error) {
 // GetClientId ID查询
 func (dao *UsersDao) GetClientId(userId int) (string, error) {
 	var clientId string
-	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Select("client_id").Limit(1).Scan(&clientId).Error; err != nil {
+	if err := dao.Db().Table("users").Where(&model.Users{Id: userId}).Where("client_id is not null").Select("client_id").Limit(1).Scan(&clientId).Error; err != nil {
 		return "", err
 	}
 	return clientId, nil
@@ -82,7 +86,8 @@ func (dao *UsersDao) GetClientId(userId int) (string, error) {
 // GetClientId ID查询
 func (dao *UsersDao) GetUserIdByClientId(client_id string) (int, error) {
 	var userId int
-	if err := dao.Db().Table("users").Where("client_id = ?", client_id, 1).Select("id").Limit(1).Scan(&userId).Error; err != nil {
+	if err := dao.Db().Table("users").Where("client_id = ?", client_id).Select("id").Limit(1).Scan(&userId).Error; err != nil {
+		logrus.Error("GetUserIdByClientId：", err.Error())
 		return 0, err
 	}
 	return userId, nil
