@@ -133,13 +133,10 @@ func (c *Message) Answer(ctx *ichat.Context) error {
 	}
 
 	id, err := c.service.SendAnswerTextMessage(ctx.RequestCtx(), &service.AnswerTextMessageOpt{
-		UserId:      uid,
-		TalkType:    params.TalkType,
-		ReceiverId:  params.ReceiverId,
-		NewText:     params.NewContent,
-		OldText:     params.OldContent,
-		OldAvatar:   params.OldAvatar,
-		OldUserName: params.OldUserName,
+		UserId:     uid,
+		TalkType:   params.TalkType,
+		ReceiverId: params.ReceiverId,
+		RecordId:   params.RecordId,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
