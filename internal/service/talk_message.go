@@ -326,6 +326,7 @@ type ImageMessageOpt struct {
 	ReceiverId int
 	File       *multipart.FileHeader
 	ImageUrl   string
+	RecordId   int
 }
 
 // SendImageMessage 发送图片消息
@@ -337,6 +338,7 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			MsgType:    entity.MsgTypeFile,
 			UserId:     opts.UserId,
 			ReceiverId: opts.ReceiverId,
+			RecordId:   opts.RecordId,
 		}
 	)
 	filePath := ""

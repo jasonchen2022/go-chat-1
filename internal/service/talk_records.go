@@ -553,6 +553,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			GroupName:        item.GroupName,
 			GroupAvatar:      item.GroupAvatar,
 			GroupType:        item.GroupType,
+			RecordId:         item.RecordId,
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')
@@ -566,6 +567,10 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 				data.File = value
 			} else {
 				logger.Warnf("文件消息信息不存在[%d]", item.Id)
+			}
+			//回复信息处理
+			if item.RecordId > 0 {
+				data.Answer, _ = s.GetTalkRecord(ctx, int64(item.RecordId))
 			}
 		case entity.MsgTypeForward:
 			if value, ok := hashForwards[item.Id]; ok {
