@@ -501,7 +501,7 @@ func (s *SubscribeConsume) onConsumeTalkJoinGroup(body string) {
 	}
 }
 
-// onConsumeTalkRead 消息已读事件
+//onConsumeTalkRead 消息已读事件
 // func (s *SubscribeConsume) onConsumeTalkRead(body string) {
 // 	var (
 // 		ctx  = context.Background()

@@ -127,6 +127,12 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 				}
 			})
 		}
+
+		work.Wait()
+	}()
+
+	go func() {
+		work := worker.NewWorker(10, 10)
 		for d := range msgsPrivate {
 			work.Do(func() {
 				result := *(*string)(unsafe.Pointer(&d.Body))
