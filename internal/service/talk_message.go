@@ -1053,6 +1053,7 @@ func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
 
 func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, content string) {
 
+	//s.SendAll(channel, content)
 	gateway := entity.GetIMGatewayPrivate(sid)
 	// 声明一个queue
 	if _, err := channel.QueueDeclare(
