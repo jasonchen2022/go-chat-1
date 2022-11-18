@@ -113,7 +113,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 	}
 
 	go func() {
-		work := worker.NewWorker(10, 10)
+		work := worker.NewWorker(20, 20)
 
 		for d := range msgsGroup {
 			work.Do(func() {
