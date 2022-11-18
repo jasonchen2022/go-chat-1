@@ -115,6 +115,7 @@ func RegisterWebRoute(secret string, router *gin.Engine, handler *web.Handler, s
 			userGroup.GET("/member/invites", ichat.HandlerFunc(handler.V1.Group.GetInviteFriends)) // 群成员列表
 			userGroup.POST("/member/remove", ichat.HandlerFunc(handler.V1.Group.RemoveMembers))    // 移出指定群成员
 			userGroup.POST("/member/remark", ichat.HandlerFunc(handler.V1.Group.EditRemark))       // 设置群名片
+			userGroup.GET("/member/detail", ichat.HandlerFunc(handler.V1.Group.MemberDetail))      // 群成员详情
 
 			// 群公告相关
 			userGroup.GET("/notice/list", ichat.HandlerFunc(handler.V1.GroupNotice.List))             // 群公告列表

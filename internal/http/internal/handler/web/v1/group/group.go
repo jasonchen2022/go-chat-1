@@ -540,6 +540,20 @@ func (c *Group) Members(ctx *ichat.Context) error {
 	return ctx.Success(c.groupMemberService.Dao().GetMembers(params.GroupId))
 }
 
+func (c *Group) MemberDetail(ctx *ichat.Context) error {
+
+	params := &web.GroupMemberRequest{}
+	if err := ctx.Context.ShouldBind(params); err != nil {
+		return ctx.InvalidParams(err)
+	}
+
+	if !c.groupMemberService.Dao().IsMember(params.GroupId, ctx.UserId(), false) {
+		return ctx.BusinessError("非群成员")
+	}
+
+	return ctx.Success(c.groupMemberService.Dao().GetMemberDetail(params.GroupId, params.UserId))
+}
+
 // OvertList 公开群列表
 func (c *Group) OvertList(ctx *ichat.Context) error {
 
@@ -673,6 +687,7 @@ func (c *Group) NoSpeak(ctx *ichat.Context) error {
 	}
 
 	status := 1
+	//1 禁言  2  解禁
 	if params.Mode == 2 {
 		status = 0
 	}

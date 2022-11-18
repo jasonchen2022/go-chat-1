@@ -117,6 +117,25 @@ func (dao *GroupMemberDao) GetMembers(groupId int) []*model.MemberItem {
 	return items
 }
 
+func (dao *GroupMemberDao) GetMemberDetail(groupId int, userId int) *model.MemberItem {
+	fields := []string{
+		"group_member.id",
+		"group_member.leader",
+		"group_member.user_card",
+		"group_member.user_id",
+		"group_member.is_mute",
+	}
+
+	tx := dao.Db().Table("group_member")
+	tx.Where("group_member.group_id = ?  and group_member.user_id=?", groupId, userId)
+	tx.Order("group_member.leader desc")
+
+	items := make([]*model.MemberItem, 0)
+	tx.Unscoped().Select(fields).Scan(&items)
+
+	return items[0]
+}
+
 type CountGroupMember struct {
 	GroupId int `gorm:"column:group_id;"`
 	Count   int `gorm:"column:count;"`

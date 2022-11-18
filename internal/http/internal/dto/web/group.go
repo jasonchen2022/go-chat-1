@@ -3,6 +3,10 @@ package web
 type GroupCommonRequest struct {
 	GroupId int `form:"group_id" json:"group_id" binding:"required"`
 }
+type GroupMemberRequest struct {
+	GroupId int `form:"group_id" json:"group_id" binding:"required"`
+	UserId  int `form:"user_id" json:"user_id" binding:"required"`
+}
 
 type GroupCreateRequest struct {
 	Name       string `form:"name" json:"name" binding:"required" label:"name"`
