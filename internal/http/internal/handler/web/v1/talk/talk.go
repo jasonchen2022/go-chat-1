@@ -2,11 +2,9 @@ package talk
 
 import (
 	"fmt"
-	"strings"
 
 	"go-chat/internal/entity"
 	"go-chat/internal/http/internal/dto/web"
-	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/timeutil"
 	"go-chat/internal/repository/cache"
@@ -111,24 +109,14 @@ func (c *Talk) Create(ctx *ichat.Context) error {
 	var (
 		params = &web.CreateTalkRequest{}
 		uid    = ctx.UserId()
-		agent  = strings.TrimSpace(ctx.Context.GetHeader("user-agent"))
 	)
 
 	if err := ctx.Context.ShouldBind(params); err != nil {
 		return ctx.InvalidParams(err)
 	}
 
-	if agent != "" {
-		agent = encrypt.Md5(agent)
-	}
-
 	// 判断对方是否是自己
 	if params.TalkType == entity.ChatPrivateMode && params.ReceiverId == ctx.UserId() {
-		return ctx.BusinessError("创建失败")
-	}
-
-	key := fmt.Sprintf("talk:list:%d-%d-%d-%s", uid, params.ReceiverId, params.TalkType, agent)
-	if !c.redisLock.Lock(ctx.RequestCtx(), key, 10) {
 		return ctx.BusinessError("创建失败")
 	}
 

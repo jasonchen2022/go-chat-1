@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -11,17 +9,13 @@ import (
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/im"
-	"go-chat/internal/pkg/jsonutil"
 	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
-	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
-	"go-chat/internal/websocket/internal/dto"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"github.com/tidwall/gjson"
 )
 
 type DefaultWebSocket struct {
@@ -100,72 +94,72 @@ func (c *DefaultWebSocket) open(client im.IClient) {
 // 消息接收回调事件
 func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, message []byte) {
 
-	content := string(message)
+	// content := string(message)
 
-	event := gjson.Get(content, "event").String()
+	// event := gjson.Get(content, "event").String()
 
-	// 创建一个Channel
+	// // 创建一个Channel
 	if c.mq == nil {
 		conf := config.ReadConfig(config.ParseConfigArg())
 		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
 		log.Println("Failed to open a channel:", "并重新初始化")
 	}
-	channel, err := c.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
+	// channel, err := c.mq.Channel()
+	// if err != nil {
+	// 	log.Println("Failed to open a channel:", err.Error())
 
-	}
-	defer channel.Close()
+	// }
+	// defer channel.Close()
 
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		c.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
+	// // 声明exchange
+	// if err := channel.ExchangeDeclare(
+	// 	c.config.RabbitMQ.ExchangeName, //name
+	// 	"fanout",                       //exchangeType
+	// 	true,                           //durable
+	// 	false,                          //auto-deleted
+	// 	false,                          //internal
+	// 	false,                          //noWait
+	// 	nil,                            //arguments
+	// ); err != nil {
+	// 	log.Println("Failed to declare a exchange:", err.Error())
+	// }
 
-	switch event {
+	// switch event {
 
-	// 对话键盘事件
-	case entity.EventTalkKeyboard:
-		var m *dto.KeyboardMessage
-		if err := json.Unmarshal(message, &m); err == nil {
-			body := entity.MapStrAny{
-				"event": entity.EventTalkKeyboard,
-				"data": jsonutil.Encode(entity.MapStrAny{
-					"sender_id":   m.Data.SenderID,
-					"receiver_id": m.Data.ReceiverID,
-				}),
-			}
-			c.talkMessage.SendAll(channel, jsonutil.Encode(body))
-		}
+	// // 对话键盘事件
+	// case entity.EventTalkKeyboard:
+	// 	var m *dto.KeyboardMessage
+	// 	if err := json.Unmarshal(message, &m); err == nil {
+	// 		body := entity.MapStrAny{
+	// 			"event": entity.EventTalkKeyboard,
+	// 			"data": jsonutil.Encode(entity.MapStrAny{
+	// 				"sender_id":   m.Data.SenderID,
+	// 				"receiver_id": m.Data.ReceiverID,
+	// 			}),
+	// 		}
+	// 		c.talkMessage.SendAll(channel, jsonutil.Encode(body))
+	// 	}
 
-	// 对话消息读事件
-	case entity.EventTalkRead:
-		var m *dto.TalkReadMessage
-		if err := json.Unmarshal(message, &m); err == nil {
-			c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
+	// // 对话消息读事件
+	// case entity.EventTalkRead:
+	// 	var m *dto.TalkReadMessage
+	// 	if err := json.Unmarshal(message, &m); err == nil {
+	// 		c.groupMemberService.Db().Model(&model.TalkRecords{}).Where("id in ? and receiver_id = ? and is_read = 0", m.Data.MsgIds, client.ClientUid()).Update("is_read", 1)
 
-			body := entity.MapStrAny{
-				"event": entity.EventTalkRead,
-				"data": jsonutil.Encode(entity.MapStrAny{
-					"sender_id":   client.ClientUid(),
-					"receiver_id": m.Data.ReceiverId,
-					"ids":         m.Data.MsgIds,
-				}),
-			}
+	// 		body := entity.MapStrAny{
+	// 			"event": entity.EventTalkRead,
+	// 			"data": jsonutil.Encode(entity.MapStrAny{
+	// 				"sender_id":   client.ClientUid(),
+	// 				"receiver_id": m.Data.ReceiverId,
+	// 				"ids":         m.Data.MsgIds,
+	// 			}),
+	// 		}
 
-			c.talkMessage.SendAll(channel, jsonutil.Encode(body))
-		}
-	default:
-		fmt.Printf("消息事件未定义%s", event)
-	}
+	// 		c.talkMessage.SendAll(channel, jsonutil.Encode(body))
+	// 	}
+	// default:
+	// 	fmt.Printf("消息事件未定义%s", event)
+	// }
 }
 
 // 客户端关闭回调事件

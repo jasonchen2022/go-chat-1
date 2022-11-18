@@ -978,7 +978,6 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 
 	}
 	defer channel.Close()
-
 	// 声明exchange
 	if err := channel.ExchangeDeclare(
 		s.config.RabbitMQ.ExchangeName, //name
