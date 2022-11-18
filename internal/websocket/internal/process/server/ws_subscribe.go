@@ -111,7 +111,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		log.Println("Failed to open a channel:", err.Error())
 		return err
 	}
-
+	forever := make(chan bool)
 	go func() {
 		work := worker.NewWorker(20, 20)
 
@@ -149,7 +149,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		work.Wait()
 	}()
 
-	<-ctx.Done()
+	<-forever
 
 	return nil
 }

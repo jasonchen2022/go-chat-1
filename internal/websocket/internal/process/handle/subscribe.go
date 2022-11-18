@@ -197,11 +197,12 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	}
 
 	if s.conf.GetEnv() == "alone" {
-		//异步推送 文本消息、转发消息、文件消息、红包消息
-		if data.MsgType == 1 || data.MsgType == 2 || data.MsgType == 3 || data.MsgType == 11 {
-			//判断当前会话是否免打扰
-			if !s.talkSessionService.Dao().IsDisturb(data.UserId, data.ReceiverId, data.TalkType) {
-				go func() {
+		go func() {
+			//异步推送 文本消息、转发消息、文件消息、红包消息
+			if data.MsgType == 1 || data.MsgType == 2 || data.MsgType == 3 || data.MsgType == 11 {
+				//判断当前会话是否免打扰
+				if !s.talkSessionService.Dao().IsDisturb(data.UserId, data.ReceiverId, data.TalkType) {
+
 					clientIds := make([]string, 0)
 					if msg.TalkType == 1 {
 						clientId, _ := s.userService.Dao().GetClientId(data.ReceiverId)
@@ -238,10 +239,11 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 							s.pushMessage(ctx, msg.TalkType, data.ReceiverId, clientIds, data.Nickname, data.GroupName, "红包消息")
 						}
 					}
-				}()
-			}
 
-		}
+				}
+
+			}
+		}()
 	}
 	logrus.Info("开始推送cids：", jsonutil.Encode(cids))
 	c := im.NewSenderContent()
