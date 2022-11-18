@@ -148,22 +148,26 @@ func (c *Group) CreateChat(ctx *ichat.Context) error {
 
 		}
 	}
+	//判断群是否已经存在
+	info := c.service.IsHasGroup(ctx.RequestCtx(), params.Name)
+	if info == nil {
+		gid, err := c.service.Create(ctx.RequestCtx(), &model.CreateGroupOpts{
+			UserId:    params.AnchorId,
+			Name:      params.Name,
+			Profile:   params.Profile,
+			Type:      3, //默认聊天室
+			MemberIds: userIds,
+		})
+		if err != nil {
+			fmt.Printf("创建聊天室出错：%s", err.Error())
+			return ctx.BusinessError("创建群聊失败，请稍后再试")
+		}
 
-	gid, err := c.service.Create(ctx.RequestCtx(), &model.CreateGroupOpts{
-		UserId:    params.AnchorId,
-		Name:      params.Name,
-		Profile:   params.Profile,
-		Type:      3, //默认聊天室
-		MemberIds: userIds,
-	})
-	if err != nil {
-		fmt.Printf("创建聊天室出错：%s", err.Error())
-		return ctx.BusinessError("创建群聊失败，请稍后再试")
+		return ctx.Success(entity.H{
+			"group_id": gid,
+		})
 	}
-
-	return ctx.Success(entity.H{
-		"group_id": gid,
-	})
+	return ctx.Success(entity.H{})
 }
 
 //推送测试

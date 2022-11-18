@@ -148,6 +148,17 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 	return group.Id, err
 }
 
+func (s *GroupService) IsHasGroup(ctx context.Context, groupName string) *model.Group {
+
+	info := &model.Group{}
+	if err := s.db.Where("group_name = ?", groupName).First(info).Error; err != nil {
+		return nil
+	}
+
+	return info
+
+}
+
 // Update 更新群信息
 func (s *GroupService) Update(ctx context.Context, opts *model.UpdateGroupOpt) error {
 	if opts.Name != "" {
