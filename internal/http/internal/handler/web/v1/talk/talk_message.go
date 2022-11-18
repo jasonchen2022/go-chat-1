@@ -294,6 +294,7 @@ func (c *Message) Image(ctx *ichat.Context) error {
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		File:       file,
+		RecordId:   params.RecordId,
 	})
 
 	if err != nil {
