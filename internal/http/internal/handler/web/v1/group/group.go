@@ -149,8 +149,8 @@ func (c *Group) CreateChat(ctx *ichat.Context) error {
 		}
 	}
 	//判断群是否已经存在
-	info := c.service.IsHasGroup(ctx.RequestCtx(), params.Name)
-	if info == nil {
+	isHas := c.service.IsHasGroup(ctx.RequestCtx(), params.Name)
+	if !isHas {
 		gid, err := c.service.Create(ctx.RequestCtx(), &model.CreateGroupOpts{
 			UserId:    params.AnchorId,
 			Name:      params.Name,

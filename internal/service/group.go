@@ -148,14 +148,17 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 	return group.Id, err
 }
 
-func (s *GroupService) IsHasGroup(ctx context.Context, groupName string) *model.Group {
+func (s *GroupService) IsHasGroup(ctx context.Context, groupName string) bool {
 
-	info := &model.Group{}
-	if err := s.db.Where("group_name = ?", groupName).First(info).Error; err != nil {
-		return nil
-	}
+	// info := &model.Group{}
+	// if err := s.db.Where("group_name = ?", groupName).First(info).Error; err != nil {
+	// 	return nil
+	// }
+	// return info
 
-	return info
+	var id int
+	s.db.Table("group").Where("group_name = ?", groupName).Select([]string{"id"}).Limit(1).Scan(&id)
+	return id > 0
 
 }
 
