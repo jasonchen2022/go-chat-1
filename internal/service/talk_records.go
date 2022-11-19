@@ -743,7 +743,9 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 				}
 			}
 		case entity.MsgTypeAnswerText:
-			data.Answer, _ = s.GetTalkRecord(ctx, int64(item.RecordId))
+			if item.RecordId > 0 {
+				data.Answer, _ = s.GetTalkRecord(ctx, int64(item.RecordId))
+			}
 		}
 
 		newItems = append(newItems, data)
