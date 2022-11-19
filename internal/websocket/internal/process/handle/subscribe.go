@@ -196,6 +196,12 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 		return
 	}
 
+	alreadySend := s.GetTalkRecordSend(ctx, int(msg.RecordID), int(msg.SenderID), int(msg.ReceiverID))
+	if alreadySend == 1 {
+		logrus.Error("[GetTalkRecordSend] 重复发送", jsonutil.Encode(msg))
+		return
+	}
+
 	if s.conf.GetEnv() == "alone" {
 		go func() {
 			//异步推送 文本消息、转发消息、文件消息、红包消息
@@ -259,6 +265,19 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	})
 	im.Session.Default.Write(c)
 	logrus.Info("结束推送消息：", time.Now().Unix())
+}
+
+func (dao *SubscribeConsume) GetTalkRecordSend(ctx context.Context, recordId int, senderId int, receiverId int) int {
+	alreadySend := 0
+	key := fmt.Sprintf("GetTalkRecordSend_%s_%s_%s", strconv.Itoa(recordId), strconv.Itoa(senderId), strconv.Itoa(receiverId))
+	result := dao.rds.Get(ctx, key).Val()
+	if result == "" {
+		dao.rds.Set(ctx, key, strconv.Itoa(1), time.Duration(60*1)*time.Second)
+	} else {
+		alreadySend, _ = strconv.Atoi(result)
+	}
+	return alreadySend
+
 }
 
 //判断目标用户是否在线
