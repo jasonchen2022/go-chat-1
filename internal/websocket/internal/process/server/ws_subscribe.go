@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"unsafe"
 
 	"go-chat/config"
 	"go-chat/internal/entity"
@@ -15,7 +14,6 @@ import (
 	"go-chat/internal/websocket/internal/process/handle"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
@@ -65,13 +63,13 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		log.Println("Failed to open a channel:", err.Error())
 		return err
 	}
-	ch2, err := w.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel2:", err.Error())
-		return err
-	}
+	// ch2, err := w.mq.Channel()
+	// if err != nil {
+	// 	log.Println("Failed to open a channel2:", err.Error())
+	// 	return err
+	// }
 	// 声明一个私聊队列
-	qPrivate, err := ch2.QueueDeclare(
+	qPrivate, err := ch.QueueDeclare(
 		gateway, // name
 		true,    // durable
 		false,   // delete when usused
@@ -98,7 +96,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		return err
 	}
 	//注册私聊消费者
-	msgsPrivate, err := ch2.Consume(
+	msgsPrivate, err := ch.Consume(
 		qPrivate.Name, // queue
 		"",            // 标签
 		true,          // auto-ack
@@ -111,16 +109,17 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		log.Println("Failed to open a channel:", err.Error())
 		return err
 	}
-
+	// forever := make(chan bool)
 	go func() {
-		work := worker.NewWorker(20, 20)
+		work := worker.NewWorker(10, 10)
 
 		for d := range msgsGroup {
 			work.Do(func() {
-				result := *(*string)(unsafe.Pointer(&d.Body))
-				logrus.Printf("Received a message: %s", result)
+				//result := *(*string)(unsafe.Pointer(&d.Body))
+				//logrus.Printf("Received a message: %s", result)
 				var message *SubscribeContent
 				if err := json.Unmarshal(d.Body, &message); err == nil {
+					logger.Infof("Received a message1: %s", message.Data)
 					w.consume.Handle(message.Event, message.Data)
 				} else {
 					logger.Warnf("订阅消息格式错误 Err: %s \n", err.Error())
@@ -135,10 +134,11 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		work := worker.NewWorker(10, 10)
 		for d := range msgsPrivate {
 			work.Do(func() {
-				result := *(*string)(unsafe.Pointer(&d.Body))
-				logrus.Printf("Received a message2: %s", result)
+				//result := *(*string)(unsafe.Pointer(&d.Body))
+				//logrus.Printf("Received a message2: %s", result)
 				var message *SubscribeContent
 				if err := json.Unmarshal(d.Body, &message); err == nil {
+					logger.Infof("Received a message2: %s", message.Data)
 					w.consume.Handle(message.Event, message.Data)
 				} else {
 					logger.Warnf("订阅消息格式错误 Err: %s \n", err.Error())
@@ -149,6 +149,7 @@ func (w *WsSubscribe) Setup(ctx context.Context) error {
 		work.Wait()
 	}()
 
+	// <-forever
 	<-ctx.Done()
 
 	return nil

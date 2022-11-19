@@ -33,7 +33,7 @@ func (dao *UsersDao) SetAppStatus(uid int, client_id string) error {
 	if client_id != _client_id {
 		err := dao.db.Model(&model.Users{}).Where("client_id = ?", client_id).Update("client_id", nil).Error
 		if err != nil {
-			logrus.Info("触发单点登录：", client_id)
+			logrus.Info("修改其他账号单点登录错误：", err.Error())
 		}
 		err = dao.db.Model(&model.Users{}).Where("id = ?", uid).Update("client_id", client_id).Error
 		//如果两个ID不相同，则触发单点登录
