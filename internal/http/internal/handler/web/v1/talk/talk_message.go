@@ -25,11 +25,12 @@ type Message struct {
 	splitUploadService *service.SplitUploadService
 	contactService     *service.ContactService
 	groupMemberService *service.GroupMemberService
+	groupService       *service.GroupService
 	organizeService    *organize.OrganizeService
 }
 
-func NewMessage(service *service.TalkMessageService, talkService *service.TalkService, talkRecordsVoteDao *dao.TalkRecordsVoteDao, forwardService *service.TalkMessageForwardService, splitUploadService *service.SplitUploadService, contactService *service.ContactService, groupMemberService *service.GroupMemberService, organizeService *organize.OrganizeService) *Message {
-	return &Message{service: service, talkService: talkService, talkRecordsVoteDao: talkRecordsVoteDao, forwardService: forwardService, splitUploadService: splitUploadService, contactService: contactService, groupMemberService: groupMemberService, organizeService: organizeService}
+func NewMessage(service *service.TalkMessageService, talkService *service.TalkService, talkRecordsVoteDao *dao.TalkRecordsVoteDao, forwardService *service.TalkMessageForwardService, splitUploadService *service.SplitUploadService, contactService *service.ContactService, groupMemberService *service.GroupMemberService, groupService *service.GroupService, organizeService *organize.OrganizeService) *Message {
+	return &Message{service: service, talkService: talkService, talkRecordsVoteDao: talkRecordsVoteDao, forwardService: forwardService, splitUploadService: splitUploadService, contactService: contactService, groupMemberService: groupMemberService, groupService: groupService, organizeService: organizeService}
 }
 
 type AuthorityOpts struct {
@@ -49,13 +50,6 @@ func (dao *Message) IsLeader(userId int) bool {
 func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 
 	if opt.TalkType == entity.ChatPrivateMode {
-		// 这里需要判断双方是否都是企业成员，如果是则无需添加好友即可聊天
-		// if isOk, err := c.organizeService.Dao().IsQiyeMember(opt.UserId, opt.ReceiverId); err != nil {
-		// 	return errors.New("系统繁忙，请稍后再试")
-		// } else if isOk {
-		// 	return nil
-		// }
-
 		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) || opt.UserId == opt.ReceiverId {
 			return nil
 		}
@@ -71,9 +65,24 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 		err := c.groupMemberService.Db().First(groupMemberInfo, "group_id = ? and user_id = ?", opt.ReceiverId, opt.UserId).Error
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				return errors.New("暂无权限发送消息")
-			}
+				//聊天室重新加群
+				group_type := c.groupService.GetGroupType(ctx.Context, opt.ReceiverId)
+				if group_type == 3 {
+					ids := []int{opt.UserId}
+					if err := c.groupService.InviteMembers(ctx.Context, &model.InviteGroupMembersOpt{
+						UserId:    1,
+						GroupId:   opt.ReceiverId,
+						MemberIds: ids,
+					}); err != nil {
+						return errors.New("暂无权限发送消息")
+					} else {
+						return nil
+					}
+				} else {
+					return errors.New("暂无权限发送消息")
+				}
 
+			}
 			return errors.New("系统繁忙，请稍后再试")
 		}
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"go-chat/config"
@@ -479,6 +480,65 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 	return nil
 }
 
+// InviteMembers 邀请加入群聊
+func (s *GroupService) JoinMembers(ctx context.Context, opts *model.InviteGroupMembersOpt) error {
+	var (
+		err        error
+		addMembers []*model.GroupMember
+	)
+
+	m := make(map[int]struct{})
+	for _, value := range s.memberDao.GetMemberIds(opts.GroupId) {
+		m[value] = struct{}{}
+	}
+
+	for _, value := range opts.MemberIds {
+		addMembers = append(addMembers, &model.GroupMember{
+			GroupId: opts.GroupId,
+			UserId:  value,
+		})
+	}
+
+	if len(addMembers) == 0 {
+		return nil
+	}
+
+	record := &model.TalkRecords{
+		TalkType:   entity.ChatGroupMode,
+		ReceiverId: opts.GroupId,
+		MsgType:    entity.MsgTypeGroupInvite,
+	}
+
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// 删除已存在成员记录
+		tx.Where("group_id = ? and user_id in ? and is_quit = 1", opts.GroupId, opts.MemberIds).Delete(&model.GroupMember{})
+
+		// 添加新成员
+		if err = tx.Create(&addMembers).Error; err != nil {
+			return err
+		}
+
+		if err = tx.Create(record).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(&model.TalkRecordsInvite{
+			RecordId:      record.Id,
+			Type:          1,
+			OperateUserId: opts.UserId,
+			UserIds:       sliceutil.IntToIds(opts.MemberIds),
+		}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type RemoveMembersOpt struct {
 	UserId    int   // 操作人ID
 	GroupId   int   // 群ID
@@ -647,4 +707,17 @@ func (s *GroupService) List(userId int) ([]*model.GroupItem, error) {
 	}
 
 	return items, nil
+}
+
+func (s *GroupService) GetGroupType(ctx context.Context, group_id int) int {
+	var group_type int
+	key := fmt.Sprintf("group_type_%s", strconv.Itoa(group_id))
+	result := s.rds.Get(ctx, key).Val()
+	if result == "" {
+		s.db.Table("`group`").Where("id = ?", group_id).Select([]string{"type"}).Limit(1).Scan(&group_type)
+		s.rds.Set(ctx, key, strconv.Itoa(group_type), time.Duration(60*5)*time.Second)
+	} else {
+		group_type, _ = strconv.Atoi(result)
+	}
+	return group_type
 }
