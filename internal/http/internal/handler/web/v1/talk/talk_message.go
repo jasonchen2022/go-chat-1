@@ -474,38 +474,6 @@ func (c *Message) Forward(ctx *ichat.Context) error {
 	if err := c.forwardService.SendForwardMessage(ctx.RequestCtx(), forward); err != nil {
 		return ctx.BusinessError(err.Error())
 	}
-	// //转发私聊
-	// if params.ReceiveUserIds != "" {
-	// 	forward := &service.TalkForwardOpt{
-	// 		Mode:       params.ForwardMode,
-	// 		UserId:     uid,
-	// 		ReceiverId: params.ReceiverId,
-	// 		TalkType:   1,
-	// 		RecordsIds: sliceutil.ParseIds(params.RecordsIds),
-	// 		UserIds:    sliceutil.ParseIds(params.ReceiveUserIds),
-	// 		GroupIds:   sliceutil.ParseIds(params.ReceiveGroupIds),
-	// 	}
-
-	// 	if err := c.forwardService.SendForwardMessage(ctx.RequestCtx(), forward); err != nil {
-	// 		return ctx.BusinessError(err.Error())
-	// 	}
-	// }
-	// //转发群聊
-	// if params.ReceiveGroupIds != "" {
-	// 	forward := &service.TalkForwardOpt{
-	// 		Mode:       params.ForwardMode,
-	// 		UserId:     uid,
-	// 		ReceiverId: params.ReceiverId,
-	// 		TalkType:   2,
-	// 		RecordsIds: sliceutil.ParseIds(params.RecordsIds),
-	// 		UserIds:    sliceutil.ParseIds(params.ReceiveUserIds),
-	// 		GroupIds:   sliceutil.ParseIds(params.ReceiveGroupIds),
-	// 	}
-
-	// 	if err := c.forwardService.SendForwardMessage(ctx.RequestCtx(), forward); err != nil {
-	// 		return ctx.BusinessError(err.Error())
-	// 	}
-	// }
 
 	return ctx.Success(nil)
 }
