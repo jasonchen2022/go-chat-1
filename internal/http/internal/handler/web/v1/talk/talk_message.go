@@ -193,8 +193,8 @@ func (c *Message) SysRedPacketMsg(ctx *ichat.Context) error {
 		UserId:      uid,
 		TalkType:    params.TalkType,
 		ReceiverId:  params.ReceiverId,
-		Text:        params.Text,
-		RedPacketId: params.RedPacketId,
+		Text:        params.Text,        //发送红包用户  id
+		RedPacketId: params.RedPacketId, //红包记录  id
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
