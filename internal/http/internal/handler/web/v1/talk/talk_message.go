@@ -190,10 +190,11 @@ func (c *Message) SysRedPacketMsg(ctx *ichat.Context) error {
 		return ctx.BusinessError(err.Error())
 	}
 	err := c.service.SendSysRedpacketsMessage(ctx.RequestCtx(), &service.SysTextMessageOpt{
-		UserId:     uid,
-		TalkType:   params.TalkType,
-		ReceiverId: params.ReceiverId,
-		Text:       params.Text,
+		UserId:      uid,
+		TalkType:    params.TalkType,
+		ReceiverId:  params.ReceiverId,
+		Text:        params.Text,
+		RedPacketId: params.RedPacketId,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())

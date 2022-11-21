@@ -6,9 +6,10 @@ type TextMessageRequest struct {
 	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
 }
 type RedPacketSysMessageRequest struct {
-	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
-	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
-	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
+	TalkType    int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
+	ReceiverId  int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
+	Text        string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
+	RedPacketId string `form:"red_packet_id" json:"red_packet_id" label:"red_packet_id"`
 }
 type RedpacketsMessageRequest struct {
 	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`

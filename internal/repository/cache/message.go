@@ -16,10 +16,11 @@ type MessageStorage struct {
 }
 
 type LastCacheMessage struct {
-	Content  string `json:"content"`
-	Datetime string `json:"datetime"`
-	MsgType  int    `json:"msg_type"`
-	RecordId int    `json:"record_id"`
+	Content     string `json:"content"`
+	Datetime    string `json:"datetime"`
+	MsgType     int    `json:"msg_type"`
+	RecordId    int    `json:"record_id"`
+	RedPacketId string `json:"red_packet_id"`
 }
 
 func NewMessageStorage(rds *redis.Client) *MessageStorage {

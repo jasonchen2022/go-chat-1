@@ -50,10 +50,11 @@ func NewTalkMessageService(baseService *BaseService, config *config.Config, unre
 }
 
 type SysTextMessageOpt struct {
-	UserId     int
-	TalkType   int
-	ReceiverId int
-	Text       string
+	UserId      int
+	TalkType    int
+	ReceiverId  int
+	Text        string
+	RedPacketId string
 }
 
 type SysOfflineMessageOpt struct {
@@ -84,11 +85,12 @@ func (s *TalkMessageService) SendSysMessage(ctx context.Context, opts *SysTextMe
 
 func (s *TalkMessageService) SendSysRedpacketsMessage(ctx context.Context, opts *SysTextMessageOpt) error {
 	record := &model.TalkRecords{
-		TalkType:   opts.TalkType,
-		MsgType:    entity.MsgTypeSysRedPackets,
-		UserId:     opts.UserId,
-		ReceiverId: opts.ReceiverId,
-		Content:    opts.Text,
+		TalkType:    opts.TalkType,
+		MsgType:     entity.MsgTypeSysRedPackets,
+		UserId:      opts.UserId,
+		ReceiverId:  opts.ReceiverId,
+		Content:     opts.Text,
+		RedPacketId: opts.RedPacketId,
 	}
 
 	if err := s.db.Debug().Create(record).Error; err != nil {
@@ -952,10 +954,11 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 	if record.MsgType != 0 && record.MsgType != 8 && record.MsgType != 9 {
 		///
 		_ = s.lastMessage.Set(ctx, record.TalkType, record.UserId, record.ReceiverId, &cache.LastCacheMessage{
-			Content:  opts["text"],
-			Datetime: timeutil.DateTime(),
-			MsgType:  record.MsgType,
-			RecordId: record.RecordId,
+			Content:     opts["text"],
+			Datetime:    timeutil.DateTime(),
+			MsgType:     record.MsgType,
+			RecordId:    record.RecordId,
+			RedPacketId: record.RedPacketId,
 		})
 	}
 	content := jsonutil.Encode(map[string]interface{}{
