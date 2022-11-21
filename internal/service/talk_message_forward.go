@@ -30,6 +30,7 @@ type talkRecord struct {
 }
 
 type forwardItem struct {
+	Id       int    `json:"id"`
 	MsgType  int    `json:"msg_type"`
 	Content  string `json:"content"`
 	Nickname string `json:"nickname"`
@@ -86,23 +87,24 @@ func (t *TalkMessageForwardService) verify(forward *TalkForwardOpt) error {
 // 聚合转发数据
 func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *TalkForwardOpt) (string, error) {
 
-	rows := make([]*forwardItem, 0)
-
-	query := t.db.Table("talk_records")
-	query.Joins("left join users on users.id = talk_records.user_id")
-
 	ids := forward.RecordsIds
 
 	if len(forward.RecordsIds) > 3 {
 		ids = forward.RecordsIds[:3]
 	}
+	rows := make([]*forwardItem, 0)
 
-	query.Where("talk_records.id in ?", ids)
+	// query := t.db.Table("talk_records")
+	// query.Joins("left join users on users.id = talk_records.user_id")
 
-	if err := query.Limit(3).Scan(&rows).Error; err != nil {
-		return "", err
-	}
+	// query.Where("talk_records.id in ?", ids)
+	// if err := query.Limit(3).Scan(&rows).Error; err != nil {
+	// 	return "", err
+	// }
 
+	t.db.Raw("select a.id,a.content,a.msg_type,b.nickname from talk_records a left join users b on b.id = a.user_id where a.id in ?", ids).Scan(&rows)
+
+	// fmt.Printf("recordID:" + jsonutil.Encode(rows))
 	data := make([]map[string]interface{}, 0)
 	for _, row := range rows {
 		item := map[string]interface{}{}
@@ -112,12 +114,20 @@ func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *Ta
 			text := strings.TrimSpace(row.Content)
 			item["nickname"] = row.Nickname
 			item["text"] = strutil.MtSubstr(text, 0, 30)
+			item["msg_type"] = row.MsgType
+			item["path"] = ""
 		case entity.MsgTypeCode:
 			item["nickname"] = row.Nickname
 			item["text"] = "【代码消息】"
+			item["msg_type"] = row.MsgType
+			item["path"] = ""
 		case entity.MsgTypeFile:
+			fileItem := &model.TalkRecordsFile{}
+			t.db.Model(&model.TalkRecordsFile{}).Where("record_id = ?", row.Id).Limit(1).Scan(&fileItem)
 			item["nickname"] = row.Nickname
 			item["text"] = "【文件消息】"
+			item["path"] = fileItem.Path
+			item["msg_type"] = row.MsgType
 		}
 
 		data = append(data, item)
