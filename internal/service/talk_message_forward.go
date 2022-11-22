@@ -53,6 +53,7 @@ type TalkForwardOpt struct {
 	UserIds    []int
 	GroupIds   []int
 	Mode       int
+	TimeStamp  int64
 }
 
 // 验证消息转发
@@ -239,6 +240,7 @@ func (t *TalkMessageForwardService) MultiMergeForward(ctx context.Context, forwa
 				MsgType:    entity.MsgTypeForward,
 				UserId:     forward.UserId,
 				ReceiverId: item.ReceiverId,
+				TimeStamp:  forward.TimeStamp,
 			})
 		}
 

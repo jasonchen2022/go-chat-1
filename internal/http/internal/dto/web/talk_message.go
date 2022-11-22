@@ -4,6 +4,7 @@ type TextMessageRequest struct {
 	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
+	TimeStamp  int64  `form:"time_stamp" json:"time_stamp"  label:"time_stamp"`
 }
 type RedPacketSysMessageRequest struct {
 	TalkType    int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
@@ -29,12 +30,14 @@ type ImageMessageRequest struct {
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	ImageUrl   string `form:"image_url" json:"image_url" label:"image_url"`
 	RecordId   int    `form:"record_id" json:"record_id"  label:"record_id"`
+	TimeStamp  int64  `form:"time_stamp" json:"time_stamp"  label:"time_stamp"`
 }
 
 type FileMessageRequest struct {
 	TalkType   int    `form:"talk_type" json:"talk_type" binding:"required,oneof=1 2" label:"talk_type"`
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	UploadId   string `form:"upload_id" json:"upload_id" binding:"required"`
+	TimeStamp  int64  `form:"time_stamp" json:"time_stamp"  label:"time_stamp"`
 }
 
 type VoteMessageRequest struct {
@@ -61,6 +64,7 @@ type AnswerMessageRequest struct {
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	RecordId   int    `form:"record_id" json:"record_id" binding:"required" label:"record_id"`
 	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
+	TimeStamp  int64  `form:"time_stamp" json:"time_stamp"  label:"time_stamp"`
 }
 
 type ForwardMessageRequest struct {
@@ -70,6 +74,7 @@ type ForwardMessageRequest struct {
 	RecordsIds      string `form:"records_ids" json:"records_ids" binding:"required,ids"`
 	ReceiveUserIds  string `form:"receive_user_ids" json:"receive_user_ids" binding:"ids"`
 	ReceiveGroupIds string `form:"receive_group_ids" json:"receive_group_ids" binding:"ids"`
+	TimeStamp       int64  `form:"time_stamp" json:"time_stamp"  label:"time_stamp"`
 }
 
 type CardMessageRequest struct {

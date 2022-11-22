@@ -119,6 +119,7 @@ func (c *Message) Text(ctx *ichat.Context) error {
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		Text:       params.Text,
+		TimeStamp:  params.TimeStamp,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
@@ -147,6 +148,7 @@ func (c *Message) Answer(ctx *ichat.Context) error {
 		ReceiverId: params.ReceiverId,
 		RecordId:   params.RecordId,
 		Text:       params.Text,
+		TimeStamp:  params.TimeStamp,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
@@ -304,6 +306,7 @@ func (c *Message) Image(ctx *ichat.Context) error {
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		File:       file,
+		TimeStamp:  params.TimeStamp,
 	})
 
 	if err != nil {
@@ -373,6 +376,7 @@ func (c *Message) File(ctx *ichat.Context) error {
 		TalkType:   params.TalkType,
 		ReceiverId: params.ReceiverId,
 		UploadId:   params.UploadId,
+		TimeStamp:  params.TimeStamp,
 	})
 	if err != nil {
 		return ctx.BusinessError(err.Error())
@@ -478,6 +482,7 @@ func (c *Message) Forward(ctx *ichat.Context) error {
 		RecordsIds: sliceutil.ParseIds(params.RecordsIds),
 		UserIds:    sliceutil.ParseIds(params.ReceiveUserIds),
 		GroupIds:   sliceutil.ParseIds(params.ReceiveGroupIds),
+		TimeStamp:  params.TimeStamp,
 	}
 
 	if err := c.forwardService.SendForwardMessage(ctx.RequestCtx(), forward); err != nil {
