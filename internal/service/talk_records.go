@@ -56,6 +56,7 @@ type TalkRecordsItem struct {
 	ReceiverNickname  string      `json:"receiver_nickname"`
 	RecordId          int         `json:"record_id"`
 	Answer            interface{} `json:"answer,omitempty"`
+	TimeStamp         int64       `json:"time_stamp"`
 }
 
 type TalkRecordsService struct {
@@ -114,6 +115,7 @@ func (s *TalkRecordsService) GetTalkRecords(ctx context.Context, opts *QueryTalk
 			"0 as is_leader",
 			"talk_records.record_id",
 			"talk_records.red_packet_id",
+			"talk_records.time_stamp",
 		}
 	)
 
@@ -245,6 +247,7 @@ func (s *TalkRecordsService) GetTalkRecord(ctx context.Context, recordId int64) 
 			"0 as is_leader",
 			"talk_records.record_id",
 			"talk_records.red_packet_id",
+			"talk_records.time_stamp",
 		}
 	)
 
@@ -557,6 +560,7 @@ func (s *TalkRecordsService) HandleTalkRecords(ctx context.Context, uid int, ite
 			GroupAvatar:      item.GroupAvatar,
 			GroupType:        item.GroupType,
 			RecordId:         item.RecordId,
+			TimeStamp:        item.TimeStamp,
 		}
 		if data.MemberType <= 0 {
 			_, content := senService.Match(data.Content, '*')

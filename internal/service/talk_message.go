@@ -126,6 +126,7 @@ type TextMessageOpt struct {
 	TalkType   int
 	ReceiverId int
 	Text       string
+	TimeStamp  int64
 }
 
 type AnswerTextMessageOpt struct {
@@ -134,10 +135,7 @@ type AnswerTextMessageOpt struct {
 	ReceiverId int
 	RecordId   int
 	Text       string
-	// OldAvatar   string
-	// OldText     string
-	// OldUserName string
-	// NewText     string
+	TimeStamp  int64
 }
 
 // SendTextMessage 发送文本消息
@@ -148,6 +146,7 @@ func (s *TalkMessageService) SendTextMessage(ctx context.Context, opts *TextMess
 		UserId:     opts.UserId,
 		ReceiverId: opts.ReceiverId,
 		Content:    opts.Text,
+		TimeStamp:  opts.TimeStamp,
 	}
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
@@ -187,6 +186,7 @@ func (s *TalkMessageService) SendAnswerTextMessage(ctx context.Context, opts *An
 		ReceiverId: opts.ReceiverId,
 		RecordId:   opts.RecordId,
 		Content:    opts.Text,
+		TimeStamp:  opts.TimeStamp,
 	}
 	//校验权限
 	c := s.checkUserAuth(ctx, record.UserId, opts.TalkType, opts.ReceiverId)
@@ -307,6 +307,7 @@ type ImageMessageOpt struct {
 	File       *multipart.FileHeader
 	ImageUrl   string
 	RecordId   int
+	TimeStamp  int64
 }
 
 // SendImageMessage 发送图片消息
@@ -319,6 +320,7 @@ func (s *TalkMessageService) SendImageMessage(ctx context.Context, opts *ImageMe
 			UserId:     opts.UserId,
 			ReceiverId: opts.ReceiverId,
 			RecordId:   opts.RecordId,
+			TimeStamp:  opts.TimeStamp,
 		}
 	)
 	filePath := ""
@@ -388,6 +390,7 @@ type FileMessageOpt struct {
 	TalkType   int
 	ReceiverId int
 	UploadId   string
+	TimeStamp  int64
 }
 
 // SendFileMessage 发送文件消息
@@ -400,6 +403,7 @@ func (s *TalkMessageService) SendFileMessage(ctx context.Context, opts *FileMess
 			MsgType:    entity.MsgTypeFile,
 			UserId:     opts.UserId,
 			ReceiverId: opts.ReceiverId,
+			TimeStamp:  opts.TimeStamp,
 		}
 	)
 
@@ -958,6 +962,7 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 			MsgType:     record.MsgType,
 			RecordId:    record.RecordId,
 			RedPacketId: record.RedPacketId,
+			TimeStamp:   record.TimeStamp,
 		})
 	}
 	content := jsonutil.Encode(map[string]interface{}{

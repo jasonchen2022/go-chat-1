@@ -18,6 +18,7 @@ type TalkRecords struct {
 	CreatedAt   time.Time `gorm:"column:created_at;NOT NULL" json:"created_at"`             // 创建时间
 	UpdatedAt   time.Time `gorm:"column:updated_at;NOT NULL" json:"updated_at"`             // 更新时间
 	RecordId    int       `gorm:"column:record_id;default:0;NOT NULL" json:"record_id"`     // 回复记录id
+	TimeStamp   int64     `gorm:"column:time_stamp;default:0;NOT NULL" json:"time_stamp"`   // 时间戳
 }
 
 type QueryTalkRecordsItem struct {
@@ -50,6 +51,7 @@ type QueryTalkRecordsItem struct {
 	GroupType        int       `json:"group_type"`
 	RecordId         int       `json:"record_id"`     // 回复记录id
 	RedPacketId      string    `json:"red_packet_id"` // 红包id
+	TimeStamp        int64     `json:"time_stamp"`
 }
 
 type QueryGroupMemberItem struct {

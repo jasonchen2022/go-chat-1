@@ -228,7 +228,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 						//clientIds, _ = s.userService.Dao().GetClientIds(userIds)
 
 					}
-					logrus.Info("clientIds：", jsonutil.Encode(clientIds))
+					// logrus.Info("clientIds：", jsonutil.Encode(clientIds))
 					//推送离线消息
 					if len(clientIds) > 0 {
 						//文本消息、转发消息

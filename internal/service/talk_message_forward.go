@@ -50,6 +50,7 @@ type TalkForwardOpt struct {
 	UserIds    []int
 	GroupIds   []int
 	Mode       int
+	TimeStamp  int64
 }
 
 // 验证消息转发
@@ -121,8 +122,17 @@ func (t *TalkMessageForwardService) aggregation(ctx context.Context, forward *Ta
 		case entity.MsgTypeFile:
 			fileItem := &model.TalkRecordsFile{}
 			t.db.Model(&model.TalkRecordsFile{}).Where("record_id = ?", row.Id).Limit(1).Scan(&fileItem)
+			//消息类型[1:图片;2:视频;3:文件]
+			var msg string
+			if fileItem.Type == 1 {
+				msg = "[图片]"
+			} else if fileItem.Type == 2 {
+				msg = "[文件]"
+			} else if fileItem.Type == 3 {
+				msg = "[视频]"
+			}
 			item["nickname"] = row.Nickname
-			item["text"] = "【文件消息】"
+			item["text"] = msg
 			item["path"] = fileItem.Path
 			item["msg_type"] = row.MsgType
 		}
@@ -202,6 +212,7 @@ func (t *TalkMessageForwardService) MultiMergeForward(ctx context.Context, forwa
 				MsgType:    entity.MsgTypeForward,
 				UserId:     forward.UserId,
 				ReceiverId: item.ReceiverId,
+				TimeStamp:  forward.TimeStamp,
 			})
 		}
 
