@@ -29,7 +29,7 @@ var providerSet = wire.NewSet(
 	// 基础服务
 	provider.NewMySQLClient,
 	provider.NewRedisClient,
-	provider.NewRabbitMQClient,
+	provider.NewRocketMQClient,
 	provider.NewHttpClient,
 	provider.NewEmailClient,
 	provider.NewHttpServer,

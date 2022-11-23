@@ -5,6 +5,7 @@ import (
 
 	"go-chat/internal/http/internal/dto/web"
 	"go-chat/internal/pkg/ichat"
+	"go-chat/internal/pkg/logger"
 	"go-chat/internal/repository/dao"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service/organize"
@@ -40,20 +41,29 @@ type AuthorityOpts struct {
 }
 
 //判断当前发送者是否管理员
-func (dao *Message) IsLeader(userId int) bool {
+func (dao *Message) IsLeader(ctx *ichat.Context, userId int) bool {
 	var member_type int
-	dao.service.Db().Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type)
+	err := dao.service.Db().Table("users").Where("id = ?", userId).Select([]string{"type"}).Limit(1).Scan(&member_type).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			err = dao.service.SyncUsers(ctx.Context, userId)
+			return err == nil
+
+		} else {
+			logger.Error("查询用户数据失败：", err.Error())
+			return false
+		}
+
+	}
 	return member_type > 0
 }
 
 // 权限验证
 func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
-
 	if opt.TalkType == entity.ChatPrivateMode {
-		if c.IsLeader(opt.UserId) || c.IsLeader(opt.ReceiverId) || opt.UserId == opt.ReceiverId {
+		if c.IsLeader(ctx, opt.UserId) || c.IsLeader(ctx, opt.ReceiverId) || opt.UserId == opt.ReceiverId {
 			return nil
 		}
-
 		isOk := c.contactService.Dao().IsFriend(ctx.RequestCtx(), opt.UserId, opt.ReceiverId, false)
 		if isOk {
 			return nil

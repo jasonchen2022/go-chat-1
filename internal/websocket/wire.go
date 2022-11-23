@@ -25,7 +25,7 @@ var providerSet = wire.NewSet(
 	// 基础服务
 	provider.NewMySQLClient,
 	provider.NewRedisClient,
-	provider.NewRabbitMQClient,
+	provider.NewRocketMQClient,
 	provider.NewWebsocketServer,
 	provider.NewFilesystem,
 
@@ -60,6 +60,7 @@ var providerSet = wire.NewSet(
 	dao.NewFileSplitUploadDao,
 	dao.NewUserDao,
 	dao.NewTalkSessionDao,
+	dao.NewMemberDao,
 
 	// 服务
 	service.NewBaseService,
@@ -71,6 +72,7 @@ var providerSet = wire.NewSet(
 	service.NewTalkMessageService,
 	service.NewUserService,
 	service.NewTalkSessionService,
+	service.NewMemberService,
 
 	push.NewGeTuiService,
 	push.NewJpushService,

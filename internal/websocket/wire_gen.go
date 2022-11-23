@@ -26,13 +26,13 @@ import (
 
 func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	client := provider.NewRedisClient(ctx, conf)
-	connection := provider.NewRabbitMQClient(ctx, conf)
+	producer := provider.NewRocketMQClient(ctx, conf)
 	sidServer := cache.NewSid(client)
 	wsClientSession := cache.NewWsClientSession(client, conf, sidServer)
 	clientService := service.NewClientService(wsClientSession)
 	roomStorage := cache.NewRoomStorage(client)
 	db := provider.NewMySQLClient(conf)
-	baseService := service.NewBaseService(db, client, connection, conf)
+	baseService := service.NewBaseService(db, client, producer, conf)
 	baseDao := dao.NewBaseDao(db, client)
 	relation := cache.NewRelation(client)
 	groupMemberDao := dao.NewGroupMemberDao(baseDao, relation)
@@ -46,8 +46,12 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	sensitiveMatchService := service.NewSensitiveMatchService(db, client)
 	contactRemark := cache.NewContactRemark(client)
 	contactDao := dao.NewContactDao(baseDao, contactRemark, relation)
-	talkMessageService := service.NewTalkMessageService(baseService, conf, unreadStorage, messageStorage, talkRecordsVoteDao, groupMemberDao, sidServer, wsClientSession, filesystem, splitUploadDao, sensitiveMatchService, contactDao)
-	defaultWebSocket := handler.NewDefaultWebSocket(client, connection, conf, clientService, roomStorage, groupMemberService, talkMessageService)
+	memberDao := dao.NewMemberDao(baseDao)
+	memberService := service.NewMemberService(memberDao)
+	usersDao := dao.NewUserDao(baseDao)
+	userService := service.NewUserService(usersDao)
+	talkMessageService := service.NewTalkMessageService(baseService, conf, unreadStorage, messageStorage, talkRecordsVoteDao, groupMemberDao, sidServer, wsClientSession, filesystem, splitUploadDao, sensitiveMatchService, contactDao, memberService, userService)
+	defaultWebSocket := handler.NewDefaultWebSocket(client, producer, conf, clientService, roomStorage, groupMemberService, talkMessageService)
 	exampleWebsocket := handler.NewExampleWebsocket()
 	handlerHandler := &handler.Handler{
 		DefaultWebSocket: defaultWebSocket,
@@ -62,12 +66,10 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	talkSessionDao := dao.NewTalkSessionDao(baseDao)
 	talkSessionService := service.NewTalkSessionService(baseService, talkSessionDao, contactDao)
 	talkRecordsService := service.NewTalkRecordsService(baseService, talkVote, talkRecordsVoteDao, groupMemberDao, talkRecordsDao, sensitiveMatchService, contactService, talkSessionService)
-	usersDao := dao.NewUserDao(baseDao)
-	userService := service.NewUserService(usersDao)
 	geTuiService := push.NewGeTuiService(conf, client)
 	jpushService := push.NewJpushService(conf, client)
 	subscribeConsume := handle.NewSubscribeConsume(conf, client, wsClientSession, roomStorage, sidServer, groupMemberDao, talkRecordsService, contactService, userService, talkSessionService, geTuiService, jpushService)
-	wsSubscribe := server.NewWsSubscribe(client, connection, conf, subscribeConsume)
+	wsSubscribe := server.NewWsSubscribe(client, producer, conf, subscribeConsume)
 	subServers := &process.SubServers{
 		Health:    health,
 		Subscribe: wsSubscribe,
@@ -83,4 +85,4 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRabbitMQClient, provider.NewWebsocketServer, provider.NewFilesystem, router.NewRouter, wire.Struct(new(process.SubServers), "*"), process.NewServer, server.NewHealth, server.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSessionStorage, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoomStorage, cache.NewTalkVote, cache.NewRelation, cache.NewContactRemark, cache.NewUnreadStorage, cache.NewMessageStorage, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, dao.NewFileSplitUploadDao, dao.NewUserDao, dao.NewTalkSessionDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, service.NewTalkMessageService, service.NewUserService, service.NewTalkSessionService, push.NewGeTuiService, push.NewJpushService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRocketMQClient, provider.NewWebsocketServer, provider.NewFilesystem, router.NewRouter, wire.Struct(new(process.SubServers), "*"), process.NewServer, server.NewHealth, server.NewWsSubscribe, handle.NewSubscribeConsume, cache.NewSessionStorage, cache.NewSid, cache.NewRedisLock, cache.NewWsClientSession, cache.NewRoomStorage, cache.NewTalkVote, cache.NewRelation, cache.NewContactRemark, cache.NewUnreadStorage, cache.NewMessageStorage, dao.NewBaseDao, dao.NewTalkRecordsDao, dao.NewTalkRecordsVoteDao, dao.NewGroupMemberDao, dao.NewContactDao, dao.NewFileSplitUploadDao, dao.NewUserDao, dao.NewTalkSessionDao, dao.NewMemberDao, service.NewBaseService, service.NewTalkRecordsService, service.NewClientService, service.NewGroupMemberService, service.NewContactService, service.NewSensitiveMatchService, service.NewTalkMessageService, service.NewUserService, service.NewTalkSessionService, service.NewMemberService, push.NewGeTuiService, push.NewJpushService, handler.NewDefaultWebSocket, handler.NewExampleWebsocket, wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))

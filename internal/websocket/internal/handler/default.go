@@ -9,18 +9,17 @@ import (
 	"go-chat/internal/entity"
 	"go-chat/internal/pkg/ichat"
 	"go-chat/internal/pkg/im"
-	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/service"
 
+	"github.com/apache/rocketmq-client-go/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
 type DefaultWebSocket struct {
 	rds                *redis.Client
-	mq                 *amqp.Connection
+	mq                 rocketmq.Producer
 	config             *config.Config
 	cache              *service.ClientService
 	room               *cache.RoomStorage
@@ -28,7 +27,7 @@ type DefaultWebSocket struct {
 	talkMessage        *service.TalkMessageService
 }
 
-func NewDefaultWebSocket(rds *redis.Client, mq *amqp.Connection, config *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService, talkMessage *service.TalkMessageService) *DefaultWebSocket {
+func NewDefaultWebSocket(rds *redis.Client, mq rocketmq.Producer, config *config.Config, cache *service.ClientService, room *cache.RoomStorage, groupMemberService *service.GroupMemberService, talkMessage *service.TalkMessageService) *DefaultWebSocket {
 	return &DefaultWebSocket{rds: rds, config: config, cache: cache, room: room, groupMemberService: groupMemberService, talkMessage: talkMessage}
 }
 
@@ -100,8 +99,8 @@ func (c *DefaultWebSocket) message(ctx *ichat.Context, client im.IClient, messag
 
 	// // 创建一个Channel
 	if c.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
+		// conf := config.ReadConfig(config.ParseConfigArg())
+		// c.mq = provider.NewRocketMQClient(ctx.Context, conf)
 		log.Println("Failed to open a channel:", "并重新初始化")
 	}
 	// channel, err := c.mq.Channel()

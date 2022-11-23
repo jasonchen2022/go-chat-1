@@ -6,18 +6,27 @@ import (
 	"strconv"
 
 	"go-chat/config"
+	"go-chat/internal/pkg/logger"
 
-	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
+	"github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/producer"
 )
 
-func NewRabbitMQClient(ctx context.Context, conf *config.Config) *amqp.Connection {
-
-	url := fmt.Sprintf("amqp://%s:%s@%s:%s", conf.RabbitMQ.UserName, conf.RabbitMQ.Password, conf.RabbitMQ.Host, strconv.Itoa(conf.RabbitMQ.Port))
-	client, err := amqp.Dial(url)
+func NewRocketMQClient(ctx context.Context, conf *config.Config) rocketmq.Producer {
+	host := fmt.Sprintf("%s:%s", conf.RabbitMQ.Host, strconv.Itoa(conf.RabbitMQ.Port))
+	p, err := rocketmq.NewProducer(
+		producer.WithNameServer([]string{host}),
+	)
 	if err != nil {
-		logrus.Error("初始化MQ出错：", err.Error())
+		logger.Error("初始化MQ出错：", err.Error())
 		return nil
 	}
-	return client
+	err = p.Start()
+
+	if err != nil {
+		logger.Error("NewProducer：", err.Error())
+		return nil
+	}
+
+	return p
 }

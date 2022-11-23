@@ -44,8 +44,8 @@ import (
 func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	db := provider.NewMySQLClient(conf)
 	client := provider.NewRedisClient(ctx, conf)
-	connection := provider.NewRabbitMQClient(ctx, conf)
-	baseService := service.NewBaseService(db, client, connection, conf)
+	producer := provider.NewRocketMQClient(ctx, conf)
+	baseService := service.NewBaseService(db, client, producer, conf)
 	smsCodeCache := cache.NewSmsCodeCache(client)
 	smsService := service.NewSmsService(baseService, smsCodeCache)
 	baseDao := dao.NewBaseDao(db, client)
@@ -70,7 +70,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	filesystem := provider.NewFilesystem(conf)
 	splitUploadDao := dao.NewFileSplitUploadDao(baseDao)
 	sensitiveMatchService := service.NewSensitiveMatchService(db, client)
-	talkMessageService := service.NewTalkMessageService(baseService, conf, unreadStorage, messageStorage, talkRecordsVoteDao, groupMemberDao, sidServer, wsClientSession, filesystem, splitUploadDao, sensitiveMatchService, contactDao)
+	talkMessageService := service.NewTalkMessageService(baseService, conf, unreadStorage, messageStorage, talkRecordsVoteDao, groupMemberDao, sidServer, wsClientSession, filesystem, splitUploadDao, sensitiveMatchService, contactDao, memberService, userService)
 	httpClient := provider.NewHttpClient()
 	requestClient := provider.NewRequestClient(httpClient)
 	ipAddressService := service.NewIpAddressService(baseService, conf, requestClient)
@@ -107,7 +107,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 	groupNoticeDao := dao.NewGroupNoticeDao(baseDao)
 	groupNoticeService := service.NewGroupNoticeService(groupNoticeDao)
 	jpushService := push.NewJpushService(conf, client)
-	groupGroup := group.NewGroup(groupService, groupMemberService, talkSessionService, redisLock, contactService, userService, groupNoticeService, talkMessageService, memberService, jpushService, connection, conf, wsClientSession, sidServer)
+	groupGroup := group.NewGroup(groupService, groupMemberService, talkSessionService, redisLock, contactService, userService, groupNoticeService, talkMessageService, memberService, jpushService, producer, conf, wsClientSession, sidServer)
 	notice := group.NewNotice(groupNoticeService, groupMemberService)
 	groupApplyDao := dao.NewGroupApply(baseDao)
 	groupApplyService := service.NewGroupApplyService(baseService, groupApplyDao)
@@ -184,7 +184,7 @@ func Initialize(ctx context.Context, conf *config.Config) *AppProvider {
 
 // wire.go:
 
-var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRabbitMQClient, provider.NewHttpClient, provider.NewEmailClient, provider.NewHttpServer, provider.NewFilesystem, provider.NewRequestClient, router.NewRouter, wire.Struct(new(web.Handler), "*"), wire.Struct(new(admin.Handler), "*"), wire.Struct(new(open.Handler), "*"), wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
+var providerSet = wire.NewSet(provider.NewMySQLClient, provider.NewRedisClient, provider.NewRocketMQClient, provider.NewHttpClient, provider.NewEmailClient, provider.NewHttpServer, provider.NewFilesystem, provider.NewRequestClient, router.NewRouter, wire.Struct(new(web.Handler), "*"), wire.Struct(new(admin.Handler), "*"), wire.Struct(new(open.Handler), "*"), wire.Struct(new(handler.Handler), "*"), wire.Struct(new(AppProvider), "*"))
 
 var cacheProviderSet = wire.NewSet(cache.NewSessionStorage, cache.NewSid, cache.NewUnreadStorage, cache.NewRedisLock, cache.NewWsClientSession, cache.NewMessageStorage, cache.NewTalkVote, cache.NewRoomStorage, cache.NewRelation, cache.NewSmsCodeCache, cache.NewContactRemark)
 

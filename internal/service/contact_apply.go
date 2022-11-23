@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
-	"go-chat/config"
-	"go-chat/internal/provider"
 	model2 "go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
@@ -62,33 +59,7 @@ func (s *ContactApplyService) Create(ctx context.Context, opts *ContactApplyCrea
 			"type":     1,
 		}),
 	}
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body))
+	s.talkMessage.SendAll(jsonutil.Encode(body))
 
 	return nil
 }
@@ -162,27 +133,7 @@ func (s *ContactApplyService) Decline(ctx context.Context, opts *ContactApplyDec
 			}),
 		}
 
-		// 创建一个Channel
-		channel, err := s.mq.Channel()
-		if err != nil {
-			log.Println("Failed to open a channel:", err.Error())
-
-		}
-		defer channel.Close()
-
-		// 声明exchange
-		if err := channel.ExchangeDeclare(
-			s.config.RabbitMQ.ExchangeName, //name
-			"fanout",                       //exchangeType
-			true,                           //durable
-			false,                          //auto-deleted
-			false,                          //internal
-			false,                          //noWait
-			nil,                            //arguments
-		); err != nil {
-			log.Println("Failed to declare a exchange:", err.Error())
-		}
-		s.talkMessage.SendAll(channel, jsonutil.Encode(body))
+		s.talkMessage.SendAll(jsonutil.Encode(body))
 
 	}
 

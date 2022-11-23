@@ -3,19 +3,19 @@ package service
 import (
 	"go-chat/config"
 
+	"github.com/apache/rocketmq-client-go/v2"
 	"github.com/go-redis/redis/v8"
-	"github.com/streadway/amqp"
 	"gorm.io/gorm"
 )
 
 type BaseService struct {
 	db     *gorm.DB
 	rds    *redis.Client
-	mq     *amqp.Connection
+	mq     rocketmq.Producer
 	config *config.Config
 }
 
-func NewBaseService(db *gorm.DB, rds *redis.Client, mq *amqp.Connection, config *config.Config) *BaseService {
+func NewBaseService(db *gorm.DB, rds *redis.Client, mq rocketmq.Producer, config *config.Config) *BaseService {
 	return &BaseService{db, rds, mq, config}
 }
 

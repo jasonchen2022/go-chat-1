@@ -119,32 +119,7 @@ func (s *GroupService) Create(ctx context.Context, opts *model.CreateGroupOpts) 
 			"uids":     mids,
 		}),
 	}
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body))
+	s.talkMessage.SendAll(jsonutil.Encode(body))
 
 	return group.Id, err
 }
@@ -290,32 +265,13 @@ func (s *GroupService) Secede(ctx context.Context, groupId int, uid int) error {
 	}
 	if s.mq == nil {
 		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
+		s.mq = provider.NewRocketMQClient(ctx, conf)
 		log.Println("Failed to open a channel:", "并重新初始化")
 	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
 
-	}
-	defer channel.Close()
+	s.talkMessage.SendAll(jsonutil.Encode(body1))
 
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
-
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
+	s.talkMessage.SendAll(jsonutil.Encode(body2))
 
 	return nil
 }
@@ -429,31 +385,6 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 	if err != nil {
 		return err
 	}
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
 
 	// 广播网关将在线的用户加入房间
 	body1 := map[string]interface{}{
@@ -474,9 +405,9 @@ func (s *GroupService) InviteMembers(ctx context.Context, opts *model.InviteGrou
 			"record_id":   record.Id,
 		}),
 	}
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
+	s.talkMessage.SendAll(jsonutil.Encode(body1))
 
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
+	s.talkMessage.SendAll(jsonutil.Encode(body2))
 	return nil
 }
 
@@ -598,32 +529,6 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 
 	s.relation.BatchDelGroupRelation(ctx, opts.MemberIds, opts.GroupId)
 
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
 	body1 := map[string]interface{}{
 		"event": entity.EventTalkJoinGroup,
 		"data": jsonutil.Encode(map[string]interface{}{
@@ -642,9 +547,9 @@ func (s *GroupService) RemoveMembers(ctx context.Context, opts *RemoveMembersOpt
 			"record_id":   int64(record.Id),
 		}),
 	}
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body1))
+	s.talkMessage.SendAll(jsonutil.Encode(body1))
 
-	s.talkMessage.SendAll(channel, jsonutil.Encode(body2))
+	s.talkMessage.SendAll(jsonutil.Encode(body2))
 
 	return nil
 }

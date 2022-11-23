@@ -153,7 +153,6 @@ func (s *SubscribeConsume) onSendPrivate(receiverId int, messageType string, msg
 
 // onConsumeTalk 聊天消息事件
 func (s *SubscribeConsume) onConsumeTalk(body string) {
-
 	var msg struct {
 		TalkType   int   `json:"talk_type"`
 		SenderID   int64 `json:"sender_id"`
@@ -265,6 +264,7 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 	})
 	im.Session.Default.Write(c)
 	logrus.Info("结束推送消息：", time.Now().Unix())
+
 }
 
 func (dao *SubscribeConsume) GetTalkRecordSend(ctx context.Context, recordId int, senderId int, receiverId int) int {

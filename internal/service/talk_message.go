@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"sort"
 	"strconv"
@@ -17,8 +16,8 @@ import (
 	"go-chat/internal/repository/model"
 
 	"github.com/GUAIK-ORG/go-snowflake/snowflake"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	"gorm.io/gorm"
 
 	"go-chat/config"
@@ -26,6 +25,7 @@ import (
 	"go-chat/internal/pkg/encrypt"
 	"go-chat/internal/pkg/filesystem"
 	"go-chat/internal/pkg/jsonutil"
+	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/strutil"
 	"go-chat/internal/pkg/timeutil"
 )
@@ -43,9 +43,12 @@ type TalkMessageService struct {
 	splitUploadDao        *dao.SplitUploadDao
 	sensitiveMatchService *SensitiveMatchService
 	contactDao            *dao.ContactDao
+	memberService         *MemberService
+	userService           *UserService
 }
 
-func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadStorage, lastMessage *cache.MessageStorage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao, sensitiveMatchService *SensitiveMatchService, contactDao *dao.ContactDao) *TalkMessageService {
+func NewTalkMessageService(baseService *BaseService, config *config.Config, unreadTalkCache *cache.UnreadStorage, lastMessage *cache.MessageStorage, talkRecordsVoteDao *dao.TalkRecordsVoteDao, groupMemberDao *dao.GroupMemberDao, sidServer *cache.SidServer, client *cache.WsClientSession, fileSystem *filesystem.Filesystem, splitUploadDao *dao.SplitUploadDao, sensitiveMatchService *SensitiveMatchService, contactDao *dao.ContactDao, memberService *MemberService,
+	userService *UserService) *TalkMessageService {
 	return &TalkMessageService{BaseService: baseService, config: config, unreadTalkCache: unreadTalkCache, lastMessage: lastMessage, talkRecordsVoteDao: talkRecordsVoteDao, groupMemberDao: groupMemberDao, sidServer: sidServer, client: client, fileSystem: fileSystem, splitUploadDao: splitUploadDao, sensitiveMatchService: sensitiveMatchService, contactDao: contactDao}
 }
 
@@ -114,32 +117,7 @@ func (s *TalkMessageService) SendOfflineMessage(ctx context.Context, opts *SysOf
 			"client_id": opts.ClientId,
 		}),
 	}
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-	s.SendAll(channel, jsonutil.Encode(body))
+	s.SendAll(jsonutil.Encode(body))
 	return nil
 }
 
@@ -715,32 +693,7 @@ func (s *TalkMessageService) SendRevokeRecordMessage(ctx context.Context, uid in
 			"record_id": record.Id,
 		}),
 	}
-	if s.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-	s.SendAll(channel, jsonutil.Encode(body))
+	s.SendAll(jsonutil.Encode(body))
 	return nil
 }
 
@@ -906,11 +859,55 @@ func (s *TalkMessageService) SendDefaultMessage(ctx context.Context, receiverId 
 	return nil
 }
 
+func (s *TalkMessageService) SyncUsers(ctx context.Context, userId int) error {
+	member, err := s.memberService.FindById(userId)
+	if err != nil || member == nil {
+		return err
+	}
+	//先查询当前用户存不存在
+	user, _ := s.userService.Dao().FindByMobile(member.Mobile)
+	if user == nil {
+		password, _ := encrypt.HashPassword("12345689")
+		timetemp := strconv.FormatInt(time.Now().Unix(), 10)
+		timeresult := strings.TrimLeft(timetemp, "1")
+		timeid, _ := strconv.Atoi(timeresult)
+		_, err := s.userService.Dao().Create(&model.Users{
+			Id:               member.Id,
+			MemberId:         (timeid + member.Id) * 2, //（时间戳+ID主键）* 2
+			MemberLevel:      member.MemberLevel,
+			MemberLevelTitle: member.MemberLevelTitle,
+			Username:         member.UserName,
+			Nickname:         member.Nickname,
+			Mobile:           member.Mobile,
+			Gender:           member.Gender,
+			Type:             member.Type,
+			Motto:            member.Motto,
+			ClientId:         member.ClientId,
+			Password:         password,
+			CreatedAt:        time.Now(),
+		})
+		if err != nil {
+			logger.Error("同步用户数据失败：", err.Error())
+			return err
+
+		}
+	}
+	return nil
+}
+
 func (s *TalkMessageService) checkUserAuth(ctx context.Context, userId int, talkType int, receiverId int) error {
 	//1.检测发送消息用户账号是否被禁止发言
 	user := &model.QueryUserTypeItem{}
 	if err := s.db.Table("users").Where(&model.Users{Id: userId}).First(user).Error; err != nil {
-		return err
+		if err == gorm.ErrRecordNotFound {
+			err = s.SyncUsers(ctx, userId)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+
 	}
 	if user.IsMute == 1 {
 		return errors.New("你已被禁言，请文明聊天")
@@ -937,19 +934,20 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 			s.unreadTalkCache.Increment(ctx, 1, record.ReceiverId, record.UserId)
 		}
 	} else if record.TalkType == entity.ChatGroupMode {
+		if s.config.GetEnv() == "alone" {
+			go func() {
+				// todo 需要加缓存
+				ids := s.groupMemberDao.GetMemberIds(record.ReceiverId)
+				for _, uid := range ids {
 
-		go func() {
-			// todo 需要加缓存
-			ids := s.groupMemberDao.GetMemberIds(record.ReceiverId)
-			for _, uid := range ids {
+					if uid == record.UserId {
+						continue
+					}
 
-				if uid == record.UserId {
-					continue
+					s.unreadTalkCache.Increment(ctx, entity.ChatGroupMode, record.ReceiverId, uid)
 				}
-
-				s.unreadTalkCache.Increment(ctx, entity.ChatGroupMode, record.ReceiverId, uid)
-			}
-		}()
+			}()
+		}
 
 	}
 	if record.MsgType != 0 && record.MsgType != 8 && record.MsgType != 9 {
@@ -971,126 +969,23 @@ func (s *TalkMessageService) afterHandle(ctx context.Context, record *model.Talk
 			"record_id":   record.Id,
 		}),
 	})
-	// 创建一个Channel
+	s.SendAll(content)
+}
+
+func (s *TalkMessageService) SendAll(content string) {
+	ctx := context.Background()
 	if s.mq == nil {
 		conf := config.ReadConfig(config.ParseConfigArg())
-		s.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
+		s.mq = provider.NewRocketMQClient(ctx, conf)
+		logger.Error("Failed to open a mqclient:", "并重新初始化")
 	}
-	// 创建一个Channel
-	channel, err := s.mq.Channel()
+	msg := &primitive.Message{
+		Topic: s.config.RabbitMQ.ExchangeName,
+		Body:  []byte(content),
+	}
+	res, err := s.mq.SendSync(ctx, msg)
 	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
+		logger.Error("Failed to open a channel:", err.Error())
 	}
-	defer channel.Close()
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		s.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-	// 点对点消息采用精确投递
-	if record.TalkType == entity.ChatPrivateMode {
-		sids := s.sidServer.All(ctx, 1)
-
-		// 小于三台服务器则采用全局广播
-		if len(sids) <= 3 {
-			s.SendAll(channel, content)
-		} else {
-			for _, sid := range s.sidServer.All(ctx, 1) {
-				for _, uid := range []int{record.UserId, record.ReceiverId} {
-					if s.client.IsCurrentServerOnline(ctx, sid, entity.ImChannelDefault, strconv.Itoa(uid)) {
-						s.SendSingle(channel, sid, content)
-					}
-				}
-			}
-		}
-	} else {
-		s.SendAll(channel, content)
-	}
-
-}
-
-func (s *TalkMessageService) SendAll(channel *amqp.Channel, content string) {
-
-	// 声明一个queue
-	if _, err := channel.QueueDeclare(
-		entity.IMGatewayAll, // name
-		true,                // durable
-		false,               // delete when unused
-		false,               // exclusive
-		false,               // no-wait
-		nil,                 // arguments
-	); err != nil {
-		log.Println("Failed to declare a queue:", err.Error())
-
-	}
-	// exchange 绑定 queue
-	err := channel.QueueBind(entity.IMGatewayAll, "", s.config.RabbitMQ.ExchangeName, false, nil)
-	if err != nil {
-		log.Println("Failed to declare a queuebind:", err.Error())
-	}
-	if err := channel.Publish(
-		s.config.RabbitMQ.ExchangeName, // exchange
-		entity.IMGatewayAll,            // routing key
-		false,                          // mandatory
-		false,                          // immediate
-		amqp.Publishing{
-			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
-			Body:            []byte(content),
-			//Expiration:      "60000", // 消息过期时间
-		},
-	); err != nil {
-		log.Println("Failed to publish a message:", err.Error())
-	}
-	log.Println("SendAll：", content)
-}
-
-func (s *TalkMessageService) SendSingle(channel *amqp.Channel, sid string, content string) {
-
-	//s.SendAll(channel, content)
-	gateway := entity.GetIMGatewayPrivate(sid)
-	// 声明一个queue
-	if _, err := channel.QueueDeclare(
-		gateway, // name
-		true,    // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	); err != nil {
-		log.Println("Failed to declare a queue:", err.Error())
-
-	}
-	// exchange 绑定 queue
-	err := channel.QueueBind(gateway, "", s.config.RabbitMQ.ExchangeName, false, nil)
-	if err != nil {
-		log.Println("Failed to declare a queuebind:", err.Error())
-	}
-
-	if err := channel.Publish(
-		s.config.RabbitMQ.ExchangeName, // exchange
-		gateway,                        // routing key
-		false,                          // mandatory
-		false,                          // immediate
-		amqp.Publishing{
-			Headers:         amqp.Table{},
-			ContentType:     "text/plain",
-			ContentEncoding: "",
-			Body:            []byte(content),
-			//Expiration:      "60000", // 消息过期时间
-		},
-	); err != nil {
-		log.Println("Failed to publish a message:", err.Error())
-	}
-	log.Println("SendSingle", content)
+	logger.Info("发送结果：", jsonutil.Encode(res))
 }

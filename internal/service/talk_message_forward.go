@@ -3,11 +3,8 @@ package service
 import (
 	"context"
 	"errors"
-	"log"
 	"strings"
 
-	"go-chat/config"
-	"go-chat/internal/provider"
 	"go-chat/internal/repository/model"
 
 	"gorm.io/gorm"
@@ -156,31 +153,6 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 	if err != nil {
 		return err
 	}
-	if t.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		t.mq = provider.NewRabbitMQClient(ctx, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := t.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		t.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
 
 	for _, item := range items {
 
@@ -193,7 +165,7 @@ func (t *TalkMessageForwardService) SendForwardMessage(ctx context.Context, forw
 				"record_id":   item.RecordId,
 			}),
 		}
-		t.talkMessage.SendAll(channel, jsonutil.Encode(body))
+		t.talkMessage.SendAll(jsonutil.Encode(body))
 	}
 
 	return nil

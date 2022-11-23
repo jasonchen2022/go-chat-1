@@ -2,7 +2,6 @@ package group
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -15,14 +14,13 @@ import (
 	"go-chat/internal/pkg/logger"
 	"go-chat/internal/pkg/sliceutil"
 	"go-chat/internal/pkg/timeutil"
-	"go-chat/internal/provider"
 	"go-chat/internal/repository/cache"
 	"go-chat/internal/repository/model"
 	"go-chat/internal/service"
 	"go-chat/internal/service/push"
 
+	"github.com/apache/rocketmq-client-go/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 )
 
 type Group struct {
@@ -36,7 +34,7 @@ type Group struct {
 	messageService     *service.TalkMessageService
 	memberService      *service.MemberService
 	jpushService       *push.JpushService
-	mq                 *amqp.Connection
+	mq                 rocketmq.Producer
 	config             *config.Config
 	ws                 *cache.WsClientSession
 	sidServer          *cache.SidServer
@@ -53,7 +51,7 @@ func NewGroup(
 	messageService *service.TalkMessageService,
 	memberService *service.MemberService,
 	jpushService *push.JpushService,
-	mq *amqp.Connection,
+	mq rocketmq.Producer,
 	config *config.Config,
 	ws *cache.WsClientSession,
 	sidServer *cache.SidServer,
@@ -350,33 +348,8 @@ func (c *Group) Setting(ctx *ichat.Context) error {
 			"group_id": params.GroupId,
 		}),
 	})
-	if c.mq == nil {
-		conf := config.ReadConfig(config.ParseConfigArg())
-		c.mq = provider.NewRabbitMQClient(ctx.Context, conf)
-		log.Println("Failed to open a channel:", "并重新初始化")
-	}
-	// 创建一个Channel
-	channel, err := c.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
 
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		c.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-
-	c.messageService.SendAll(channel, content)
+	c.messageService.SendAll(content)
 
 	return ctx.Success(nil)
 }
@@ -728,28 +701,7 @@ func (c *Group) AllNoSpeak(ctx *ichat.Context) error {
 		}),
 	})
 
-	// 创建一个Channel
-	channel, err := c.mq.Channel()
-	if err != nil {
-		log.Println("Failed to open a channel:", err.Error())
-
-	}
-	defer channel.Close()
-
-	// 声明exchange
-	if err := channel.ExchangeDeclare(
-		c.config.RabbitMQ.ExchangeName, //name
-		"fanout",                       //exchangeType
-		true,                           //durable
-		false,                          //auto-deleted
-		false,                          //internal
-		false,                          //noWait
-		nil,                            //arguments
-	); err != nil {
-		log.Println("Failed to declare a exchange:", err.Error())
-	}
-
-	c.messageService.SendAll(channel, content)
+	c.messageService.SendAll(content)
 
 	return ctx.Success(entity.H{})
 }
