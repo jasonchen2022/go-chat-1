@@ -195,12 +195,6 @@ func (s *SubscribeConsume) onConsumeTalk(body string) {
 		return
 	}
 
-	alreadySend := s.GetTalkRecordSend(ctx, int(msg.RecordID), int(msg.SenderID), int(msg.ReceiverID))
-	if alreadySend == 1 {
-		logrus.Error("[GetTalkRecordSend] 重复发送", jsonutil.Encode(msg))
-		return
-	}
-
 	if s.conf.GetEnv() == "alone" {
 		go func() {
 			//异步推送 文本消息、转发消息、文件消息、红包消息
