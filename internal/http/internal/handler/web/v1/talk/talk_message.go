@@ -69,7 +69,7 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 			return nil
 		}
 
-		return errors.New("暂无权限发送消息")
+		return errors.New("你们不是好友关系，暂无权限发送消息")
 	} else {
 		groupMemberInfo := &model.GroupMember{}
 		err := c.groupMemberService.Db().First(groupMemberInfo, "group_id = ? and user_id = ?", opt.ReceiverId, opt.UserId).Error
@@ -84,12 +84,12 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 						GroupId:   opt.ReceiverId,
 						MemberIds: ids,
 					}); err != nil {
-						return errors.New("暂无权限发送消息")
+						return errors.New("你已被踢出群聊，暂无权限发送消息")
 					} else {
 						return nil
 					}
 				} else {
-					return errors.New("暂无权限发送消息")
+					return errors.New("你已被踢出群聊，暂无权限发送消息")
 				}
 
 			}
@@ -97,7 +97,7 @@ func (c *Message) authority(ctx *ichat.Context, opt *AuthorityOpts) error {
 		}
 
 		if groupMemberInfo.IsQuit == 1 {
-			return errors.New("暂无权限发送消息")
+			return errors.New("你已被踢出群聊，暂无权限发送消息")
 		}
 
 		if groupMemberInfo.IsMute == 1 {

@@ -27,6 +27,7 @@ func (c *ClearGroup) Handle(ctx context.Context) error {
 
 	c.clearGroup()
 	c.clearOfficialGroup()
+	c.clearTalkSession()
 	return nil
 }
 
@@ -40,4 +41,9 @@ func (c *ClearGroup) clearGroup() {
 func (c *ClearGroup) clearOfficialGroup() {
 	c.db.Exec("DELETE m FROM group_member as m where m.group_id=34 and EXISTS(SELECT 1 FROM users as u where m.user_id=u.id and u.type=-1)")
 	logrus.Info("结束删除官方聊天室游客")
+}
+
+//删除聊天session
+func (c *ClearGroup) clearTalkSession() {
+	c.db.Exec("DELETE g FROM group_member as g JOIN users as u on g.group_id=u.id where g.group_id in(SELECT id from `group` where group_name LIKE '%主播%') and u.type=-1; DELETE s FROM talk_session as s where s.talk_type=2 and NOT EXISTS(SELECT 1 FROM  group_member as m where m.user_id=s.user_id and m.group_id=s.receiver_id);")
 }
